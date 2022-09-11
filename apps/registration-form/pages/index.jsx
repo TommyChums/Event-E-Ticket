@@ -2,6 +2,7 @@ import { Button } from "ui";
 import { useForm } from 'react-hook-form';
 
 import supabase from "../lib/supabase";
+import { useState } from "react";
 
 function GetAge(birthDate) {
   console.log(birthDate)
@@ -18,6 +19,7 @@ function GetAge(birthDate) {
 }
 
 export default function Docs() {
+  const [ saving, setSaving ] = useState(false);
   
   const {
     register,
@@ -29,6 +31,9 @@ export default function Docs() {
     console.log(data)
     const age = GetAge(new Date(data.date_of_birth));
     console.log(age)
+
+    setSaving(true);
+
     await supabase
       .from('registered-users')
       .insert([{
@@ -36,52 +41,62 @@ export default function Docs() {
         age,
       }]);
 
-    reset();
+    setSaving(false)
+    // reset();
   };
 
   return (
-    <form
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-      onSubmit={handleSubmit(onSubmit)}
-      onReset={reset}
-    >
-      <label htmlFor="email">Email*</label>
-      <input {...register("email", { required: true })} type="email" />
-      <div
+    <div>
+      {
+        saving && (
+          <div>
+            Saving...
+          </div>
+        )
+      }
+      <form
         style={{
           display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
+          flexDirection: 'column',
         }}
+        onSubmit={handleSubmit(onSubmit)}
+        onReset={reset}
       >
+        <label htmlFor="email">Email*</label>
+        <input {...register("email", { required: true })} type="email" />
         <div
           style={{
             display: 'flex',
-            flexDirection: 'column',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
           }}
         >
-          <label htmlFor="first_name">First Name*</label>
-          <input {...register("first_name", { required: true })} type="text" />
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <label htmlFor="first_name">First Name*</label>
+            <input {...register("first_name", { required: true })} type="text" />
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <label htmlFor="last_name">Last Name*</label>
+            <input {...register("last_name", { required: true })} type="text" />
+          </div>
         </div>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <label htmlFor="last_name">Last Name*</label>
-          <input {...register("last_name", { required: true })} type="text" />
-        </div>
-      </div>
-      <label htmlFor="date_of_birth">Date of Birth*</label>
-      <input {...register("date_of_birth", { required: true })} type="date" />
+        <label htmlFor="date_of_birth">Date of Birth*</label>
+        <input {...register("date_of_birth", { required: true })} type="date" />
 
-      <Button type="submit">
-        Submit
-      </Button>
-    </form>
+        <Button type="submit">
+          Submit
+        </Button>
+      </form>
+    </div>
   );
 }
