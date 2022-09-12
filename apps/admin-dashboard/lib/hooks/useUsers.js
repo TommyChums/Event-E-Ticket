@@ -1,41 +1,77 @@
-import { useEffect, useState } from "react";
+import { useEffect, useReducer } from "react";
 import keyBy from 'lodash/keyBy';
 
 import supabase from "../supabase";
 
 export default function useUsers() {
-  const [ registeredUsers, setRegisteredUsers ] = useState({});
-  const [ error, setError ] = useState(false);
+  const [ state, dispatch ] = useReducer((state, { type, payload }) => {
+    switch (type) {
+      case 'RECEIVED_USERS': {
+        return {
+          ...state,
+          users: payload,
+        };
+      }
+      case 'UPDATE':
+      case 'INSERT': {
+        return {
+          ...state,
+          users: {
+            ...state.users,
+            [payload.new.uuid]: payload.new,
+          },
+        };
+      }
+      case 'DELETE': {
+        const updatedState = {
+          ...state,
+        };
+
+        delete state.users[payload.old.uuid];
+
+        return updatedState;
+      }
+      case 'ERROR': {
+        return {
+          ...state,
+          error: payload,
+        };
+      }
+      case 'LOADING': {
+        return {
+          ...state,
+          isLoading: payload,
+        };
+      }
+      default: {
+        return state;
+      }
+    };
+  }, { users: {}, isLoading: false, error: false });
 
   useEffect(() => {
     (async () => {
+      dispatch({ type: 'LOADING', payload: true });
       const { data: users, error } = await supabase.from('registered-users').select('*');
 
       if (error) {
-        setError(error);
+        dispatch({ type: 'ERROR', payload: error });
       }
 
-      setRegisteredUsers(keyBy(users, 'uuid'));
-    })()
+      dispatch({ type: 'RECEIVED_USERS', payload: keyBy(users, 'uuid') });
+      dispatch({ type: 'LOADING', payload: false });
+    })();
 
-    const subscription = supabase.from('registered-users')
-      .on('*', (payload) => {
-        console.log('payload:', payload);
-
-        const newRecord = payload.new;
-
-        setRegisteredUsers({
-          ...registeredUsers,
-          [newRecord.uuid]: newRecord,
-        });
-      }).subscribe();
+    const subscription = supabase.from('registered-users').on('*', (payload) => {
+      dispatch({ type: payload.eventType, payload });
+    }).subscribe();
 
     return () => supabase.removeSubscription(subscription);
-  }, [ registeredUsers ]);
+  }, []);
 
   return {
-    isLoading: !registeredUsers || !Object.keys(registeredUsers).length,
-    error,
-    users: registeredUsers,
+    isLoading: state.isLoading,
+    error: state.error,
+    users: state.users,
   };
 }

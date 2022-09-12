@@ -1,7 +1,7 @@
 import * as React from 'react';
 import filter from 'lodash/filter';
+import find from 'lodash/find';
 import PropTypes from 'prop-types';
-import { alpha } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -16,15 +16,9 @@ import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import Checkbox from '@mui/material/Checkbox';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Switch from '@mui/material/Switch';
-// import DeleteIcon from '@mui/icons-material/Delete';
-const DeleteIcon = null;
-const FilterListIcon = null;
-// import FilterListIcon from '@mui/icons-material/FilterList';
 import { visuallyHidden } from '@mui/utils';
+
+import UserDialog from '../UserDialog';
 
 function descendingComparator(a, b, orderBy) {
   let aVal = a[orderBy];
@@ -91,8 +85,7 @@ const headCells = [
 ];
 
 function EnhancedTableHead(props) {
-  const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort } =
-    props;
+  const { order, orderBy, onRequestSort } = props;
   const createSortHandler = (property) => (event) => {
     onRequestSort(event, property);
   };
@@ -130,12 +123,9 @@ function EnhancedTableHead(props) {
 }
 
 EnhancedTableHead.propTypes = {
-  numSelected: PropTypes.number.isRequired,
   onRequestSort: PropTypes.func.isRequired,
-  onSelectAllClick: PropTypes.func.isRequired,
   order: PropTypes.oneOf(['asc', 'desc']).isRequired,
   orderBy: PropTypes.string.isRequired,
-  rowCount: PropTypes.number.isRequired,
 };
 
 const EnhancedTableToolbar = (props) => {
@@ -177,13 +167,14 @@ EnhancedTableToolbar.defaultProps = {
 };
 
 export default function EnhancedTable({ users }) {
+  const [ dialogOpen, setDialogOpen ] = React.useState(false);
   const [ rows, setRows ] = React.useState(users);
   const [order, setOrder] = React.useState('asc');
   const [orderBy, setOrderBy] = React.useState('first_name');
   const [page, setPage] = React.useState(0);
-  const [dense, setDense] = React.useState(false);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [searchValue, setSearchValue] = React.useState('');
+  const [selectedUserUuid, setSelectedUserUuid] = React.useState('');
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -191,8 +182,10 @@ export default function EnhancedTable({ users }) {
     setOrderBy(property);
   };
 
-  const handleClick = (event, name) => {
-    console.log('Clicked:', name);
+  const handleClick = (event, uuid) => {
+    setSelectedUserUuid(uuid);
+    setDialogOpen(true);
+    console.log('Clicked:', uuid);
   };
 
   const handleChangePage = (event, newPage) => {
@@ -218,72 +211,71 @@ export default function EnhancedTable({ users }) {
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
   return (
-    <Box sx={{ width: '100%' }}>
-      <Paper sx={{ width: '100%', mb: 2 }}>
-        <EnhancedTableToolbar searchValue={searchValue} setSearchValue={setSearchValue} />
-        <TableContainer>
-          <Table
-            sx={{ minWidth: 750 }}
-            aria-labelledby="tableTitle"
-            size={dense ? 'small' : 'medium'}
-          >
-            <EnhancedTableHead
-              order={order}
-              orderBy={orderBy}
-              onRequestSort={handleRequestSort}
-              rowCount={rows.length}
-            />
-            <TableBody>
-              {/* if you don't need to support IE11, you can replace the `stableSort` call with:
-                 rows.slice().sort(getComparator(order, orderBy)) */}
-              {stableSort(rows, getComparator(order, orderBy))
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((row, index) => {
-                  return (
-                    <TableRow
-                      hover
-                      onClick={(event) => handleClick(event, row.uuid)}
-                      role="checkbox"
-                      tabIndex={-1}
-                      key={row.uuid}
-                    >
-                      {/* <TableCell
-                        component="th"
-                        id={labelId}
-                        scope="row"
-                        padding="none"
+    <>
+      <Box sx={{ width: '100%' }}>
+        <Paper sx={{ width: '100%', mb: 2 }}>
+          <EnhancedTableToolbar searchValue={searchValue} setSearchValue={setSearchValue} />
+          <TableContainer>
+            <Table
+              sx={{ minWidth: 750 }}
+              aria-labelledby="tableTitle"
+              size="medium"
+            >
+              <EnhancedTableHead
+                order={order}
+                orderBy={orderBy}
+                onRequestSort={handleRequestSort}
+                rowCount={rows.length}
+              />
+              <TableBody>
+                {/* if you don't need to support IE11, you can replace the `stableSort` call with:
+                  rows.slice().sort(getComparator(order, orderBy)) */}
+                {stableSort(rows, getComparator(order, orderBy))
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((row, index) => {
+                    return (
+                      <TableRow
+                        hover
+                        onClick={(event) => handleClick(event, row.uuid)}
+                        role="checkbox"
+                        tabIndex={-1}
+                        key={row.uuid}
                       >
-                        {row.first_name}
-                      </TableCell> */}
-                      <TableCell align="left">{row.first_name}</TableCell>
-                      <TableCell align="left">{row.last_name}</TableCell>
-                      <TableCell align="left">{row.age}</TableCell>
-                      <TableCell align="left">{row.ticket_issued ? 'Yes' : 'No' }</TableCell>
-                    </TableRow>
-                  );
-                })}
-              {emptyRows > 0 && (
-                <TableRow
-                  style={{
-                    height: (dense ? 33 : 53) * emptyRows,
-                  }}
-                >
-                  <TableCell colSpan={6} />
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25, 50]}
-          component="div"
-          count={rows.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </Paper>
-    </Box>
+                        <TableCell align="left">{row.first_name}</TableCell>
+                        <TableCell align="left">{row.last_name}</TableCell>
+                        <TableCell align="left">{row.age}</TableCell>
+                        <TableCell align="left">{row.ticket_issued ? 'Yes' : 'No' }</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                {emptyRows > 0 && (
+                  <TableRow
+                    style={{
+                      height: (53) * emptyRows,
+                    }}
+                  >
+                    <TableCell colSpan={6} />
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25, 50]}
+            component="div"
+            count={rows.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </Paper>
+      </Box>
+      <UserDialog
+        onClose={() => setDialogOpen(false)}
+        open={dialogOpen}
+        user={find(rows, [ 'uuid', selectedUserUuid ]) || {}}
+      />
+    </>
   );
 }
