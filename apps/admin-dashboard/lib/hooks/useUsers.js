@@ -18,7 +18,31 @@ export default function useUsers() {
           ...state,
           users: {
             ...state.users,
-            [payload.new.uuid]: payload.new,
+            [payload.new.uuid]: {
+              ...(state.users[payload.new.uuid] ||{}),
+              ...payload.new,
+            },
+          },
+        };
+      }
+      case 'PAYMENT-UPDATE':
+      case 'PAYMENT-INSERT': {
+        const paymentUserUuid = payload.new.user_uuid;
+
+        if (!state.users[paymentUserUuid]) return state;
+
+        const payments = keyBy(state.users[paymentUserUuid].payments, 'uuid');
+
+        payments[payload.new.uuid] = payload.new;
+
+        return {
+          ...state,
+          users: {
+            ...state.users,
+            [paymentUserUuid]: {
+              ...state.users[paymentUserUuid],
+              payments: Object.values(payments),
+            },
           },
         };
       }
@@ -47,31 +71,42 @@ export default function useUsers() {
         return state;
       }
     };
-  }, { users: {}, isLoading: false, error: false });
+  }, { users: {}, isLoading: true, error: false });
+
+  const authenticatedUser = supabase.auth.user();
 
   useEffect(() => {
-    (async () => {
-      dispatch({ type: 'LOADING', payload: true });
-      const { data: users, error } = await supabase.from('registered-users').select('*');
+    if (authenticatedUser) {
+      (async () => {
+        dispatch({ type: 'LOADING', payload: true });
+        const { data: users, error } = await supabase.from('registered-users').select('*, payments:registered-user-payments(*)');
+  
+        if (error) {
+          dispatch({ type: 'ERROR', payload: error });
+        }
+  
+        dispatch({ type: 'RECEIVED_USERS', payload: keyBy(users, 'uuid') });
+        dispatch({ type: 'LOADING', payload: false });
+      })();
+  
+      const usersSubscription = supabase.from('registered-users').on('*', (payload) => {
+        dispatch({ type: payload.eventType, payload });
+      }).subscribe();
 
-      if (error) {
-        dispatch({ type: 'ERROR', payload: error });
+      const paymentsSubscription = supabase.from('registered-user-payments').on('*', (payload) => {
+        dispatch({ type: `PAYMENT-${payload.eventType}`, payload });
+      }).subscribe();
+  
+      return () => {
+        supabase.removeSubscription(usersSubscription);
+        supabase.removeSubscription(paymentsSubscription);
       }
-
-      dispatch({ type: 'RECEIVED_USERS', payload: keyBy(users, 'uuid') });
-      dispatch({ type: 'LOADING', payload: false });
-    })();
-
-    const subscription = supabase.from('registered-users').on('*', (payload) => {
-      dispatch({ type: payload.eventType, payload });
-    }).subscribe();
-
-    return () => supabase.removeSubscription(subscription);
-  }, []);
+    }
+  }, [ authenticatedUser ]);
 
   return {
     isLoading: state.isLoading,
     error: state.error,
     users: state.users,
   };
-}
+};

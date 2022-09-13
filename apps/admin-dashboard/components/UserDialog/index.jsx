@@ -1,35 +1,156 @@
-import * as React from 'react';
-import find from 'lodash/find';
+import { useEffect, useState } from 'react';
+import moment from 'moment';
+import findKey from 'lodash/findKey';
+import reduce from 'lodash/reduce';
+import isFinite from 'lodash/isFinite';
+import toNumber from 'lodash/toNumber';
 import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
+import InputAdornment from '@mui/material/InputAdornment';
+import InputLabel from '@mui/material/InputLabel';
+import OutlinedInput from '@mui/material/OutlinedInput';
+import Typography from '@mui/material/Typography';
+import Stack from '@mui/material/Stack';
+import Alert from '@mui/material/Alert';
 
-export default function UserDialog({ open, onClose, user, ...props}) {
+import supabase from '../../lib/supabase';
+import { makeAuthenticatedPostRequest } from '../../lib/api/makeAuthenticatedRequest';
+
+export default function UserDialog({ event, open, onClose, user, ...props}) {
+  const [ error, setError ] = useState(null);
+  const [ success, setSuccess ] = useState(null);
+  const [ amountPaid, setAmountPaid ] = useState(0);
+  const [ currentPayment, setCurentPayment ] = useState(0);
+  const [ amountRequriedToPay, setAmountRequiredToPay ] = useState(0);
+  const [ updating, setUpdating ] = useState(false);
+
+  useEffect(() => {
+    setUpdating(false);
+    setCurentPayment(0);
+    setError(null);
+
+    if (user.ticket_issued) {
+      setSuccess('Ticket successfully issued!');
+    } else {
+      setSuccess(null);
+    }
+
+    console.log(user, event)
+    const paymentConfig = event.payment_config;
+
+    if (paymentConfig) {
+      const earlyBirdDate = paymentConfig.early_bird_date;
+    
+      let earlyBirdPayments = false;
+    
+      const userAmountPaid = reduce(user.payments, (total, payment) => {
+        total += payment.amount;
+        if (earlyBirdDate) {
+          earlyBirdPayments = moment(payment.timestamp).isSameOrBefore(earlyBirdDate);
+        }
+        return total;
+      }, 0);
+    
+      const isEarlyBirdActive = !!earlyBirdDate && (earlyBirdPayments || moment().isSameOrBefore(earlyBirdDate));
+    
+      const userAgeMapping = findKey(paymentConfig.age_mapping, (ages) => {
+        const [ ageFrom, ageTo ] = ages;
+        return (user.age >= ageFrom && user.age <= ageTo)
+      });
+    
+      const userAmountRequired = isEarlyBirdActive
+        ? paymentConfig.early_bird_price_by_age[userAgeMapping]
+        : paymentConfig.price_by_age[userAgeMapping];
+
+      setAmountRequiredToPay(userAmountRequired - userAmountPaid);
+      setAmountPaid(userAmountPaid);
+    } else {
+      setAmountRequiredToPay(0);
+      setAmountPaid(0);
+    }
+    
+  }, [ event, user ]);
+
+  const updateCurrentPayment = ({ target: { value } }) => {
+    const numberVal = toNumber(value);
+    if (isFinite(numberVal) && numberVal > -1 && numberVal <= amountRequriedToPay) {
+      setCurentPayment(numberVal);
+    }
+  };
+
+  const handlePaymentUpdate = async () => {
+    setUpdating(true);
+
+    let success = true;
+
+    if (amountRequriedToPay > 0) {
+      const { data, error: insertErorr } = await supabase.from('registered-user-payments').insert({
+        user_uuid: user.uuid,
+        amount: currentPayment,
+      });
+
+      success = data && !insertErorr;
+
+      if (insertErorr) {
+        setError(insertErorr);
+      }
+    }
+
+    if (success && ((amountRequriedToPay - currentPayment) === 0)) {
+      const { error: issueError } = await makeAuthenticatedPostRequest('/api/issue-ticket', { user_uuid: user.uuid });
+
+      if (issueError) {
+        setError(issueError);
+      } else {
+        setSuccess('Ticket successfully issued!');
+      }
+    }
+
+    setUpdating(false);
+  };
+
   return (
-    <Dialog {...props} open={open} onClose={onClose} fullWidth>
+    <Dialog {...props} open={open} onClose={onClose}>
+      { error && <Alert severity="error">{error}</Alert> }
+      { success && <Alert severity="success">{success}</Alert> }
       <DialogTitle>{user.first_name} {user.last_name}</DialogTitle>
       <DialogContent>
-        <DialogContentText>
-          Update this user
-        </DialogContentText>
-        <TextField
-          autoFocus
-          margin="dense"
-          id="name"
-          label="Email Address"
-          type="email"
-          fullWidth
-          variant="standard"
-        />
+        <Stack direction="column" spacing={2}>
+          <Typography>
+            Amount Required: ${amountRequriedToPay}
+          </Typography>
+          <Typography>
+            Amount Paid: ${amountPaid}
+          </Typography>
+          <div>
+            <InputLabel htmlFor="outlined-adornment-amount">Current payment</InputLabel>
+            <OutlinedInput
+              id="outlined-adornment-amount"
+              value={currentPayment}
+              onChange={updateCurrentPayment}
+              startAdornment={<InputAdornment position="start">$</InputAdornment>}
+              label="Amount"
+            />
+          </div>
+        </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={onClose}>Subscribe</Button>
+        <Button 
+          disabled={
+            user.ticket_issued ||
+            (currentPayment <= 0 &&
+            amountRequriedToPay > 0) ||
+            amountRequriedToPay <= 0
+          } 
+          onClick={handlePaymentUpdate}
+        >
+          {updating ? 'Updating' : 'Update'}
+        </Button>
       </DialogActions>
     </Dialog>
   );
-}
+};

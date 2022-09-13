@@ -1,30 +1,46 @@
-import UsersTable from "../components/UsersTable";
-import useUsers from "../lib/hooks/useUsers";
+import { useEffect, useState } from 'react';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
-export default function Web() {
-  const { error, isLoading, users } = useUsers();
+import Auth from '../components/Auth';
 
-  if (error) {
-    return (
-      <div>
-        Error loading users
-      </div>
-    );
-  }
+export default function Home() {
+  const [ containerWidth, setContainerWidth ] = useState('100%');
+  const isRegular = useMediaQuery('(max-width:1450px)');
+  const isMedium = useMediaQuery('(max-width:1100px)');
+  const isSmall = useMediaQuery('(max-width:820px)');
 
-  if (isLoading) {
-    return (
-      <div>
-        Loading...
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (isSmall) {
+      setContainerWidth('100%');
+    } else if (isMedium) {
+      setContainerWidth('60%');
+    } else if (isRegular) {
+      setContainerWidth('40%');
+    } else {
+      setContainerWidth('30%');
+    }
+  }, [ isSmall, isMedium, isRegular ]);
 
   return (
-    <div>
-      <UsersTable
-        users={Object.values(users)}
-      />
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        textAlign: 'center',
+        minHeight: '95vh'
+      }}
+    >
+      <div
+        style={{
+          padding: '0 1rem',
+          width: containerWidth
+        }}
+      >
+        <Auth
+          redirectTo="/users"
+        />
+      </div>
     </div>
   );
-}
+};

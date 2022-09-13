@@ -16,9 +16,12 @@ import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import { visuallyHidden } from '@mui/utils';
 
 import UserDialog from '../UserDialog';
+import { Stack } from '@mui/material';
+import useEvent from '../../lib/hooks/useEvent';
 
 function descendingComparator(a, b, orderBy) {
   let aVal = a[orderBy];
@@ -144,21 +147,36 @@ const EnhancedTableToolbar = (props) => {
       >
         Registered Users
       </Typography>
-      <TextField
-        id="outlined-search"
-        fullWidth
-        label="Search"
-        onChange={({ target }) => props.setSearchValue(target.value)}
-        size="small"
-        value={props.searchValue}
-      />
+      <Stack
+        sx={{ width: '100%' }}
+        direction="row"
+      >
+        <TextField
+          id="outlined-search"
+          fullWidth
+          label="Search"
+          onChange={({ target }) => props.setSearchValue(target.value)}
+          size="small"
+          value={props.searchValue}
+        />
+        <FormControlLabel
+          sx={{ width: '175px', marginRight: '1rem' }}
+          value={props.paidInFullOnly}
+          control={<Checkbox />}
+          onChange={({ target }) => props.setPaidInFullOnly(target.checked)}
+          label="Paid in full"
+          labelPlacement="start"
+        />
+      </Stack>
     </Toolbar>
   );
 };
 
 EnhancedTableToolbar.propTypes = {
+  paidInFullOnly: PropTypes.bool,
   searchValue: PropTypes.string,
   setSearchValue: PropTypes.func,
+  setPaidInFullOnly: PropTypes.func,
 };
 
 EnhancedTableToolbar.defaultProps = {
@@ -167,14 +185,16 @@ EnhancedTableToolbar.defaultProps = {
 };
 
 export default function EnhancedTable({ users }) {
+  const { event: usersEvent } = useEvent('16e9856f-4caf-478d-a553-b7e3ae9c86a0');
   const [ dialogOpen, setDialogOpen ] = React.useState(false);
   const [ rows, setRows ] = React.useState(users);
-  const [order, setOrder] = React.useState('asc');
-  const [orderBy, setOrderBy] = React.useState('first_name');
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
-  const [searchValue, setSearchValue] = React.useState('');
-  const [selectedUserUuid, setSelectedUserUuid] = React.useState('');
+  const [ order, setOrder ] = React.useState('asc');
+  const [ orderBy, setOrderBy ] = React.useState('first_name');
+  const [ page, setPage ] = React.useState(0);
+  const [ rowsPerPage, setRowsPerPage ] = React.useState(10);
+  const [ searchValue, setSearchValue ] = React.useState('');
+  const [ selectedUserUuid, setSelectedUserUuid ] = React.useState('');
+  const [ paidInFullOnly, setPaidInFullOnly ] = React.useState(false);
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -198,13 +218,15 @@ export default function EnhancedTable({ users }) {
   };
 
   React.useEffect(() => {
-    const searchedUsers = filter((users), ({ first_name, last_name }) => {
+    const searchedUsers = filter((users), ({ first_name, last_name, ticket_issued }) => {
       const searchRegex = new RegExp(searchValue, 'i');
-      return searchRegex.test(first_name) || searchRegex.test(last_name);
+      return paidInFullOnly 
+        ? ticket_issued && (searchRegex.test(first_name) || searchRegex.test(last_name))
+        : searchRegex.test(first_name) || searchRegex.test(last_name);
     });
 
     setRows(searchedUsers);
-  }, [ users, searchValue ]);
+  }, [ users, searchValue, paidInFullOnly ]);
 
   // Avoid a layout jump when reaching the last page with empty rows.
   const emptyRows =
@@ -214,7 +236,12 @@ export default function EnhancedTable({ users }) {
     <>
       <Box sx={{ width: '100%' }}>
         <Paper sx={{ width: '100%', mb: 2 }}>
-          <EnhancedTableToolbar searchValue={searchValue} setSearchValue={setSearchValue} />
+          <EnhancedTableToolbar
+            paidInFullOnly={paidInFullOnly}
+            searchValue={searchValue}
+            setSearchValue={setSearchValue}
+            setPaidInFullOnly={setPaidInFullOnly}
+          />
           <TableContainer>
             <Table
               sx={{ minWidth: 750 }}
@@ -232,7 +259,7 @@ export default function EnhancedTable({ users }) {
                   rows.slice().sort(getComparator(order, orderBy)) */}
                 {stableSort(rows, getComparator(order, orderBy))
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((row, index) => {
+                  .map((row) => {
                     return (
                       <TableRow
                         hover
@@ -275,7 +302,8 @@ export default function EnhancedTable({ users }) {
         onClose={() => setDialogOpen(false)}
         open={dialogOpen}
         user={find(rows, [ 'uuid', selectedUserUuid ]) || {}}
+        event={usersEvent}
       />
     </>
   );
-}
+};
