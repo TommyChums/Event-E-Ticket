@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --port 3004",
     "build": "next build",
-    "now-build": "yum install libuuid-devel libmount-devel zlib && npm run build",
+    "now-build": "yum install libuuid-devel libmount-devel zlib && next build",
     "start": "next start",
     "lint": "next lint"
   },
