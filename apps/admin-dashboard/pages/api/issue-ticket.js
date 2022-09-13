@@ -4,8 +4,7 @@ import pug from 'pug';
 import path from 'path';
 import isEmpty from 'lodash/isEmpty';
 import moment from 'moment';
-import mergeImages from 'merge-images';
-import { Canvas, Image } from 'canvas';
+import sharp from 'sharp';
 import fs from 'fs';
 
 import supabase from "../../lib/supabase";
@@ -83,14 +82,11 @@ export default async function handler(req, res) {
       },
     });
 
-    const qrCodeImg = await mergeImages(['template.png', {
-      src: 'qrcode.png',
-      x: config.x,
-      y: config.y,
-    }], {
-      Canvas: Canvas,
-      Image: Image
-    }).then(b64 => b64);
+    const qrCodeImg = await sharp('template.png').composite([
+      { input: 'qrcode.png', top: config.y, left: config.x },
+    ]).toBuffer().then(buffer => {
+      return buffer.toString('base64');
+    });
 
     const eventTicketPugPath = path.join(process.cwd(), 'assets/email-templates/event-ticket.pug');
  
