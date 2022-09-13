@@ -64,7 +64,7 @@ export default function useEvent(eventUuid) {
   
       return () => supabase.removeSubscription(subscription);
     }
-  }, [ authenticatedUser ]);
+  }, [ authenticatedUser, eventUuid ]);
 
   return {
     isLoading: state.isLoading,
