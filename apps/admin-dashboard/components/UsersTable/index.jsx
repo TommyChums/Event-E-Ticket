@@ -205,7 +205,7 @@ EnhancedTableToolbar.defaultProps = {
 
 export default function EnhancedTable({ loading, users, usersEvent }) {
   const [ dialogOpen, setDialogOpen ] = useState(false);
-  const [ rows, setRows ] = useState(users);
+  const [ rows, setRows ] = useState([]);
   const [ order, setOrder ] = useState('asc');
   const [ orderBy, setOrderBy ] = useState('first_name');
   const [ page, setPage ] = useState(0);
@@ -260,6 +260,10 @@ export default function EnhancedTable({ loading, users, usersEvent }) {
     setRows(searchedUsers);
   }, [ users, searchValue, paidInFullOnly, indeterminate ]);
 
+  useEffect(() => {
+    setPage(0);
+  }, [ searchValue, paidInFullOnly, indeterminate ]);
+
   // Avoid a layout jump when reaching the last page with empty rows.
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
@@ -290,10 +294,8 @@ export default function EnhancedTable({ loading, users, usersEvent }) {
               <TableBody>
                 { 
                   loading ? (
-                    <TableRow
-                      key="empty-row"
-                    >
-                      <TableCell align="center">Loading...</TableCell>
+                    <TableRow key="empty-row">
+                      <TableCell colSpan={5} align="center">Loading...</TableCell>
                     </TableRow>
                   ) : (
                     rows.slice().sort(getComparator(order, orderBy))

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import Button from '@mui/material/Button'
 import Stack from '@mui/material/Stack'
-import { useRouter } from 'next/router';
 
 import supabase from '../../lib/supabase';
 

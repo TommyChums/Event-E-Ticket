@@ -1,26 +1,14 @@
 import UsersTable from "../components/UsersTable";
-import useUsers from "../lib/hooks/useUsers";
-import useEvent from "../lib/hooks/useEvent";
+import { useAppContext } from "../context/UsersAndEvents";
 
 export default function Web() {
-  const { error, isLoading, users } = useUsers();
-  const { event: usersEvent, isLoading: eventLoading } = useEvent('16e9856f-4caf-478d-a553-b7e3ae9c86a0');
-
-  if (error) {
-    return (
-      <div>
-        Error loading users
-      </div>
-    );
-  }
+  const { users, event, loading } = useAppContext();
 
   return (
-    <div>
-      <UsersTable
-        users={Object.values(users)}
-        loading={isLoading || eventLoading}
-        usersEvent={usersEvent}
-      />
-    </div>
+    <UsersTable
+      loading={loading}
+      users={users}
+      usersEvent={event}
+    />
   );
 };
