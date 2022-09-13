@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import moment from 'moment';
 import filter from 'lodash/filter';
 import find from 'lodash/find';
 import PropTypes from 'prop-types';
@@ -17,18 +18,30 @@ import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import Stack from '@mui/material/Stack';
 import { visuallyHidden } from '@mui/utils';
 
 import UserDialog from '../UserDialog';
-import { Stack } from '@mui/material';
-import useEvent from '../../lib/hooks/useEvent';
 
 function descendingComparator(a, b, orderBy) {
   let aVal = a[orderBy];
   let bVal = b[orderBy];
 
+  const momAVal = moment(aVal, true);
+  const momBVal = moment(bVal, true);
+
   if (typeof aVal === 'string') aVal = aVal.toLowerCase();
   if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+
+
+  if (momAVal.isValid() && momBVal.isValid()) {
+    if (momBVal.isBefore(momAVal)) {
+      return -1;
+    }
+    if (momBVal.isAfter(momAVal)) {
+      return 1;
+    }
+  }
 
   if (bVal < aVal) {
     return -1;
@@ -85,6 +98,12 @@ const headCells = [
     disableSorting: true,
     label: 'Paid In Full',
   },
+  {
+    id: 'updated_on',
+    type: 'text',
+    disablePadding: true,
+    label: 'Updated On',
+  },
 ];
 
 function EnhancedTableHead(props) {
@@ -100,7 +119,7 @@ function EnhancedTableHead(props) {
           <TableCell
             key={headCell.id}
             // align={headCell.numeric ? 'right' : 'left'}
-            align={'left'}
+            align="left"
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
           >
@@ -274,7 +293,7 @@ export default function EnhancedTable({ loading, users, usersEvent }) {
                     <TableRow
                       key="empty-row"
                     >
-                      <TableCell align="left">Loading...</TableCell>
+                      <TableCell align="center">Loading...</TableCell>
                     </TableRow>
                   ) : (
                     rows.slice().sort(getComparator(order, orderBy))
@@ -292,6 +311,7 @@ export default function EnhancedTable({ loading, users, usersEvent }) {
                             <TableCell align="left">{row.last_name}</TableCell>
                             <TableCell align="left">{row.age}</TableCell>
                             <TableCell align="left">{row.ticket_issued ? 'Yes' : 'No' }</TableCell>
+                            <TableCell align="left">{moment(row.updated_on).format('LLL')}</TableCell>
                           </TableRow>
                         );
                       })
