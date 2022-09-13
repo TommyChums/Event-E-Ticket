@@ -57,9 +57,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: downloadError.message });
     }
 
-    const buffer = Buffer.from( await ticketTemplate.arrayBuffer() );
-
-    fs.writeFileSync('template.png', buffer);
+    const ticketTemplateBuffer = Buffer.from( await ticketTemplate.arrayBuffer() );
 
     const qrCodeInfo = JSON.stringify({
       user_uuid,
@@ -72,18 +70,10 @@ export default async function handler(req, res) {
       qrCodeOptions.width = config.w;
     }
 
-    await QRCode.toFile('qrcode.png', qrCodeInfo, qrCodeOptions);
+    await QRCode.toFile('/tmp/qrcode.png', qrCodeInfo, qrCodeOptions);
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: 'techteam@reformationlifecentre.org',
-        pass: 'bsaxpzkffwvzihnz',
-      },
-    });
-
-    const qrCodeImg = await sharp('template.png').composite([
-      { input: 'qrcode.png', top: config.y, left: config.x },
+    const qrCodeImg = await sharp(ticketTemplateBuffer).composite([
+      { input: '/tmp/qrcode.png', top: config.y, left: config.x },
     ]).toBuffer().then(buffer => {
       return buffer.toString('base64');
     });
@@ -103,6 +93,14 @@ export default async function handler(req, res) {
 
     console.log(ticketHtml)
 
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'techteam@reformationlifecentre.org',
+        pass: 'bsaxpzkffwvzihnz',
+      },
+    });
+  
     await transporter.sendMail({
       from: '"Reformation Life Centre" <techteam@reformationlifecentre.org>', // sender address
       to: registeredUser.email, // list of receivers
