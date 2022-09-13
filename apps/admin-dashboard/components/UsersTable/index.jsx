@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useEffect, useState } from 'react';
 import filter from 'lodash/filter';
 import find from 'lodash/find';
 import PropTypes from 'prop-types';
@@ -161,9 +161,8 @@ const EnhancedTableToolbar = (props) => {
         />
         <FormControlLabel
           sx={{ width: '175px', marginRight: '1rem' }}
-          value={props.paidInFullOnly}
-          control={<Checkbox />}
-          onChange={({ target }) => props.setPaidInFullOnly(target.checked)}
+          control={<Checkbox checked={props.paidInFullOnly} indeterminate={props.indeterminate} />}
+          onChange={props.onPaidInFullClick}
           label="Paid in full"
           labelPlacement="start"
         />
@@ -173,10 +172,11 @@ const EnhancedTableToolbar = (props) => {
 };
 
 EnhancedTableToolbar.propTypes = {
+  indeterminate: PropTypes.bool,
+  onPaidInFullClick: PropTypes.func,
   paidInFullOnly: PropTypes.bool,
   searchValue: PropTypes.string,
   setSearchValue: PropTypes.func,
-  setPaidInFullOnly: PropTypes.func,
 };
 
 EnhancedTableToolbar.defaultProps = {
@@ -186,15 +186,16 @@ EnhancedTableToolbar.defaultProps = {
 
 export default function EnhancedTable({ users }) {
   const { event: usersEvent } = useEvent('16e9856f-4caf-478d-a553-b7e3ae9c86a0');
-  const [ dialogOpen, setDialogOpen ] = React.useState(false);
-  const [ rows, setRows ] = React.useState(users);
-  const [ order, setOrder ] = React.useState('asc');
-  const [ orderBy, setOrderBy ] = React.useState('first_name');
-  const [ page, setPage ] = React.useState(0);
-  const [ rowsPerPage, setRowsPerPage ] = React.useState(10);
-  const [ searchValue, setSearchValue ] = React.useState('');
-  const [ selectedUserUuid, setSelectedUserUuid ] = React.useState('');
-  const [ paidInFullOnly, setPaidInFullOnly ] = React.useState(false);
+  const [ dialogOpen, setDialogOpen ] = useState(false);
+  const [ rows, setRows ] = useState(users);
+  const [ order, setOrder ] = useState('asc');
+  const [ orderBy, setOrderBy ] = useState('first_name');
+  const [ page, setPage ] = useState(0);
+  const [ rowsPerPage, setRowsPerPage ] = useState(10);
+  const [ searchValue, setSearchValue ] = useState('');
+  const [ selectedUserUuid, setSelectedUserUuid ] = useState('');
+  const [ paidInFullOnly, setPaidInFullOnly ] = useState(false);
+  const [ indeterminate, setIndeterminate ] = useState(false);
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -217,16 +218,30 @@ export default function EnhancedTable({ users }) {
     setPage(0);
   };
 
-  React.useEffect(() => {
+  const handlePaidInFullClick = ({ target: { checked } }) => {
+    if (checked && !paidInFullOnly && !indeterminate) {
+      setPaidInFullOnly(true);
+      setIndeterminate(false);
+    } else if (!checked && paidInFullOnly && !indeterminate) {
+      setPaidInFullOnly(false);
+      setIndeterminate(true);
+    } else {
+      setPaidInFullOnly(false);
+      setIndeterminate(false);
+    }
+  };
+
+  useEffect(() => {
     const searchedUsers = filter((users), ({ first_name, last_name, ticket_issued }) => {
       const searchRegex = new RegExp(searchValue, 'i');
-      return paidInFullOnly 
-        ? ticket_issued && (searchRegex.test(first_name) || searchRegex.test(last_name))
-        : searchRegex.test(first_name) || searchRegex.test(last_name);
+
+      const ticketIssuedCheck = paidInFullOnly ? ticket_issued : indeterminate ? !ticket_issued : true;
+
+      return ticketIssuedCheck && (searchRegex.test(first_name) || searchRegex.test(last_name));
     });
 
     setRows(searchedUsers);
-  }, [ users, searchValue, paidInFullOnly ]);
+  }, [ users, searchValue, paidInFullOnly, indeterminate ]);
 
   // Avoid a layout jump when reaching the last page with empty rows.
   const emptyRows =
@@ -237,10 +252,11 @@ export default function EnhancedTable({ users }) {
       <Box sx={{ width: '100%' }}>
         <Paper sx={{ width: '100%', mb: 2 }}>
           <EnhancedTableToolbar
+            indeterminate={indeterminate}
+            onPaidInFullClick={handlePaidInFullClick}
             paidInFullOnly={paidInFullOnly}
             searchValue={searchValue}
             setSearchValue={setSearchValue}
-            setPaidInFullOnly={setPaidInFullOnly}
           />
           <TableContainer>
             <Table
@@ -298,12 +314,19 @@ export default function EnhancedTable({ users }) {
           />
         </Paper>
       </Box>
-      <UserDialog
-        onClose={() => setDialogOpen(false)}
-        open={dialogOpen}
-        user={find(rows, [ 'uuid', selectedUserUuid ]) || {}}
-        event={usersEvent}
-      />
+      {
+        selectedUserUuid && (
+          <UserDialog
+            onClose={() => {
+              setDialogOpen(false);
+              setSelectedUserUuid('');
+            }}
+            open={dialogOpen}
+            user={find(rows, [ 'uuid', selectedUserUuid ]) || {}}
+            event={usersEvent}
+          />
+        )
+      }
     </>
   );
 };

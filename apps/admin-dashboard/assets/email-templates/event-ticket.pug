@@ -1,0 +1,14 @@
+doctype html
+html(lang="en")
+  head
+    title=pageTitle
+  body
+    h1 #{eventHost} presents #{eventName}
+    #container.col
+      p Here is your ticket to attend the event.
+      p You are required to present this ticket at the door.
+      p Event date and time: #{startTime}
+      p Event venue: #{eventVenue}
+      img(
+        src=imgSrc
+      )

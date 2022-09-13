@@ -1,4 +1,13 @@
+import QRCode from 'qrcode';
+import nodemailer from 'nodemailer';
+import pug from 'pug';
+import path from 'path';
 import isEmpty from 'lodash/isEmpty';
+import moment from 'moment';
+import mergeImages from 'merge-images';
+import { Canvas, Image } from 'canvas';
+import fs from 'fs';
+
 import supabase from "../../lib/supabase";
 
 export default async function handler(req, res) {
@@ -29,8 +38,87 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Missing user_uuid in request body' });
     }
 
+    const { data: registeredUser, error: selectError } = await supabase.from('registered-users').select('*, event:events(*)').eq('uuid', user_uuid).single();
+
+    if (selectError) {
+      return res.status(500).json({ error: selectError.message });
+    }
+
+    const issued_at = moment().toISOString();
+
+    const event = registeredUser.event;
+
+    const { bucket, key, config } = event.ticket_template || {};
+
+    const { data: ticketTemplate, error: downloadError } = await supabase.storage.from(bucket).download(key);
+
+    console.log(bucket, key)
+
+    if (downloadError) {
+      return res.status(500).json({ error: downloadError.message });
+    }
+
+    const buffer = Buffer.from( await ticketTemplate.arrayBuffer() );
+
+    fs.writeFileSync('template.png', buffer);
+
+    const qrCodeInfo = JSON.stringify({
+      user_uuid,
+      issued_at,
+    });
+
+    const qrCodeOptions = {};
+
+    if (config.w) {
+      qrCodeOptions.width = config.w;
+    }
+
+    await QRCode.toFile('qrcode.png', qrCodeInfo, qrCodeOptions);
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'techteam@reformationlifecentre.org',
+        pass: 'bsaxpzkffwvzihnz',
+      },
+    });
+
+    const qrCodeImg = await mergeImages(['template.png', {
+      src: 'qrcode.png',
+      x: config.x,
+      y: config.y,
+    }], {
+      Canvas: Canvas,
+      Image: Image
+    }).then(b64 => b64);
+
+    const eventTicketPugPath = path.join(process.cwd(), 'assets/email-templates/event-ticket.pug');
+ 
+    const compileEventTicket = pug.compileFile(eventTicketPugPath);
+
+    const ticketHtml = compileEventTicket({
+      pageTitle: `${event.host} - ${event.name}`,
+      eventHost: event.host,
+      eventName: event.name,
+      startTime: moment(event.start_date).format('LLLL'),
+      eventVenue: event.venue,
+      imgSrc: qrCodeImg,
+    });
+
+    console.log(ticketHtml)
+
+    await transporter.sendMail({
+      from: '"Reformation Life Centre" <techteam@reformationlifecentre.org>', // sender address
+      to: registeredUser.email, // list of receivers
+      subject: `Ticket for: ${event.name}`, // Subject line
+      html: ticketHtml, // html body
+    }).then(info => {
+      console.log({info});
+    }).catch(console.error);
+
     const { error: updateError } = await supabase.from('registered-users').update({
       ticket_issued: true,
+      updated_on: issued_at,
     }).eq('uuid', user_uuid);
 
     if (updateError) return res.status(500).json({ error: updateError.message });

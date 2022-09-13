@@ -20,8 +20,7 @@ import supabase from '../../lib/supabase';
 import { makeAuthenticatedPostRequest } from '../../lib/api/makeAuthenticatedRequest';
 
 export default function UserDialog({ event, open, onClose, user, ...props}) {
-  const [ error, setError ] = useState(null);
-  const [ success, setSuccess ] = useState(null);
+  const [ saveStatus, setSaveStatus ] = useState(null);
   const [ amountPaid, setAmountPaid ] = useState(0);
   const [ currentPayment, setCurentPayment ] = useState(0);
   const [ amountRequriedToPay, setAmountRequiredToPay ] = useState(0);
@@ -30,12 +29,9 @@ export default function UserDialog({ event, open, onClose, user, ...props}) {
   useEffect(() => {
     setUpdating(false);
     setCurentPayment(0);
-    setError(null);
 
     if (user.ticket_issued) {
-      setSuccess('Ticket successfully issued!');
-    } else {
-      setSuccess(null);
+      setSaveStatus({ type: 'success', message: 'Ticket successfully issued!' });
     }
 
     console.log(user, event)
@@ -82,31 +78,44 @@ export default function UserDialog({ event, open, onClose, user, ...props}) {
   };
 
   const handlePaymentUpdate = async () => {
+    setSaveStatus(null);
     setUpdating(true);
 
     let success = true;
 
     if (amountRequriedToPay > 0) {
-      const { data, error: insertErorr } = await supabase.from('registered-user-payments').insert({
+      const paymentTime = moment().toISOString();
+
+      setSaveStatus({ type: 'info', message: 'Storing Payment' });
+      const { error: insertError } = await supabase.from('registered-user-payments').insert({
         user_uuid: user.uuid,
         amount: currentPayment,
+        timestamp: paymentTime,
       });
 
-      success = data && !insertErorr;
+      setSaveStatus({ type: 'info', message: 'Updating User' });
+      const { error: updateError } = await supabase.from('registered-users').update({
+        updated_on: paymentTime,
+      }).eq('uuid', user.uuid);
 
-      if (insertErorr) {
-        setError(insertErorr);
+      success = !updateError && !insertError;
+
+      if (!success) {
+        setSaveStatus({ type: 'error', message: insertError.message || updateError.message });
       }
     }
 
     if (success && ((amountRequriedToPay - currentPayment) === 0)) {
+      setSaveStatus({ type: 'info', message: 'Issuing ticket...' });
       const { error: issueError } = await makeAuthenticatedPostRequest('/api/issue-ticket', { user_uuid: user.uuid });
 
       if (issueError) {
-        setError(issueError);
+        setSaveStatus({ type: 'error', message: issueError.message });
       } else {
-        setSuccess('Ticket successfully issued!');
+        setSaveStatus({ type: 'success', message: 'Ticket successfully issued!' });
       }
+    } else if (success) {
+      setSaveStatus({ type: 'success', message: 'Payment stored and User Updated' });
     }
 
     setUpdating(false);
@@ -114,8 +123,7 @@ export default function UserDialog({ event, open, onClose, user, ...props}) {
 
   return (
     <Dialog {...props} open={open} onClose={onClose}>
-      { error && <Alert severity="error">{error}</Alert> }
-      { success && <Alert severity="success">{success}</Alert> }
+      { saveStatus && <Alert severity={saveStatus.type}>{saveStatus.message}</Alert> }
       <DialogTitle>{user.first_name} {user.last_name}</DialogTitle>
       <DialogContent>
         <Stack direction="column" spacing={2}>
