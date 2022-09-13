@@ -1,9 +1,11 @@
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import keyBy from 'lodash/keyBy';
 
 import supabase from "../supabase";
 
 export default function useUsers() {
+  const authenticatedUser = supabase.auth.user();
+
   const [ state, dispatch ] = useReducer((state, { type, payload }) => {
     switch (type) {
       case 'RECEIVED_USERS': {
@@ -73,35 +75,32 @@ export default function useUsers() {
     };
   }, { users: {}, isLoading: true, error: false });
 
-  const authenticatedUser = supabase.auth.user();
-
   useEffect(() => {
-    if (authenticatedUser) {
-      (async () => {
-        dispatch({ type: 'LOADING', payload: true });
-        const { data: users, error } = await supabase.from('registered-users').select('*, payments:registered-user-payments(*)');
-  
-        if (error) {
-          dispatch({ type: 'ERROR', payload: error });
-        }
-  
-        dispatch({ type: 'RECEIVED_USERS', payload: keyBy(users, 'uuid') });
-        dispatch({ type: 'LOADING', payload: false });
-      })();
-  
-      const usersSubscription = supabase.from('registered-users').on('*', (payload) => {
-        dispatch({ type: payload.eventType, payload });
-      }).subscribe();
+    if (!authenticatedUser) return;
+    (async () => {
+      dispatch({ type: 'LOADING', payload: true });
+      const { data: users, error } = await supabase.from('registered-users').select('*, payments:registered-user-payments(*)');
 
-      const paymentsSubscription = supabase.from('registered-user-payments').on('*', (payload) => {
-        dispatch({ type: `PAYMENT-${payload.eventType}`, payload });
-      }).subscribe();
-  
-      return () => {
-        supabase.removeSubscription(usersSubscription);
-        supabase.removeSubscription(paymentsSubscription);
+      if (error) {
+        dispatch({ type: 'ERROR', payload: error });
       }
-    }
+
+      dispatch({ type: 'RECEIVED_USERS', payload: keyBy(users, 'uuid') });
+      dispatch({ type: 'LOADING', payload: false });
+    })();
+
+    const usersSubscription = supabase.from('registered-users').on('*', (payload) => {
+      dispatch({ type: payload.eventType, payload });
+    }).subscribe();
+
+    const paymentsSubscription = supabase.from('registered-user-payments').on('*', (payload) => {
+      dispatch({ type: `PAYMENT-${payload.eventType}`, payload });
+    }).subscribe();
+
+    return () => {
+      supabase.removeSubscription(usersSubscription);
+      supabase.removeSubscription(paymentsSubscription);
+    };
   }, [ authenticatedUser ]);
 
   return {

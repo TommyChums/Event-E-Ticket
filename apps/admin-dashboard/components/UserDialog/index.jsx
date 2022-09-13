@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import moment from 'moment';
 import findKey from 'lodash/findKey';
 import reduce from 'lodash/reduce';
+import isEmpty from 'lodash/isEmpty';
 import isFinite from 'lodash/isFinite';
 import toNumber from 'lodash/toNumber';
 import Button from '@mui/material/Button';
@@ -27,6 +28,8 @@ export default function UserDialog({ event, open, onClose, user, ...props}) {
   const [ updating, setUpdating ] = useState(false);
 
   useEffect(() => {
+    if (isEmpty(user) || isEmpty(event)) onClose();
+
     setUpdating(false);
     setCurentPayment(0);
 
@@ -34,7 +37,6 @@ export default function UserDialog({ event, open, onClose, user, ...props}) {
       setSaveStatus({ type: 'success', message: 'Ticket successfully issued!' });
     }
 
-    console.log(user, event)
     const paymentConfig = event.payment_config;
 
     if (paymentConfig) {
@@ -68,7 +70,7 @@ export default function UserDialog({ event, open, onClose, user, ...props}) {
       setAmountPaid(0);
     }
     
-  }, [ event, user ]);
+  }, [ event, user, onClose ]);
 
   const updateCurrentPayment = ({ target: { value } }) => {
     const numberVal = toNumber(value);
@@ -152,7 +154,8 @@ export default function UserDialog({ event, open, onClose, user, ...props}) {
             user.ticket_issued ||
             (currentPayment <= 0 &&
             amountRequriedToPay > 0) ||
-            amountRequriedToPay <= 0
+            (amountRequriedToPay <= 0 &&
+            user.ticket_issued)
           } 
           onClick={handlePaymentUpdate}
         >

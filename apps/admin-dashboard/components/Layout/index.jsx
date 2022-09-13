@@ -6,38 +6,18 @@ import { useRouter } from 'next/router';
 import supabase from '../../lib/supabase';
 
 export default function Layout({ children }) {
-  const [ session, setSession ] = useState();
-  const user = supabase.auth.user();
+  const currentSession = supabase.auth.session();
   const router = useRouter();
-
-  useEffect(() => {
-    const session = supabase.auth.session();
-
-    if (session) {
-      setSession(session);
-    }
-
-    const { data: subscription } = supabase.auth.onAuthStateChange((_, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   useEffect(() => {
     if (router.pathname === '/') return;
 
-    if (!session) router.push('/');
-  }, [ router, session ])
+    if (!currentSession) router.push('/');
+  }, [ currentSession, router ])
 
   // Login page
   if (router.pathname === '/') {
-
     return children;
-  }
-
-  if (!session || !user) {
-    return <div>Loading...</div>
   }
 
   return (
@@ -48,12 +28,15 @@ export default function Layout({ children }) {
           size="small"
           onClick={() => {
             supabase.auth.signOut();
+            router.push('/');
           }}
         >
           Logout
         </Button>
       </Stack>
-      {children}
+      <main>
+        {children}
+      </main>
     </Stack>
   );
 };

@@ -184,8 +184,7 @@ EnhancedTableToolbar.defaultProps = {
   setSearchValue: () => {},
 };
 
-export default function EnhancedTable({ users }) {
-  const { event: usersEvent } = useEvent('16e9856f-4caf-478d-a553-b7e3ae9c86a0');
+export default function EnhancedTable({ loading, users, usersEvent }) {
   const [ dialogOpen, setDialogOpen ] = useState(false);
   const [ rows, setRows ] = useState(users);
   const [ order, setOrder ] = useState('asc');
@@ -206,7 +205,6 @@ export default function EnhancedTable({ users }) {
   const handleClick = (event, uuid) => {
     setSelectedUserUuid(uuid);
     setDialogOpen(true);
-    console.log('Clicked:', uuid);
   };
 
   const handleChangePage = (event, newPage) => {
@@ -271,26 +269,34 @@ export default function EnhancedTable({ users }) {
                 rowCount={rows.length}
               />
               <TableBody>
-                {/* if you don't need to support IE11, you can replace the `stableSort` call with:
-                  rows.slice().sort(getComparator(order, orderBy)) */}
-                {stableSort(rows, getComparator(order, orderBy))
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((row) => {
-                    return (
-                      <TableRow
-                        hover
-                        onClick={(event) => handleClick(event, row.uuid)}
-                        role="checkbox"
-                        tabIndex={-1}
-                        key={row.uuid}
-                      >
-                        <TableCell align="left">{row.first_name}</TableCell>
-                        <TableCell align="left">{row.last_name}</TableCell>
-                        <TableCell align="left">{row.age}</TableCell>
-                        <TableCell align="left">{row.ticket_issued ? 'Yes' : 'No' }</TableCell>
-                      </TableRow>
-                    );
-                  })}
+                { 
+                  loading ? (
+                    <TableRow
+                      key="empty-row"
+                    >
+                      <TableCell align="left">Loading...</TableCell>
+                    </TableRow>
+                  ) : (
+                    rows.slice().sort(getComparator(order, orderBy))
+                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                      .map((row) => {
+                        return (
+                          <TableRow
+                            hover
+                            onClick={(event) => handleClick(event, row.uuid)}
+                            role="checkbox"
+                            tabIndex={-1}
+                            key={row.uuid}
+                          >
+                            <TableCell align="left">{row.first_name}</TableCell>
+                            <TableCell align="left">{row.last_name}</TableCell>
+                            <TableCell align="left">{row.age}</TableCell>
+                            <TableCell align="left">{row.ticket_issued ? 'Yes' : 'No' }</TableCell>
+                          </TableRow>
+                        );
+                      })
+                  )
+                }
                 {emptyRows > 0 && (
                   <TableRow
                     style={{

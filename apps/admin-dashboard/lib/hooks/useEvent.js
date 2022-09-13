@@ -3,6 +3,8 @@ import { useEffect, useReducer } from "react";
 import supabase from "../supabase";
 
 export default function useEvent(eventUuid) {
+  const authenticatedUser = supabase.auth.user();
+
   const [ state, dispatch ] = useReducer((state, { type, payload }) => {
     switch (type) {
       case 'RECEIVED_EVENT': {
@@ -42,28 +44,26 @@ export default function useEvent(eventUuid) {
     };
   }, { event: {}, isLoading: true, error: false });
 
-  const authenticatedUser = supabase.auth.user();
 
   useEffect(() => {
-    if (authenticatedUser) {
-      (async () => {
-        dispatch({ type: 'LOADING', payload: true });
-        const { data: event, error } = await supabase.from('events').select('*').eq('uuid', eventUuid).single();
-  
-        if (error) {
-          dispatch({ type: 'ERROR', payload: error });
-        }
-  
-        dispatch({ type: 'RECEIVED_EVENT', payload: event });
-        dispatch({ type: 'LOADING', payload: false });
-      })();
-  
-      const subscription = supabase.from(`events:uuid=eq.${eventUuid}`).on('*', (payload) => {
-        dispatch({ type: payload.eventType, payload });
-      }).subscribe();
-  
-      return () => supabase.removeSubscription(subscription);
-    }
+    if (!authenticatedUser) return;
+    (async () => {
+      dispatch({ type: 'LOADING', payload: true });
+      const { data: event, error } = await supabase.from('events').select('*').eq('uuid', eventUuid).single();
+
+      if (error) {
+        dispatch({ type: 'ERROR', payload: error });
+      }
+
+      dispatch({ type: 'RECEIVED_EVENT', payload: event });
+      dispatch({ type: 'LOADING', payload: false });
+    })();
+
+    const subscription = supabase.from(`events:uuid=eq.${eventUuid}`).on('*', (payload) => {
+      dispatch({ type: payload.eventType, payload });
+    }).subscribe();
+
+    return () => supabase.removeSubscription(subscription);
   }, [ authenticatedUser, eventUuid ]);
 
   return {
