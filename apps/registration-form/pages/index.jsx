@@ -39,6 +39,7 @@ export default function Docs() {
       .insert([{
         ...data,
         age,
+        registered_event: '16e9856f-4caf-478d-a553-b7e3ae9c86a0',
       }]);
 
     setSaving(false)
