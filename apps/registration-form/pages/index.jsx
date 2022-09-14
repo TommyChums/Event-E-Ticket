@@ -1,103 +1,111 @@
-import { Button } from "ui";
-import { useForm } from 'react-hook-form';
+import * as React from 'react';
+import { useRouter } from 'next/router';
+import Container from '@mui/material/Container';
+import List from '@mui/material/List';
+import ListItemButton from '@mui/material/ListItemButton';
+import Divider from '@mui/material/Divider';
+import ListItemText from '@mui/material/ListItemText';
+import ListItemAvatar from '@mui/material/ListItemAvatar';
+import Avatar from '@mui/material/Avatar';
+import Typography from '@mui/material/Typography';
+import Stack from '@mui/material/Stack';
+import map from 'lodash/map';
 
 import supabase from "../lib/supabase";
-import { useState } from "react";
 
-function GetAge(birthDate) {
-  console.log(birthDate)
-  var today = new Date();
-  var age = today.getFullYear() - birthDate.getUTCFullYear();
-  console.log(today.getFullYear(), birthDate.getUTCFullYear())
-  var m = today.getMonth() - birthDate.getUTCMonth();
-  console.log(today.getMonth(), birthDate.getUTCMonth())
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getUTCDate())) {
-    age--;
-  }
-  console.log(today.getDate(), birthDate.getUTCDate())
-  return age;
-}
+export async function getServerSideProps() {
+  const { data: events, error } = await supabase.from('events').select('*');
 
-export default function Docs() {
-  const [ saving, setSaving ] = useState(false);
-  
-  const {
-    register,
-    handleSubmit,
-    reset,
-  } = useForm();
+  if (error) throw error;
 
-  const onSubmit = async (data) => {
-    console.log(data)
-    const age = GetAge(new Date(data.date_of_birth));
-    console.log(age)
+  return {
+    props: {
+      events: events.map((event) => {
+        const logoLocation = event.logo;
 
-    setSaving(true);
+        if (logoLocation) {
+          const { publicURL, error } = supabase.storage.from(logoLocation.bucket).getPublicUrl(logoLocation.key);
 
-    await supabase
-      .from('registered-users')
-      .insert([{
-        ...data,
-        age,
-        registered_event: '16e9856f-4caf-478d-a553-b7e3ae9c86a0',
-      }]);
+          if (error) throw error;
 
-    setSaving(false)
-    // reset();
+          event.logo = publicURL;
+        }
+
+        return event;
+      }),
+    },
   };
+};
+
+export default function EventsHome({ events }) {
+  const router = useRouter();
 
   return (
-    <div>
-      {
-        saving && (
-          <div>
-            Saving...
-          </div>
-        )
-      }
-      <form
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-        onSubmit={handleSubmit(onSubmit)}
-        onReset={reset}
-      >
-        <label htmlFor="email">Email*</label>
-        <input {...register("email", { required: true })} type="email" />
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-          }}
+    <Container
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        textAlign: 'center',
+        padding: '2rem 0'
+      }}
+    >
+      <Stack direction="column" spacing={3}>
+        <Typography
+          sx={{ display: 'inline' }}
+          component="span"
+          variant="h4"
+          color="text.primary"
         >
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            <label htmlFor="first_name">First Name*</label>
-            <input {...register("first_name", { required: true })} type="text" />
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            <label htmlFor="last_name">Last Name*</label>
-            <input {...register("last_name", { required: true })} type="text" />
-          </div>
-        </div>
-        <label htmlFor="date_of_birth">Date of Birth*</label>
-        <input {...register("date_of_birth", { required: true })} type="date" />
-
-        <Button type="submit">
-          Submit
-        </Button>
-      </form>
-    </div>
-  );
+          Welcome to Reformation Life Centre&apos;s events page.
+        </Typography>
+        <Typography
+          sx={{ display: 'inline' }}
+          component="span"
+          variant="h5"
+          color="text.primary"
+        >
+          { 
+            events.length
+              ? 'These are all our current events. Click one to register.'
+              : 'We currently have no events schedules. Check us back at a later date.'
+          }
+        </Typography>
+      </Stack>
+      <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper', margin: '1rem 0 0' }}>
+        {
+          map(events, (event, i) => {
+            const isFirst = i === 0;
+            return (
+              <React.Fragment key={event.uuid}>
+                { !isFirst ? <Divider variant="inset" component="li" /> : null}
+                <ListItemButton alignItems="flex-start" onClick={() => router.push(`/${event.uuid}`)}>
+                  <ListItemAvatar>
+                    <Avatar alt={event.name} src={event.logo} />
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={event.name}
+                    secondary={
+                      <React.Fragment>
+                        <Typography
+                          sx={{ display: 'inline' }}
+                          component="span"
+                          variant="body2"
+                          color="text.primary"
+                        >
+                          {event.host}
+                        </Typography>
+                        {` — ${event.description}` || ` — Presents ${event.name}`}
+                      </React.Fragment>
+                    }
+                  />
+                </ListItemButton>
+              </React.Fragment>
+            );
+          })
+        }
+      </List>
+    </Container>
+  );  
 }
