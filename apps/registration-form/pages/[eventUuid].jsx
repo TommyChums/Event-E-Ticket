@@ -86,7 +86,7 @@ export default function RegistrationForm({ event }) {
   return (
     <>
       <Head>
-        <title>{event.name} | {event.host} presents {event.name}</title>
+        <title>{`${event.name} | ${event.host} presents ${event.name}`}</title>
         <meta property="og:title" content={`${event.name} | ${event.host} presents ${event.name}"`} key="title" />
         <link rel="icon" type="image/x-icon" href={event.logo || '/images/rlc-logo.ico'} />
       </Head>
