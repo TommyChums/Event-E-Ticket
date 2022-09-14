@@ -76,7 +76,7 @@ export default function EventsHome({ events }) {
             { 
               events.length
                 ? 'These are all our current events. Click one to register.'
-                : 'We currently have no events schedules. Check us back at a later date.'
+                : 'We currently have no events scheduled. Check us back at a later date.'
             }
           </Typography>
         </Stack>
