@@ -1,25 +1,25 @@
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import { Alert } from '@mui/material';
 
 import supabase from '../../lib/supabase';
-import { useRouter } from 'next/router';
-import { useEffect } from 'react';
 
 export default function Auth({ redirectTo }) {
-  const [ loading, setLoading ] = useState(true);
+  const [ loading, setLoading ] = useState(false);
   const [ email, setEmail ] = useState('');
   const [ password, setPassword ] = useState('');
   const [ error, setError ] = useState(null);
   const router = useRouter();
-  const session = supabase.auth.session();
+  
+  const user = supabase.auth.user();
 
   const handleLogin = async (email) => {
     setError(null);
     setLoading(true);
-    const { error } = await supabase.auth.signIn({ email, password }, { redirectTo: '/users' });
+    const { error } = await supabase.auth.signIn({ email, password });
     if (error) {
       setError(error.message);
     } else {
@@ -27,14 +27,6 @@ export default function Auth({ redirectTo }) {
     }
     setLoading(false);
   };
-
-  useEffect(() => {
-    if (session) {
-      router.push(redirectTo);
-    } else {
-      setLoading(false);
-    }
-  }, [ session, router, redirectTo ]);
 
   return (
     <form
@@ -66,10 +58,10 @@ export default function Auth({ redirectTo }) {
         />
         <Button
           type="submit"
-          disabled={loading}
+          disabled={loading || !!user}
           variant="contained"
         >
-          {loading ? 'Logging in' : 'Login'}
+          {loading ? 'Logging in' : user ? 'Redirecting ': 'Login'}
         </Button>
       </Stack>
     </form>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
+import supabase from '../lib/supabase';
 import Auth from '../components/Auth';
 
 export default function Home() {
@@ -43,4 +44,16 @@ export default function Home() {
       </div>
     </div>
   );
+};
+
+export async function getServerSideProps(context) {
+  const { req } = context;
+
+  const { user } = await supabase.auth.api.getUserByCookie(req);
+
+  if (user) {
+    return { props: {}, redirect: { destination: '/users', permanent: false } };
+  }
+
+  return { props: {} };
 };

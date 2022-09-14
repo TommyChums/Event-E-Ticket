@@ -1,5 +1,6 @@
 import UsersTable from "../components/UsersTable";
 import { useAppContext } from "../context/UsersAndEvents";
+import protectedRoute from "../lib/helpers/protectedRoute";
 
 export default function Web() {
   const { users, event, loading } = useAppContext();
@@ -12,3 +13,5 @@ export default function Web() {
     />
   );
 };
+
+export const getServerSideProps = protectedRoute();
