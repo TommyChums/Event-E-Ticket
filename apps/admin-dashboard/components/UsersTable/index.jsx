@@ -19,6 +19,7 @@ import TextField from '@mui/material/TextField';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Stack from '@mui/material/Stack';
+import Skeleton from '@mui/material/Skeleton';
 import { visuallyHidden } from '@mui/utils';
 
 import UserDialog from '../UserDialog';
@@ -295,7 +296,9 @@ export default function EnhancedTable({ loading, users, usersEvent }) {
                 { 
                   loading ? (
                     <TableRow key="empty-row">
-                      <TableCell colSpan={5} align="center">Loading...</TableCell>
+                      <TableCell colSpan={5}>
+                        <Skeleton sx={{ bgcolor: 'grey' }} height={53} variant="rectangular"/>
+                      </TableCell>
                     </TableRow>
                   ) : (
                     rows.slice().sort(getComparator(order, orderBy))
