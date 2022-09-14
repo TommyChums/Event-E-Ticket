@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Button from '@mui/material/Button'
 import Stack from '@mui/material/Stack'
@@ -6,14 +5,7 @@ import Stack from '@mui/material/Stack'
 import supabase from '../../lib/supabase';
 
 export default function Layout({ children }) {
-  const currentSession = supabase.auth.session();
   const router = useRouter();
-
-  useEffect(() => {
-    if (router.pathname === '/') return;
-
-    if (!currentSession) router.push('/');
-  }, [ currentSession, router ])
 
   // Login page
   if (router.pathname === '/') {
