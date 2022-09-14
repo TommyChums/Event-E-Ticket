@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import Head from 'next/head'
 import { useForm } from 'react-hook-form';
 import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
@@ -83,96 +84,103 @@ export default function RegistrationForm({ event }) {
   };
 
   return (
-    <Container
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        textAlign: 'center',
-        mergin: '2rem 0',
-      }}
-    >
-      <Stack sx={{ margin: registrationDisabled ? '0' : '0 0 2rem' }} direction="column" spacing={1.5}>
-        <Avatar alt="" src={event.logo} sx={{ width: 120, height: 120, alignSelf: 'center' }} />
-        <Typography variant="h6" fontWeight="bold">
-          {event.host}
-        </Typography>
-        <Typography variant="subtitle1">
-          {event.description || `${event.host} presents ${event.name}`}
-        </Typography>
-      </Stack>
-      {
-        registrationDisabled ? (
-          <>
-            <Typography sx={{ margin: '2rem 0 0', color: 'red' }} variant="body1" fontWeight="bold">
-              We are no longer accpeting any more registrations.
-            </Typography>
-            <Typography sx={{ margin: '0 0 2rem', color: 'red' }} variant="body1" fontWeight="bold">
-              The registration period for this event has passed.
-            </Typography>
-          </>
-        ) : null
-      }
-      <form
-        style={{
+    <>
+      <Head>
+        <title>{event.name} | {event.host} presents {event.name}</title>
+        <meta property="og:title" content={`{event.name} | {event.host} presents {event.name}"`} key="title" />
+        <link rel="icon" type="image/x-icon" href={event.logo || '/images/rlc-logo.ico'} />
+      </Head>
+      <Container
+        sx={{
           display: 'flex',
           flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          textAlign: 'center',
+          mergin: '2rem 0',
         }}
-        onSubmit={handleSubmit(onSubmit)}
-        onReset={reset}
-        >
-        <Stack direction="column" spacing={4}>
-          <Alert sx={{ visibility: info ? 'visible' : 'hidden' }} severity={info?.type}>{info?.message}</Alert>
-          <TextField
-            {...register("email", { validate:  { required: (val) => val ? null : 'Required'  } })}
-            disabled={registrationDisabled}
-            error={!!errors.email}
-            helperText={errors.email?.message}
-            id="outlined-email"
-            label="Email *"
-            variant="outlined"
-            type="email"
-          />
-          <Stack sx={{ justifyContent: 'space-between' }} direction="row" spacing={2}>
+      >
+        <Stack sx={{ margin: registrationDisabled ? '0' : '0 0 2rem' }} direction="column" spacing={1.5}>
+          <Avatar alt="" src={event.logo} sx={{ width: 120, height: 120, alignSelf: 'center' }} />
+          <Typography variant="h6" fontWeight="bold">
+            {event.host}
+          </Typography>
+          <Typography variant="subtitle1">
+            {event.description || `${event.host} presents ${event.name}`}
+          </Typography>
+        </Stack>
+        {
+          registrationDisabled ? (
+            <>
+              <Typography sx={{ margin: '2rem 0 0', color: 'red' }} variant="body1" fontWeight="bold">
+                We are no longer accpeting any more registrations.
+              </Typography>
+              <Typography sx={{ margin: '0 0 2rem', color: 'red' }} variant="body1" fontWeight="bold">
+                The registration period for this event has passed.
+              </Typography>
+            </>
+          ) : null
+        }
+        <form
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+          onSubmit={handleSubmit(onSubmit)}
+          onReset={reset}
+          >
+          <Stack direction="column" spacing={4}>
+            <Alert sx={{ visibility: info ? 'visible' : 'hidden' }} severity={info?.type}>{info?.message}</Alert>
             <TextField
-              {...register("first_name", { validate:  { required: (val) => val ? null : 'Required'  } })}
+              {...register("email", { validate:  { required: (val) => val ? null : 'Required'  } })}
               disabled={registrationDisabled}
-              error={!!errors.first_name}
-              helperText={errors.first_name?.message}
-              id="outlined-first-name"
-              label="First Name *"
+              error={!!errors.email}
+              helperText={errors.email?.message}
+              id="outlined-email"
+              label="Email *"
               variant="outlined"
-              type="text"
+              type="email"
             />
+            <Stack sx={{ justifyContent: 'space-between' }} direction="row" spacing={2}>
+              <TextField
+                {...register("first_name", { validate:  { required: (val) => val ? null : 'Required'  } })}
+                disabled={registrationDisabled}
+                error={!!errors.first_name}
+                helperText={errors.first_name?.message}
+                id="outlined-first-name"
+                label="First Name *"
+                variant="outlined"
+                type="text"
+              />
+              <TextField
+                {...register("last_name", { validate:  { required: (val) => val ? null : 'Required'  } })}
+                disabled={registrationDisabled}
+                error={!!errors.last_name}
+                helperText={errors.last_name?.message}
+                id="outlined-last-name"
+                label="Last Name*"
+                variant="outlined"
+                type="text"
+              />
+            </Stack>
             <TextField
-              {...register("last_name", { validate:  { required: (val) => val ? null : 'Required'  } })}
+              {...register("date_of_birth", { validate:  { required: (val) => val ? null : 'Required'  } })}
               disabled={registrationDisabled}
               error={!!errors.last_name}
               helperText={errors.last_name?.message}
-              id="outlined-last-name"
-              label="Last Name*"
+              id="outlined-date-of-birth"
+              InputLabelProps={{ shrink: true }}
+              label="Date of Birth *"
               variant="outlined"
-              type="text"
+              type="date"
             />
+            <Button disabled={submitDisabled} type="submit" variant="contained">
+              {saving ? 'Registering' : 'Submit'}
+            </Button>
           </Stack>
-          <TextField
-            {...register("date_of_birth", { validate:  { required: (val) => val ? null : 'Required'  } })}
-            disabled={registrationDisabled}
-            error={!!errors.last_name}
-            helperText={errors.last_name?.message}
-            id="outlined-date-of-birth"
-            InputLabelProps={{ shrink: true }}
-            label="Date of Birth *"
-            variant="outlined"
-            type="date"
-          />
-          <Button disabled={submitDisabled} type="submit" variant="contained">
-            {saving ? 'Registering' : 'Submit'}
-          </Button>
-        </Stack>
-      </form>
-    </Container>
+        </form>
+      </Container>
+    </>
   );
 };
 

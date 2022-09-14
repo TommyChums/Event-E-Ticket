@@ -1,4 +1,5 @@
-import * as React from 'react';
+import { Fragment } from 'react';
+import Head from 'next/head'
 import { useRouter } from 'next/router';
 import Container from '@mui/material/Container';
 import List from '@mui/material/List';
@@ -41,71 +42,78 @@ export default function EventsHome({ events }) {
   const router = useRouter();
 
   return (
-    <Container
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        textAlign: 'center',
-        padding: '2rem 0'
-      }}
-    >
-      <Stack direction="column" spacing={3}>
-        <Typography
-          sx={{ display: 'inline' }}
-          component="span"
-          variant="h4"
-          color="text.primary"
-        >
-          Welcome to Reformation Life Centre&apos;s events page.
-        </Typography>
-        <Typography
-          sx={{ display: 'inline' }}
-          component="span"
-          variant="h5"
-          color="text.primary"
-        >
-          { 
-            events.length
-              ? 'These are all our current events. Click one to register.'
-              : 'We currently have no events schedules. Check us back at a later date.'
+    <>
+      <Head>
+        <title>Reformation Life Centre - Events</title>
+        <meta property="og:title" content="Reformation Life Centre - Events" key="title" />
+        <link rel="icon" type="image/x-icon" href="/images/rlc-logo.ico" />
+      </Head>
+      <Container
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          textAlign: 'center',
+          padding: '2rem 0'
+        }}
+      >
+        <Stack direction="column" spacing={3}>
+          <Typography
+            sx={{ display: 'inline' }}
+            component="span"
+            variant="h4"
+            color="text.primary"
+          >
+            Welcome to Reformation Life Centre&apos;s events page.
+          </Typography>
+          <Typography
+            sx={{ display: 'inline' }}
+            component="span"
+            variant="h5"
+            color="text.primary"
+          >
+            { 
+              events.length
+                ? 'These are all our current events. Click one to register.'
+                : 'We currently have no events schedules. Check us back at a later date.'
+            }
+          </Typography>
+        </Stack>
+        <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper', margin: '1rem 0 0' }}>
+          {
+            map(events, (event, i) => {
+              const isFirst = i === 0;
+              return (
+                <Fragment key={event.uuid}>
+                  { !isFirst ? <Divider variant="inset" component="li" /> : null}
+                  <ListItemButton alignItems="flex-start" onClick={() => router.push(`/${event.uuid}`)}>
+                    <ListItemAvatar>
+                      <Avatar alt={event.name} src={event.logo} />
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={event.name}
+                      secondary={
+                        <Fragment>
+                          <Typography
+                            sx={{ display: 'inline' }}
+                            component="span"
+                            variant="body2"
+                            color="text.primary"
+                          >
+                            {event.host}
+                          </Typography>
+                          {` — ${event.description}` || ` — Presents ${event.name}`}
+                        </Fragment>
+                      }
+                    />
+                  </ListItemButton>
+                </Fragment>
+              );
+            })
           }
-        </Typography>
-      </Stack>
-      <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper', margin: '1rem 0 0' }}>
-        {
-          map(events, (event, i) => {
-            const isFirst = i === 0;
-            return (
-              <React.Fragment key={event.uuid}>
-                { !isFirst ? <Divider variant="inset" component="li" /> : null}
-                <ListItemButton alignItems="flex-start" onClick={() => router.push(`/${event.uuid}`)}>
-                  <ListItemAvatar>
-                    <Avatar alt={event.name} src={event.logo} />
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={event.name}
-                    secondary={
-                      <React.Fragment>
-                        <Typography
-                          sx={{ display: 'inline' }}
-                          component="span"
-                          variant="body2"
-                          color="text.primary"
-                        >
-                          {event.host}
-                        </Typography>
-                        {` — ${event.description}` || ` — Presents ${event.name}`}
-                      </React.Fragment>
-                    }
-                  />
-                </ListItemButton>
-              </React.Fragment>
-            );
-          })
-        }
-      </List>
-    </Container>
+        </List>
+      </Container>
+    </>
   );  
 }
