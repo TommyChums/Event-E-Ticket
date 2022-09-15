@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
@@ -6,6 +6,7 @@ import TextField from '@mui/material/TextField';
 import { Alert } from '@mui/material';
 
 import supabase from '../../lib/supabase';
+import updateSupabaseCookie from '../../lib/helpers/updateSupabaseCookie';
 
 export default function Auth({ redirectTo }) {
   const [ loading, setLoading ] = useState(false);
@@ -16,7 +17,18 @@ export default function Auth({ redirectTo }) {
   
   const user = supabase.auth.user();
 
-  const handleLogin = async (email) => {
+  useEffect(() => {
+    const session = supabase.auth.session();
+
+    if (session) {
+      // For some reason the server isn't seeing
+      // the session, so let's clear it and sign
+      // back in
+      supabase.auth.signOut();
+    }
+  }, []);
+
+  const handleLogin = async () => {
     setError(null);
     setLoading(true);
     const { error } = await supabase.auth.signIn({ email, password });
@@ -32,7 +44,7 @@ export default function Auth({ redirectTo }) {
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        handleLogin(email);
+        handleLogin();
       }}
     >
       <Stack spacing={2} direction="column">
