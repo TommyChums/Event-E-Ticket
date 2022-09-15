@@ -102,7 +102,7 @@ export default function useUsers(eventUuid) {
     if (!pollRef.current) {
       pollRef.current = setInterval(() => {
         getUsersWithPayments();
-      }, 30 * 1000);
+      }, 10 * 1000);
     }
 
     return () => {
