@@ -56,7 +56,7 @@ export default function EventManagementPage({ event }) {
       </Head>
       <Box sx={{ width: '100%', typography: 'body1' }}>
         <Box sx={{ width: '100%' }}>
-          <Tabs value={value} onChange={handleChange} aria-label={`${event?.name} Menu`}>
+          <Tabs value={value} onChange={handleChange} aria-label={`${event?.name} Menu`} variant="fullWidth" >
             <Tab label="Config" value={0} />
             <Tab label="Users" value={1} />
             <Tab label="Payments" value={2} />
@@ -70,7 +70,7 @@ export default function EventManagementPage({ event }) {
               justifyContent: 'center',
               alignItems: 'center',
               textAlign: 'center',
-              mergin: '2rem 0',
+              marginTop: '16px',
             }}
           >
             <Stack sx={{ margin: '0 0 2rem' }} direction="column" spacing={1.5}>
