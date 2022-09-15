@@ -88,7 +88,7 @@ export default async function handler(req, res) {
       eventName: event.name,
       startTime: moment(event.start_date).format('LLLL'),
       eventVenue: event.venue,
-      imgSrc: qrCodeImg,
+      imgSrc: `data:image/png;base64,${qrCodeImg}`,
     });
 
     console.log(ticketHtml)
@@ -110,14 +110,14 @@ export default async function handler(req, res) {
       console.log({info});
     }).catch(console.error);
 
-    const { error: updateError } = await supabase.from('registered-users').update({
+    const { data: updatedUser, error: updateError } = await supabase.from('registered-users').update({
       ticket_issued: true,
       updated_on: issued_at,
-    }).eq('uuid', user_uuid);
+    }).eq('uuid', user_uuid).single();
 
     if (updateError) return res.status(500).json({ error: updateError.message });
 
-    return res.status(200).json({ message: 'Successfully issued the ticket' });
+    return res.status(200).json({ message: 'Successfully issued the ticket', user: updatedUser });
   } else {
     return res.status(405).json({ message: 'Method not allowed' });
   }
