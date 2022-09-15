@@ -86,8 +86,8 @@ export default function RegistrationForm({ event }) {
   return (
     <>
       <Head>
-        <title>{`${event.name} | ${event.host} presents ${event.name}`}</title>
-        <meta property="og:title" content={`${event.name} | ${event.host} presents ${event.name}"`} key="title" />
+        <title>{`Register | ${event.name} | ${event.host} presents ${event.name}`}</title>
+        <meta property="og:title" content={`${event.name} | ${event.host} presents ${event.name}`} key="title" />
         <link rel="icon" type="image/x-icon" href={event.logo || '/images/rlc-logo.ico'} />
       </Head>
       <Container
@@ -220,5 +220,6 @@ export async function getStaticProps({ params }) {
     props: {
       event,
     },
+    revalidate: 30,
   };
 };
