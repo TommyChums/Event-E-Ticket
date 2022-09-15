@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
+import Head from 'next/head';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
 import supabase from '../lib/supabase';
 import Auth from '../components/Auth';
 
-export default function Home() {
+export default function LoginPage() {
   const [ containerWidth, setContainerWidth ] = useState('100%');
   const isRegular = useMediaQuery('(max-width:1450px)');
   const isMedium = useMediaQuery('(max-width:1100px)');
@@ -23,26 +24,33 @@ export default function Home() {
   }, [ isSmall, isMedium, isRegular ]);
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        textAlign: 'center',
-        minHeight: '95vh'
-      }}
-    >
+    <>
+      <Head>
+        <title>Login | Admin Dashboard | Reformation Life Centre - Events</title>
+        <meta property="og:title" content="Login | Admin Dashboard | Reformation Life Centre - Events" key="title" />
+        <link rel="icon" type="image/x-icon" href="/images/rlc-logo.ico" />
+      </Head>
       <div
         style={{
-          padding: '0 1rem',
-          width: containerWidth
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          textAlign: 'center',
+          minHeight: '95vh'
         }}
       >
-        <Auth
-          redirectTo="/users"
-        />
+        <div
+          style={{
+            padding: '0 1rem',
+            width: containerWidth
+          }}
+        >
+          <Auth
+            redirectTo="/events"
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
@@ -52,7 +60,7 @@ export async function getServerSideProps(context) {
   const { user } = await supabase.auth.api.getUserByCookie(req);
 
   if (user) {
-    return { props: {}, redirect: { destination: '/users', permanent: false } };
+    return { props: {}, redirect: { destination: '/events', permanent: false } };
   }
 
   return { props: {} };

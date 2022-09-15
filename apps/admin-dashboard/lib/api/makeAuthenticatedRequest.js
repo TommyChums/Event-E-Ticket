@@ -24,7 +24,7 @@ export default async function makeAuthenticatedRequest(url, method = 'GET', body
 
   const apiResponse = await fetch(url, fetchConfig).then((res) => res)
 
-  const apiResponseJson = apiResponse.json();
+  const apiResponseJson = await apiResponse.json();
 
   const apiError = apiResponse.ok ? null : apiResponseJson.error || 'Internal Server Error';
 

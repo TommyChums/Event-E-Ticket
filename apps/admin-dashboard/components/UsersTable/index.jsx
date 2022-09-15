@@ -204,7 +204,7 @@ EnhancedTableToolbar.defaultProps = {
   setSearchValue: () => {},
 };
 
-export default function EnhancedTable({ loading, users, usersEvent }) {
+export default function EnhancedTable({ loading, users, usersEvent, updatePayment, updateUser }) {
   const [ dialogOpen, setDialogOpen ] = useState(false);
   const [ rows, setRows ] = useState([]);
   const [ order, setOrder ] = useState('asc');
@@ -355,6 +355,8 @@ export default function EnhancedTable({ loading, users, usersEvent }) {
             open={dialogOpen}
             user={find(rows, [ 'uuid', selectedUserUuid ]) || {}}
             event={usersEvent}
+            updatePayment={updatePayment}
+            updateUser={updateUser}
           />
         )
       }

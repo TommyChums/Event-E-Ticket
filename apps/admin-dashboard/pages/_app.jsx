@@ -1,6 +1,6 @@
+import '../assets/css/global.css';
 import { useEffect } from 'react';
 import Layout from '../components/Layout';
-import { AppWrapper } from '../context/UsersAndEvents';
 import supabase from '../lib/supabase';
 
 async function updateSupabaseCookie(event, session) {
@@ -24,10 +24,8 @@ export default function App({ Component, pageProps }) {
   });
 
   return (
-    <AppWrapper>
-      <Layout>
-        <Component {...pageProps} />
-      </Layout>
-    </AppWrapper>
+    <Layout>
+      <Component {...pageProps} />
+    </Layout>
   );
 };

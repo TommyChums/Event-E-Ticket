@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
 import moment from 'moment';
-import findKey from 'lodash/findKey';
-import reduce from 'lodash/reduce';
 import isEmpty from 'lodash/isEmpty';
 import isFinite from 'lodash/isFinite';
 import toNumber from 'lodash/toNumber';
@@ -19,8 +17,9 @@ import Alert from '@mui/material/Alert';
 
 import supabase from '../../lib/supabase';
 import { makeAuthenticatedPostRequest } from '../../lib/api/makeAuthenticatedRequest';
+import getUserAmtPaidAndRequired from '../../lib/helpers/getUserAmtPaidAndRequired';
 
-export default function UserDialog({ event, open, onClose, user, ...props}) {
+export default function UserDialog({ event, open, onClose, user, updatePayment, updateUser, ...props}) {
   const [ saveStatus, setSaveStatus ] = useState(null);
   const [ amountPaid, setAmountPaid ] = useState(0);
   const [ currentPayment, setCurentPayment ] = useState(0);
@@ -30,9 +29,6 @@ export default function UserDialog({ event, open, onClose, user, ...props}) {
   useEffect(() => {
     if (isEmpty(user) || isEmpty(event)) onClose();
 
-    setUpdating(false);
-    setCurentPayment(0);
-
     if (user.ticket_issued) {
       setSaveStatus({ type: 'success', message: 'Ticket successfully issued!' });
     }
@@ -40,30 +36,9 @@ export default function UserDialog({ event, open, onClose, user, ...props}) {
     const paymentConfig = event.payment_config;
 
     if (paymentConfig) {
-      const earlyBirdDate = paymentConfig.early_bird_date;
-    
-      let earlyBirdPayments = false;
-    
-      const userAmountPaid = reduce(user.payments, (total, payment) => {
-        total += payment.amount;
-        if (earlyBirdDate) {
-          earlyBirdPayments = moment(payment.timestamp).isSameOrBefore(earlyBirdDate);
-        }
-        return total;
-      }, 0);
-    
-      const isEarlyBirdActive = !!earlyBirdDate && (earlyBirdPayments || moment().isSameOrBefore(earlyBirdDate));
-    
-      const userAgeMapping = findKey(paymentConfig.age_mapping, (ages) => {
-        const [ ageFrom, ageTo ] = ages;
-        return (user.age >= ageFrom && user.age <= ageTo)
-      });
-    
-      const userAmountRequired = isEarlyBirdActive
-        ? paymentConfig.early_bird_price_by_age[userAgeMapping]
-        : paymentConfig.price_by_age[userAgeMapping];
+      const { userAmountPaid, userAmountRequired } = getUserAmtPaidAndRequired(paymentConfig, user)
 
-      setAmountRequiredToPay(userAmountRequired - userAmountPaid);
+      setAmountRequiredToPay(userAmountRequired);
       setAmountPaid(userAmountPaid);
     } else {
       setAmountRequiredToPay(0);
@@ -89,38 +64,44 @@ export default function UserDialog({ event, open, onClose, user, ...props}) {
       const paymentTime = moment().toISOString();
 
       setSaveStatus({ type: 'info', message: 'Storing Payment' });
-      const { error: insertError } = await supabase.from('registered-user-payments').insert({
+      const { data: payment, error: insertError } = await supabase.from('registered-user-payments').insert({
         user_uuid: user.uuid,
         amount: currentPayment,
         timestamp: paymentTime,
-      });
+      }).single();
 
       setSaveStatus({ type: 'info', message: 'Updating User' });
-      const { error: updateError } = await supabase.from('registered-users').update({
+      const { data: updatedUser, error: updateError } = await supabase.from('registered-users').update({
         updated_on: paymentTime,
-      }).eq('uuid', user.uuid);
+      }).eq('uuid', user.uuid).single();
 
       success = !updateError && !insertError;
 
       if (!success) {
         setSaveStatus({ type: 'error', message: insertError.message || updateError.message });
+      } else {
+        updateUser(updatedUser);
+        updatePayment(payment);
       }
     }
 
     if (success && ((amountRequriedToPay - currentPayment) === 0)) {
       setSaveStatus({ type: 'info', message: 'Issuing ticket...' });
-      const { error: issueError } = await makeAuthenticatedPostRequest('/api/issue-ticket', { user_uuid: user.uuid });
+      const { data: { user: issuedUser }, error: issueError } = await makeAuthenticatedPostRequest('/api/issue-ticket', { user_uuid: user.uuid });
 
       if (issueError) {
         setSaveStatus({ type: 'error', message: issueError.message });
       } else {
         setSaveStatus({ type: 'success', message: 'Ticket successfully issued!' });
+
+        updateUser(issuedUser);
       }
     } else if (success) {
       setSaveStatus({ type: 'success', message: 'Payment stored and User Updated' });
     }
 
     setUpdating(false);
+    setCurentPayment(0);
   };
 
   return (
@@ -152,6 +133,7 @@ export default function UserDialog({ event, open, onClose, user, ...props}) {
         <Button 
           disabled={
             user.ticket_issued ||
+            updating ||
             (currentPayment <= 0 &&
             amountRequriedToPay > 0) ||
             (amountRequriedToPay <= 0 &&

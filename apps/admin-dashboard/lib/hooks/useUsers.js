@@ -1,9 +1,12 @@
 import { useEffect, useReducer, useRef } from "react";
+import isEmpty from 'lodash/isEmpty';
 import keyBy from 'lodash/keyBy';
 
 import supabase from "../supabase";
 
-export default function useUsers() {
+export default function useUsers(eventUuid) {
+  const pollRef = useRef(null);
+
   const authenticatedUser = supabase.auth.user();
 
   const [ state, dispatch ] = useReducer((state, { type, payload }) => {
@@ -11,7 +14,10 @@ export default function useUsers() {
       case 'RECEIVED_USERS': {
         return {
           ...state,
-          users: payload,
+          users: {
+            ...state.users,
+            ...payload,
+          },
         };
       }
       case 'UPDATE':
@@ -66,7 +72,7 @@ export default function useUsers() {
       case 'LOADING': {
         return {
           ...state,
-          isLoading: payload,
+          isLoading: isEmpty(state.users) ? payload : false,
         };
       }
       default: {
@@ -75,37 +81,40 @@ export default function useUsers() {
     };
   }, { users: {}, isLoading: true, error: false });
 
+  
   useEffect(() => {
-    if (!authenticatedUser) return;
-    (async () => {
-      dispatch({ type: 'LOADING', payload: true });
-      const { data: users, error } = await supabase.from('registered-users').select('*, payments:registered-user-payments(*)');
+    if (!authenticatedUser || !eventUuid) return;
 
+    async function getUsersWithPayments() {
+      dispatch({ type: 'LOADING', payload: true });
+      const { data: users, error } = await supabase.from('registered-users').select('*, payments:registered-user-payments(*)').eq('registered_event', eventUuid);
+  
       if (error) {
         dispatch({ type: 'ERROR', payload: error });
       }
-
+  
       dispatch({ type: 'RECEIVED_USERS', payload: keyBy(users, 'uuid') });
       dispatch({ type: 'LOADING', payload: false });
-    })();
+    };
 
-    const usersSubscription = supabase.from('registered-users').on('*', (payload) => {
-      dispatch({ type: payload.eventType, payload });
-    }).subscribe();
+    getUsersWithPayments();
 
-    const paymentsSubscription = supabase.from('registered-user-payments').on('*', (payload) => {
-      dispatch({ type: `PAYMENT-${payload.eventType}`, payload });
-    }).subscribe();
+    if (!pollRef.current) {
+      pollRef.current = setInterval(() => {
+        getUsersWithPayments();
+      }, 30 * 1000);
+    }
 
     return () => {
-      supabase.removeSubscription(usersSubscription);
-      supabase.removeSubscription(paymentsSubscription);
+      clearInterval(pollRef.current);
     };
-  }, [ authenticatedUser ]);
+  }, [ authenticatedUser, eventUuid ]);
 
   return {
     isLoading: state.isLoading,
     error: state.error,
     users: state.users,
+    updateUser: (user) => dispatch({ type: 'UPDATE', payload: { new: user } }),
+    updatePayment: (payment) => dispatch({ type: 'PAYMENT-UPDATE', payload: { new: payment } }),
   };
 };

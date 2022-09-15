@@ -6,7 +6,7 @@ const protectedRoute = (inner) => {
     const { user } = await supabase.auth.api.getUserByCookie(req);
 
     if (!user) {
-      return { props: {}, redirect: { destination: '/', permanent: false } };
+      return { props: {}, redirect: { destination: '/login', permanent: false } };
     }
 
     if (inner) {
