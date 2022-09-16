@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
+import Image from 'next/image';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import Typography from '@mui/material/Typography';
 
 import supabase from '../lib/supabase';
 import Auth from '../components/Auth';
@@ -35,6 +37,7 @@ export default function LoginPage() {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
+          alignContent: 'center',
           textAlign: 'center',
           minHeight: '95vh'
         }}
@@ -45,6 +48,8 @@ export default function LoginPage() {
             width: containerWidth
           }}
         >
+          <Image width={200} height={200} src="/images/rlc-logo-globe.png" alt="RLC Admin Dashoard" />
+          <Typography sx={{ marginBottom: '2rem' }} variant="h4" gutterBottom fontWeight="bold">Events Dashboard</Typography>
           <Auth
             redirectTo="/events"
           />
