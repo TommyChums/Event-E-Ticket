@@ -1,5 +1,6 @@
 import '../assets/css/global.css';
 import { useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 import Layout from '../components/Layout';
@@ -20,9 +21,16 @@ const theme = createTheme({
 });
 
 export default function App({ Component, pageProps }) {
+  const router = useRouter();
+
   useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      updateSupabaseCookie(event, session);
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      await updateSupabaseCookie(event, session);
+      if (session && router.pathname === '/login') {
+        router.push('/events');
+      } else if (!session && router.pathname !== '/login') {
+        router.push('/login');
+      }
     });
 
     return () => {

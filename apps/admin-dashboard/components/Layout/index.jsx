@@ -40,7 +40,6 @@ export default function Layout({ children }) {
   const handleLogout = async () => {
     setSigningOut(true);
     await supabase.auth.signOut();
-    router.push('/login');
   };
 
   // Login page
