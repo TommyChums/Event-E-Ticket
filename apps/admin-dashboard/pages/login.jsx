@@ -48,8 +48,8 @@ export default function LoginPage() {
             width: containerWidth
           }}
         >
-          <Image width={200} height={200} src="/images/rlc-logo-globe.png" alt="RLC Admin Dashoard" />
-          <Typography sx={{ marginBottom: '2rem' }} variant="h4" gutterBottom fontWeight="bold">Events Dashboard</Typography>
+          <Image width={170} height={170} src="/images/rlc-logo-globe.png" alt="RLC Admin Dashoard" />
+          <Typography sx={{ marginBottom: '2rem' }} variant="h5" gutterBottom fontWeight="bold">Events Dashboard</Typography>
           <Auth
             redirectTo="/events"
           />
