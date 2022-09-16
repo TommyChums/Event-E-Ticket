@@ -14,6 +14,7 @@ import supabase from "../../lib/supabase";
 import protectedRoute from "../../lib/helpers/protectedRoute";
 import UsersTable from "../../components/UsersTable";
 import useUsers from "../../lib/hooks/useUsers";
+import EventForm from "../../components/EventForm";
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -82,6 +83,7 @@ export default function EventManagementPage({ event }) {
                 {event.description || `${event.host} presents ${event.name}`}
               </Typography>
             </Stack>
+            <EventForm event={event} />
           </Container>
         </TabPanel>
         <TabPanel index={1} value={value}>
