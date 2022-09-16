@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Head from 'next/head'
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
@@ -8,23 +8,13 @@ import Container from '@mui/material/Container';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import moment from 'moment';
 import isEmpty from 'lodash/isEmpty';
 
 import supabase from "../lib/supabase";
-
-function GetAge(birthDate) {
-  var today = new Date();
-  var age = today.getFullYear() - birthDate.getUTCFullYear();
-
-  var m = today.getMonth() - birthDate.getUTCMonth();
-
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getUTCDate())) {
-    age--;
-  }
-
-  return age;
-}
 
 export default function RegistrationForm({ event }) {
   const [ saving, setSaving ] = useState(false);
@@ -36,16 +26,17 @@ export default function RegistrationForm({ event }) {
     email: '',
     first_name: '',
     last_name: '',
-    date_of_birth: '',
+    date_of_birth: null,
   }), []);
 
   const {
+    control,
     formState,
     handleSubmit,
     register,
     reset,
   } = useForm({
-    mode: 'onBlur',
+    mode: 'onChange',
     defaultValues,
   });
 
@@ -60,7 +51,7 @@ export default function RegistrationForm({ event }) {
   const submitDisabled = registrationDisabled || saving || !isDirty || isSubmitting || !isValid;
 
   const onSubmit = async (data) => {
-    const age = GetAge(new Date(data.date_of_birth));
+    const age = moment().diff(data.date_of_birth, 'years');
 
     setInfo({ type: 'info', message: `Registering for event...` });
     setSaving(true);
@@ -132,7 +123,7 @@ export default function RegistrationForm({ event }) {
           <Stack direction="column" spacing={4}>
             <Alert sx={{ visibility: info ? 'visible' : 'hidden' }} severity={info?.type}>{info?.message}</Alert>
             <TextField
-              {...register("email", { validate:  { required: (val) => val ? null : 'Required'  } })}
+              {...register("email", { validate: { required: (val) => val ? null : 'Required' } })}
               disabled={registrationDisabled}
               error={!!errors.email}
               helperText={errors.email?.message}
@@ -143,7 +134,7 @@ export default function RegistrationForm({ event }) {
             />
             <Stack sx={{ justifyContent: 'space-between' }} direction="row" spacing={2}>
               <TextField
-                {...register("first_name", { validate:  { required: (val) => val ? null : 'Required'  } })}
+                {...register("first_name", { validate: { required: (val) => val ? null : 'Required' } })}
                 disabled={registrationDisabled}
                 error={!!errors.first_name}
                 helperText={errors.first_name?.message}
@@ -153,26 +144,47 @@ export default function RegistrationForm({ event }) {
                 type="text"
               />
               <TextField
-                {...register("last_name", { validate:  { required: (val) => val ? null : 'Required'  } })}
+                {...register("last_name", { validate: { required: (val) => val ? null : 'Required' } })}
                 disabled={registrationDisabled}
                 error={!!errors.last_name}
                 helperText={errors.last_name?.message}
                 id="outlined-last-name"
-                label="Last Name*"
+                label="Last Name *"
                 variant="outlined"
                 type="text"
               />
             </Stack>
-            <TextField
-              {...register("date_of_birth", { validate:  { required: (val) => val ? null : 'Required'  } })}
-              disabled={registrationDisabled}
-              error={!!errors.last_name}
-              helperText={errors.last_name?.message}
-              id="outlined-date-of-birth"
-              InputLabelProps={{ shrink: true }}
+            <Controller
+              control={control}
+              name="date_of_birth"
               label="Date of Birth *"
-              variant="outlined"
-              type="date"
+              rules={{
+                validate: {
+                  required: (val) => val ? null : 'Required',
+                  isValidDate: (val) => moment(val, true).isValid() ? null : 'Invalid Date',
+                },
+              }}
+              render={({ field }) => (
+                <LocalizationProvider dateAdapter={AdapterMoment}>
+                  <DatePicker
+                    {...field}
+                    disableFuture
+                    inputFormat="YYYY-MM-DD"
+                    label="Date of Birth *"
+                    disabled={registrationDisabled}
+                    InputLabelProps={{ shrink: true }}
+                    openTo="year"
+                    views={[ 'year', 'month', 'day' ]}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        helperText={errors.date_of_birth?.message || 'yyyy-mm-dd'}
+                        error={!!errors.date_of_birth}
+                      />
+                    )}
+                  />
+                </LocalizationProvider>
+              )}
             />
             <Button disabled={submitDisabled} type="submit" variant="contained">
               {saving ? 'Registering' : 'Submit'}
