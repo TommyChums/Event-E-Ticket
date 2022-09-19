@@ -18,7 +18,7 @@ export default function getUserAmtPaidAndRequired(paymentConfig, user) {
   const isEarlyBirdActive = !!earlyBirdDate && (earlyBirdPayments || moment().isSameOrBefore(earlyBirdDate));
 
   const userAgeMapping = findKey(paymentConfig.age_mapping, (ages) => {
-    const [ ageFrom, ageTo ] = ages;
+    const { from: ageFrom, to: ageTo } = ages;
     return (user.age >= ageFrom && user.age <= ageTo)
   });
 

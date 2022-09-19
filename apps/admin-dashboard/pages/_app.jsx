@@ -1,4 +1,6 @@
 import '../assets/css/global.css';
+import 'react-resizable/css/styles.css';
+import "react-color-palette/lib/css/styles.css";
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { createTheme, ThemeProvider } from '@mui/material/styles';

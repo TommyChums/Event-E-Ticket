@@ -5,7 +5,6 @@ import path from 'path';
 import isEmpty from 'lodash/isEmpty';
 import moment from 'moment';
 import sharp from 'sharp';
-import fs from 'fs';
 
 import supabase from "../../lib/supabase";
 
@@ -51,8 +50,6 @@ export default async function handler(req, res) {
 
     const { data: ticketTemplate, error: downloadError } = await supabase.storage.from(bucket).download(key);
 
-    console.log(bucket, key)
-
     if (downloadError) {
       return res.status(500).json({ error: downloadError.message });
     }
@@ -66,14 +63,21 @@ export default async function handler(req, res) {
 
     const qrCodeOptions = {};
 
-    if (config.w) {
-      qrCodeOptions.width = config.w;
+    if (config.position) {
+      qrCodeOptions.width = config.position?.w;
+    }
+
+    if (config.colour) {
+      qrCodeOptions.color = {
+        light: config.colour?.light?.hex,
+        dark: config.colour?.dark?.hex
+      }
     }
 
     await QRCode.toFile('/tmp/qrcode.png', qrCodeInfo, qrCodeOptions);
 
     const qrCodeImg = await sharp(ticketTemplateBuffer).composite([
-      { input: '/tmp/qrcode.png', top: config.y, left: config.x },
+      { input: '/tmp/qrcode.png', top: config.position?.y, left: config.position?.x },
     ]).toBuffer().then(buffer => {
       return buffer.toString('base64');
     });
@@ -88,10 +92,7 @@ export default async function handler(req, res) {
       eventName: event.name,
       startTime: moment(event.start_date).format('LLLL'),
       eventVenue: event.venue,
-      imgSrc: `data:image/png;base64,${qrCodeImg}`,
     });
-
-    console.log(ticketHtml)
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -106,6 +107,13 @@ export default async function handler(req, res) {
       to: registeredUser.email, // list of receivers
       subject: `Ticket for: ${event.name}`, // Subject line
       html: ticketHtml, // html body
+      attachments: [
+        {
+          filename: 'Ticket.png',
+          content: qrCodeImg,
+          encoding: 'base64',
+        },
+      ],
     }).then(info => {
       console.log({info});
     }).catch(console.error);
