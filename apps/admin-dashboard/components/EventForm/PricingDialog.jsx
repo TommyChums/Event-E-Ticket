@@ -21,7 +21,6 @@ function ControlledNumberInput({ control, name, defaultValue, ...props }) {
     control,
     name,
     defaultValue,
-    //TODO: See why this isn't working
     rules: {
       required: 'Required',
       pattern: {
