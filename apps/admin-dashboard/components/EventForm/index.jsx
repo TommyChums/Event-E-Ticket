@@ -1,25 +1,37 @@
 import React, { useEffect, useState } from 'react'
 import { Controller, useController, useForm } from 'react-hook-form';
 import { decode } from 'base64-arraybuffer';
-import { v4 } from 'uuid';
 import { ColorPicker, toColor } from "react-color-palette";
+import { usePlacesWidget } from "react-google-autocomplete";
+import { v4 } from 'uuid';
 import moment from 'moment';
 import isEqual from 'lodash/isEqual';
+import map from 'lodash/map';
+import startCase from 'lodash/startCase';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
+import Alert from '@mui/material/Alert';
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import { usePlacesWidget } from "react-google-autocomplete";
-import Alert from '@mui/material/Alert';
 
 import PricingDialog from './PricingDialog';
 import ImgUpload from '../ImgUpload';
 import supabase from '../../lib/supabase';
 import ResizableQrCode from '../ResizableQrCode';
+
+const MAX_TICKET_WIDTH = 1650;
+const MAX_TICKET_HEIGHT = 650;
+const TICKET_IMAGE_WIDTH = 660;
+const TICKET_IMAGE_HEIGHT = 260;
+const QR_CODE_SCALE = MAX_TICKET_WIDTH / TICKET_IMAGE_WIDTH;
 
 function preventEnterSubmit(e) {
   if (e.code.toLowerCase() === 'enter') e.preventDefault();
@@ -78,7 +90,11 @@ function ControlledLocation({ control, name, defaultValue, rules, ...props }) {
   )
 };
 
-export default function EventForm({ event = {}, onSave }) {
+export default function EventForm({ event = {
+  ticket_template: {},
+  ticket_config: {},
+  original_ticket_template: {},
+}, onSave }) {
   const [ pricingDialogOpen, setPricingDialogOpen ] = useState(false);
   const [ updatingStatus, setUpdatingStatus ] = useState(null);
   const [ saving, setSaving ] = useState(false);
@@ -130,36 +146,55 @@ export default function EventForm({ event = {}, onSave }) {
     } else {
       delete data.logo;
     }
+
+    for (let ageLabel in data.ticket_template || {}) {
+      const templateInfo = data.ticket_template[ageLabel];
+
+      if (data.ticket_template[ageLabel] !== event.ticket_template[ageLabel]) {
+        const displayAgeLabel = startCase(ageLabel);
+
+        setUpdatingStatus({ type: 'info', message: `Uploading Ticket Template for ${displayAgeLabel}` });
+  
+        const ticketBucket = 'event-ticket-templates';
+  
+        const { imgKey, error } = await replaceStorageImg(templateInfo, ticketBucket, event.uuid, event.ticket_template[ageLabel]);
+  
+        if (error) {
+          setUpdatingStatus({ type: 'error', message: `Ticket Upload for ${displayAgeLabel}: ${error.message}` });
+          setSaving(false);
+          return;
+        }
     
-    if (data.ticket_template !== event.ticket_template) {
-      setUpdatingStatus({ type: 'info', message: 'Uploading Ticket Template' });
-
-      const ticketBucket = 'event-ticket-templates';
-
-      const { imgKey, error } = await replaceStorageImg(data.ticket_template, ticketBucket, event.uuid, event.ticket_template);
-
-      if (error) {
-        setUpdatingStatus({ type: 'error', message: `Ticket Upload: ${error.message}` });
-        setSaving(false);
-        return;
+        data.ticket_template[ageLabel] = {
+          key: imgKey.replace(`${ticketBucket}/`, ''),
+          bucket: ticketBucket,
+          config: data.ticket_config[ageLabel],
+        };
+    
+        setUpdatingStatus({ type: 'info', message: `Uploaded Ticket Template for ${displayAgeLabel}` });
+      } else if (!isEqual(data.ticket_config[ageLabel], event.ticket_config[ageLabel])) {
+        data.ticket_template[ageLabel] = {
+          ...typeof templateInfo === 'object' && templateInfo,
+          ...data.original_ticket_template[ageLabel] || {},
+          config: data.ticket_config[ageLabel],
+        };
       }
-  
-      data.ticket_template = {
-        key: imgKey.replace(`${ticketBucket}/`, ''),
-        bucket: ticketBucket,
-        config: data.ticket_config,
-      };
-  
-      setUpdatingStatus({ type: 'info', message: 'Uploaded Ticket Template' });
-    } else if (!isEqual(data.ticket_config, event.ticket_config)) {
-      data.ticket_template = {
-        ...typeof data.ticket_template === 'object' && data.ticket_template,
-        ...data.original_ticket_template || {},
-        config: data.ticket_config,
-      };
-    } else {
-      delete data.ticket_template;
-    }
+    };
+
+    await Promise.all(map(data.original_ticket_template, (originalTemplateInfo, ageLabel) => {
+      if (typeof data.ticket_template[ageLabel] === 'string') {
+        data.ticket_template[ageLabel] = originalTemplateInfo;
+      }
+
+      if (!data.payment_config?.age_mapping[ageLabel]) {
+        delete data.ticket_template[ageLabel];
+
+        return supabase.storage.from(originalTemplateInfo.bucket).remove(originalTemplateInfo.key);
+      }
+
+      return Promise.resolve();
+    }));
+    
 
     delete data.original_ticket_template;
     delete data.ticket_config;
@@ -207,7 +242,12 @@ export default function EventForm({ event = {}, onSave }) {
                 <ImgUpload
                   {...field}
                   avatar
+                  altText="Event Logo"
                   onUpload={field.onChange}
+                  width={120}
+                  height={120}
+                  maxWidth={500}
+                  maxHeight={500}
                 />
               )}
             />
@@ -310,79 +350,6 @@ export default function EventForm({ event = {}, onSave }) {
           <Typography variant="h6">
             Ticket Information
           </Typography>
-          <div style={{ alignSelf: 'center' }}>
-            <Typography component='label' htmlFor="ticket_template" variant="subtitle1" >Event Ticket:</Typography>
-            <Controller
-              control={control}
-              name="ticket_template"
-              render={({ field }) => (
-                <div style={{ position: 'relative' }}>
-                  <ImgUpload
-                    {...field}
-                    onUpload={field.onChange}
-                  />
-                  { field.value ? (
-                      <>
-                        <div style={{ width: 530, height: 204, position: 'absolute', top: 0, left: 0 }}>
-                          <Controller
-                            control={control}
-                            name="ticket_config.position"
-                            render={({ field }) => (
-                              <div style={{ width: 530, height: 204, position: 'absolute', top: 0, left: 0 }}>
-                                <ResizableQrCode
-                                  {...field}
-                                  config={field.value}
-                                  lightColour={getValues('ticket_config.colour.light')?.hex}
-                                  darkColour={getValues('ticket_config.colour.dark')?.hex}
-                                />
-                              </div>
-                            )}
-                          />
-                        </div>
-                        <Typography component='label' htmlFor="qrcode-colour" variant="subtitle1" >QRCode Colour:</Typography>
-                        <Stack id="qrcode-colour" direction="row" spacing={1}>
-                          <Controller
-                            control={control}
-                            name="ticket_config.colour.light"
-                            render={({ field }) => (
-                              <ColorPicker
-                                width={260}
-                                height={204}
-                                color={field.value || toColor('hex', '#fff')}
-                                onChange={(e) => {
-                                  field.onChange(e);
-                                }}
-                                alpha
-                                hideHSV
-                                hideRGB
-                              />
-                            )}
-                          />
-                          <Controller
-                            control={control}
-                            name="ticket_config.colour.dark"
-                            render={({ field }) => (
-                              <ColorPicker
-                                width={260}
-                                height={204}
-                                color={field.value || toColor('hex', '#000')}
-                                onChange={(e) => {
-                                  field.onChange(e);
-                                }}
-                                alpha
-                                hideHSV
-                                hideRGB
-                              />
-                            )}
-                          />
-                        </Stack>
-                      </>
-                    ) : null
-                  }
-                </div>
-              )}
-            />
-          </div>
           <Controller
             control={control}
             name="payment_config"
@@ -390,7 +357,6 @@ export default function EventForm({ event = {}, onSave }) {
             render={({ field }) => (
               <PricingDialog
                 {...field}
-                control={control}
                 open={pricingDialogOpen}
                 unregister={unregister}
                 onClose={() => setPricingDialogOpen(false)}
@@ -405,6 +371,89 @@ export default function EventForm({ event = {}, onSave }) {
           >
             Configure Pricing
           </Button>
+          {
+            map(getValues('payment_config.age_mapping'), (_, ageLabel) => (
+              <Accordion key={ageLabel}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography>Ticket for: {startCase(ageLabel)}</Typography>
+                </AccordionSummary>
+                <AccordionDetails draggable="false">
+                  <Stack position="relative" justifyContent="center" width="100%">
+                    <Typography component='label' htmlFor="ticket_template" variant="subtitle1" >Event Ticket:</Typography>
+                    <Controller
+                      control={control}
+                      name={`ticket_template.${ageLabel}`}
+                      render={({ field }) => (
+                          <ImgUpload
+                            {...field}
+                            onUpload={field.onChange}
+                            width={TICKET_IMAGE_WIDTH}
+                            height={TICKET_IMAGE_HEIGHT}
+                            maxWidth={MAX_TICKET_WIDTH}
+                            maxHeight={MAX_TICKET_HEIGHT}
+                            altText={`${startCase(ageLabel)} Ticket`}
+                          >
+                            <Controller
+                              control={control}
+                              name={`ticket_config.${ageLabel}.position`}
+                              render={({ field }) => (
+                                <div style={{ width: TICKET_IMAGE_WIDTH, height: TICKET_IMAGE_HEIGHT, position: 'absolute', top: 0, alignSelf: 'center' }}>
+                                  <ResizableQrCode
+                                    {...field}
+                                    scale={QR_CODE_SCALE}
+                                    maxHeight={TICKET_IMAGE_HEIGHT}
+                                    config={field.value}
+                                    lightColour={watch(`ticket_config.${ageLabel}.colour.light`)?.hex}
+                                    darkColour={watch(`ticket_config.${ageLabel}.colour.dark`)?.hex}
+                                  />
+                                </div>
+                              )}
+                            />
+                          </ImgUpload>
+                      )}
+                    />
+                    <Typography component='label' htmlFor={`qrcode-colour-${ageLabel}`} variant="subtitle1" >QRCode Colour:</Typography>
+                    <Stack id={`qrcode-colour-${ageLabel}`} direction="row" justifyContent="center" spacing={1}>
+                      <Controller
+                        control={control}
+                        name={`ticket_config.${ageLabel}.colour.light`}
+                        render={({ field }) => (
+                          <ColorPicker
+                            width={(TICKET_IMAGE_WIDTH / 2) - 5}
+                            height={TICKET_IMAGE_HEIGHT}
+                            color={field.value || toColor('hex', '#fff')}
+                            onChange={(e) => {
+                              field.onChange(e);
+                            }}
+                            alpha
+                            hideHSV
+                            hideRGB
+                          />
+                        )}
+                      />
+                      <Controller
+                        control={control}
+                        name={`ticket_config.${ageLabel}.colour.dark`}
+                        render={({ field }) => (
+                          <ColorPicker
+                            width={(TICKET_IMAGE_WIDTH / 2) - 5}
+                            height={TICKET_IMAGE_HEIGHT}
+                            color={field.value || toColor('hex', '#000')}
+                            onChange={(e) => {
+                              field.onChange(e);
+                            }}
+                            alpha
+                            hideHSV
+                            hideRGB
+                          />
+                        )}
+                      />
+                    </Stack>
+                  </Stack>
+                </AccordionDetails>
+              </Accordion>
+            ))
+          }
           <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
             <Button disabled={submitDisabled} fullWidth variant="contained" type="submit">Submit</Button>
             <Button disabled={saving} fullWidth variant="outlined" type="reset">Reset</Button>

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useController, useForm } from 'react-hook-form';
 import forEach from 'lodash/forEach';
 import isEmpty from 'lodash/isEmpty';
-import isNumber from 'lodash/isNumber';
+import isFinite from 'lodash/isFinite';
 import map from 'lodash/map';
 import snakeCase from 'lodash/snakeCase';
 import startCase from 'lodash/startCase';
@@ -38,7 +38,9 @@ function ControlledNumberInput({ control, name, defaultValue, ...props }) {
       onChange={({ target }) => {
         const { value } = target;
 
-        if (isNumber(value)) {
+        const isNumberVal = isFinite(+value);
+
+        if (isNumberVal) {
           field.onChange(+value);
         } else {
           field.onChange(value);
@@ -61,10 +63,21 @@ export default function PricingDialog(props) {
   const [ ageRangesToDelete, setAgeRangesToDelete ] = useState({});
 
   const setDefaultsFromValue = useCallback((val) => {
-    if (isEmpty(val)) return;
+    if (isEmpty(val)) {
+      setPricesByAge({
+        general_public: 0,
+      });
+      setAgeMapping({
+        general_public: {
+          from: 0,
+          to: 999,
+        },
+      });
+    } else {
+      setPricesByAge(val.price_by_age);
+      setAgeMapping(val.age_mapping);
+    }
 
-    setPricesByAge(val.price_by_age);
-    setAgeMapping(val.age_mapping);
   }, [ setPricesByAge, setAgeMapping ]);
 
   const {
@@ -75,6 +88,8 @@ export default function PricingDialog(props) {
       isValid,
     },
   } = useForm({
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       ...value || {},
     },

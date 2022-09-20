@@ -5,7 +5,7 @@ import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 
-export default function ImgUpload({ avatar, onUpload, defaultValue, value }) {
+export default function ImgUpload({ avatar, name, onUpload, defaultValue, value, maxWidth, maxHeight, width, height, altText, children = null }) {
   const uploadInputRef = useRef(null);
   const [ imgSrc, setImgSrc ] = useState(value);
 
@@ -20,15 +20,14 @@ export default function ImgUpload({ avatar, onUpload, defaultValue, value }) {
     reader.addEventListener("load", function() {
       const image = new Image();
       image.onload = function () {
-        // Resize the image
         const canvas = document.createElement('canvas');
-        const width = 530;
-        const height = 204;
 
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = maxWidth;
+        canvas.height = maxHeight;
 
-        canvas.getContext('2d').drawImage(image, 0, 0, width, height);
+        const ctx = canvas.getContext('2d');
+
+        ctx.drawImage(image, 0, 0, maxWidth, maxHeight);
 
         const dataUrl = canvas.toDataURL(file.type);
 
@@ -47,9 +46,9 @@ export default function ImgUpload({ avatar, onUpload, defaultValue, value }) {
 
 
   return (
-    <div style={{ position: 'relative', textAlign: 'initial', width: 'max-content' }}>
+    <Stack position="relative" width="100%" justifyContent="center">
       <Button
-        sx={{ padding: 0, position: 'absolute', top: '50%', left: '50%', margin: 0, transform: 'translate(-50%, -50%)', zIndex: 2 }}
+        sx={{ padding: 0, position: 'absolute', top: '42.26%', left: '50%', margin: 0, transform: 'translate(-50%, -50%)', zIndex: 2 }}
         onClick={() => uploadInputRef.current?.click()}
       >
         <UploadFileIcon fontSize="large" />
@@ -57,19 +56,19 @@ export default function ImgUpload({ avatar, onUpload, defaultValue, value }) {
       {
         avatar ? (
           <Stack>
-            <Avatar alt="" src={imgSrc} sx={{ width: 120, height: 120, alignSelf: 'center' }}>
-              Event Logo
+            <Avatar id={`avatar-${name || 1}`} alt="" src={imgSrc} sx={{ width, height, alignSelf: 'center' }}>
+              {altText}
             </Avatar>
-          <Typography component="label" htmlFor="largeImg" variant="subtitle2" sx={{ alignSelf: 'center', fontStyle: 'italic', opacity: 0.6 }}>
+            <Typography component="label" htmlFor={`avatar-${name || 1}`} variant="subtitle2" sx={{ alignSelf: 'center', fontStyle: 'italic', opacity: 0.6 }}>
               1.25&quot; x 1.25&quot;
             </Typography>
           </Stack>
         ) : (
           <Stack>
-            <Avatar id="largeImg" variant="square" alt="" src={imgSrc} sx={{ width: 530, height: 204, alignSelf: 'center' }}>
-              Event Ticket
+            <Avatar id={`rectangle-${name || 1}`} variant="square" alt="" src={imgSrc} sx={{ width, height, alignSelf: 'center' }}>
+              {altText}
             </Avatar>
-            <Typography component="label" htmlFor="largeImg" variant="subtitle2" sx={{ alignSelf: 'center', fontStyle: 'italic', opacity: 0.6 }}>
+            <Typography component="label" htmlFor={`rectangle-${name || 1}`} variant="subtitle2" sx={{ alignSelf: 'center', fontStyle: 'italic', opacity: 0.6 }}>
               5.5&quot; x 2.125&quot;
             </Typography>
           </Stack>
@@ -82,6 +81,7 @@ export default function ImgUpload({ avatar, onUpload, defaultValue, value }) {
         onChange={handleUpload}
         style={{display: "none"}}
       />
-    </div>
+      {children}
+    </Stack>
   )
 }

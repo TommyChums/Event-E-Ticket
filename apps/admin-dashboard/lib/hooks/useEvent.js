@@ -1,4 +1,5 @@
 import { useEffect, useReducer, useRef } from "react";
+import forEach from 'lodash/forEach';
 import isEmpty from 'lodash/isEmpty';
 
 import supabase from "../supabase";
@@ -20,7 +21,7 @@ function getPublicURLForEventImgs(configObj) {
 
 function setEventImgs(event) {
   const logoLocation = event.logo;
-  const ticketLocation = event.ticket_template;
+  const ticketConfig = event.ticket_template;
   let err = false;
 
   if (logoLocation) {
@@ -31,16 +32,23 @@ function setEventImgs(event) {
     event.logo = publicURL;
   }
 
-  if (ticketLocation) {
-    const { publicURL, error } = getPublicURLForEventImgs(ticketLocation);
+  event.ticket_template = {};
+  event.ticket_config = {};
+  event.original_ticket_template = {};
 
-    err = error;
+  if (ticketConfig) {
+    forEach(ticketConfig, (ticketInfo, ageLabel) => {
+      const { publicURL, error } = getPublicURLForEventImgs(ticketInfo);
+  
+      err = error;
 
-    event.ticket_template = publicURL;
+      event.ticket_template[ageLabel] = publicURL;
+  
+      event.ticket_config[ageLabel] = ticketConfig[ageLabel]?.config || {};
+      event.original_ticket_template = ticketConfig;
+    });
   }
 
-  event.ticket_config = ticketLocation.config || {};
-  event.original_ticket_template = ticketLocation;
 
   return { data: event, error: err };
 }

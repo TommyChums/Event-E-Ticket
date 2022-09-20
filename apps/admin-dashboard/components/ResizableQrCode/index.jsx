@@ -4,10 +4,17 @@ import QRCode from 'qrcode';
 import { ResizableBox } from 'react-resizable';
 import Draggable from 'react-draggable';
 import isFinite from 'lodash/isFinite';
+import reduce from 'lodash/reduce';
 import Avatar from '@mui/material/Avatar';
 
-export default function ResizableQrCode({ config, onChange, lightColour, darkColour }) {
-  const [ positionSize, setPositionSize ] = useState({});
+export default function ResizableQrCode({ scale = 1, maxHeight, config = {}, onChange, lightColour, darkColour }) {
+  const [ positionSize, setPositionSize ] = useState({
+    x: isFinite(config.x) ? config.x : 0,
+    y: isFinite(config.y) ? config.y : 0,
+    h: isFinite(config.h) ? config.h : maxHeight,
+    w: isFinite(config.w) ? config.w : maxHeight,
+  });
+
   const [ colour, setColour ] = useState({
     light: '#fff',
     dark: '#000',
@@ -17,12 +24,12 @@ export default function ResizableQrCode({ config, onChange, lightColour, darkCol
 
   useEffect(() => {
     setPositionSize({
-      x: isFinite(config.x) ? config.x : 0,
-      y: isFinite(config.y) ? config.y : 0,
-      h: isFinite(config.h) ? config.h : 204,
-      w: isFinite(config.w) ? config.w : 204,
+      x: isFinite(config.x) ? config.x / scale : 0,
+      y: isFinite(config.y) ? config.y / scale : 0,
+      h: isFinite(config.h) ? config.h / scale : maxHeight,
+      w: isFinite(config.w) ? config.w / scale : maxHeight,
     });
-  }, [ config ]);
+  }, [ config, maxHeight, scale ]);
 
   useEffect(() => {
     if (!isEqual(lightColour, colour.light)) {
@@ -60,10 +67,15 @@ export default function ResizableQrCode({ config, onChange, lightColour, darkCol
   }, [ colour ]);
 
   const updateSize = (size) => {
+    const scaledSize = reduce(size, (next, val, key) => {
+      next[key] = val * scale;
+      return next;
+    }, {});
+
     if (onChange && typeof onChange === 'function') {
-      onChange(size);
+      onChange(scaledSize);
     } else {
-      setPositionSize(size);
+      setPositionSize(scaledSize);
     }
   };
 
@@ -93,7 +105,6 @@ export default function ResizableQrCode({ config, onChange, lightColour, darkCol
         x: positionSize.x,
         y: positionSize.y,
       }}
-      scale={1}
       onDrag={handleOnMove}
       bounds="parent"
       cancel='.react-resizable-handle-se'
@@ -102,7 +113,7 @@ export default function ResizableQrCode({ config, onChange, lightColour, darkCol
         width={positionSize.w}
         height={positionSize.h}
         minConstraints={[ 100, 100 ]}
-        maxConstraints={[ 204, 204 ]}
+        maxConstraints={[ maxHeight, maxHeight ]}
         onResize={handleOnResize}
         lockAspectRatio
       >

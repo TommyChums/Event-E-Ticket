@@ -5,6 +5,7 @@ import Head from 'next/head'
 import isEmpty from 'lodash/isEmpty';
 import Container from '@mui/material/Container';
 import CircularProgress from '@mui/material/CircularProgress';;
+import Backdrop from '@mui/material/Backdrop';
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs'
@@ -94,9 +95,9 @@ export default function EventManagementPage() {
             </TabPanel>
           </Box>
       ) : (
-        <Box sx={{ width: '100%' }}>
+        <Backdrop open sx={{ color: '#fff' }}>
           <CircularProgress />
-        </Box>
+        </Backdrop>
       )}
     </>
   );

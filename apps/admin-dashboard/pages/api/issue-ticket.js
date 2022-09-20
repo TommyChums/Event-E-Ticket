@@ -2,6 +2,7 @@ import QRCode from 'qrcode';
 import nodemailer from 'nodemailer';
 import pug from 'pug';
 import path from 'path';
+import findKey from 'lodash/findKey';
 import isEmpty from 'lodash/isEmpty';
 import moment from 'moment';
 import sharp from 'sharp';
@@ -46,7 +47,14 @@ export default async function handler(req, res) {
 
     const event = registeredUser.event;
 
-    const { bucket, key, config } = event.ticket_template || {};
+    const paymentConfig = event.payment_config || {};
+
+    const userAgeMapping = findKey(paymentConfig.age_mapping, (ages) => {
+      const { from: ageFrom, to: ageTo } = ages;
+      return (registeredUser.age >= ageFrom && registeredUser.age <= ageTo)
+    });
+
+    const { bucket, key, config } = event.ticket_template[userAgeMapping] || {};
 
     const { data: ticketTemplate, error: downloadError } = await supabase.storage.from(bucket).download(key);
 
@@ -77,7 +85,7 @@ export default async function handler(req, res) {
     await QRCode.toFile('/tmp/qrcode.png', qrCodeInfo, qrCodeOptions);
 
     const qrCodeImg = await sharp(ticketTemplateBuffer).composite([
-      { input: '/tmp/qrcode.png', top: config.position?.y, left: config.position?.x },
+      { input: '/tmp/qrcode.png', top: Math.ceil(config.position?.y || 0), left: Math.ceil(config.position?.x || 0) },
     ]).toBuffer().then(buffer => {
       return buffer.toString('base64');
     });
