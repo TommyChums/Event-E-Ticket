@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Controller, useController, useForm } from 'react-hook-form';
 import { decode } from 'base64-arraybuffer';
 import { ColorPicker, toColor } from "react-color-palette";
@@ -117,6 +117,14 @@ export default function EventForm({ event = {
       reset(event);
     }
   }, [ event, getValues, reset ]);
+
+  const lightColourValue = useCallback((ageLabel) => (
+    watch(`ticket_config.${ageLabel}.colour.light`)?.hex
+  ), [ watch ]);
+
+  const darkColourValue = useCallback((ageLabel) => (
+    watch(`ticket_config.${ageLabel}.colour.dark`)?.hex
+  ), [ watch ]);
 
   const { isValid, isDirty, isSubmitting } = formState;
 
@@ -403,8 +411,8 @@ export default function EventForm({ event = {
                                     scale={QR_CODE_SCALE}
                                     maxHeight={TICKET_IMAGE_HEIGHT}
                                     config={field.value}
-                                    lightColour={watch(`ticket_config.${ageLabel}.colour.light`)?.hex}
-                                    darkColour={watch(`ticket_config.${ageLabel}.colour.dark`)?.hex}
+                                    lightColour={lightColourValue(ageLabel)}
+                                    darkColour={darkColourValue(ageLabel)}
                                   />
                                 </div>
                               )}
@@ -455,7 +463,7 @@ export default function EventForm({ event = {
             ))
           }
           <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
-            <Button disabled={submitDisabled} fullWidth variant="contained" type="submit">Submit</Button>
+            <Button disabled={submitDisabled} fullWidth variant="contained" type="submit">Save</Button>
             <Button disabled={saving} fullWidth variant="outlined" type="reset">Reset</Button>
           </Stack>
         </Stack>

@@ -9,10 +9,10 @@ import Avatar from '@mui/material/Avatar';
 
 export default function ResizableQrCode({ scale = 1, maxHeight, config = {}, onChange, lightColour, darkColour }) {
   const [ positionSize, setPositionSize ] = useState({
-    x: isFinite(config.x) ? config.x : 0,
-    y: isFinite(config.y) ? config.y : 0,
-    h: isFinite(config.h) ? config.h : maxHeight,
-    w: isFinite(config.w) ? config.w : maxHeight,
+    x: isFinite(config.x) ? config.x / scale: 0,
+    y: isFinite(config.y) ? config.y / scale: 0,
+    h: isFinite(config.h) ? config.h / scale: maxHeight,
+    w: isFinite(config.w) ? config.w / scale: maxHeight,
   });
 
   const [ colour, setColour ] = useState({
@@ -21,15 +21,6 @@ export default function ResizableQrCode({ scale = 1, maxHeight, config = {}, onC
   });
 
   const [ qrCode, setQrCode ] = useState();
-
-  useEffect(() => {
-    setPositionSize({
-      x: isFinite(config.x) ? config.x / scale : 0,
-      y: isFinite(config.y) ? config.y / scale : 0,
-      h: isFinite(config.h) ? config.h / scale : maxHeight,
-      w: isFinite(config.w) ? config.w / scale : maxHeight,
-    });
-  }, [ config, maxHeight, scale ]);
 
   useEffect(() => {
     if (!isEqual(lightColour, colour.light)) {
@@ -74,9 +65,9 @@ export default function ResizableQrCode({ scale = 1, maxHeight, config = {}, onC
 
     if (onChange && typeof onChange === 'function') {
       onChange(scaledSize);
-    } else {
-      setPositionSize(scaledSize);
     }
+
+    setPositionSize(size);
   };
 
   const handleOnResize = (_, { size }) => {

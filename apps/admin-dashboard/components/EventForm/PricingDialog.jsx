@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { useController, useForm } from 'react-hook-form';
+import { Controller, useController, useForm } from 'react-hook-form';
+import moment from 'moment';
 import forEach from 'lodash/forEach';
 import isEmpty from 'lodash/isEmpty';
 import isFinite from 'lodash/isFinite';
@@ -15,6 +16,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
+import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 
 function ControlledNumberInput({ control, name, defaultValue, ...props }) {
   const { field, fieldState: { error } } = useController({
@@ -178,30 +182,78 @@ export default function PricingDialog(props) {
               {startCase(ageLabel)}
             </Typography>
             <Stack direction="row" spacing={1}>
-              <ControlledNumberInput
-                control={control}
-                name={`age_mapping.${ageLabel}.from`}
-                defaultValue={ageMapping[ageLabel]?.from}
-                label="Age From:"
-              />
-              <ControlledNumberInput
-                control={control}
-                name={`age_mapping.${ageLabel}.to`}
-                defaultValue={ageMapping[ageLabel]?.to}
-                label="Age To:"
-              />
-              <ControlledNumberInput
-                control={control}
-                name={`price_by_age.${ageLabel}`}
-                defaultValue={price}
-                label="Price:"
-              />
+              <Stack direction="column" spacing={2} width="100%">
+                <Stack direction="row" spacing={1} >
+                  <ControlledNumberInput
+                    fullWidth
+                    control={control}
+                    name={`age_mapping.${ageLabel}.from`}
+                    defaultValue={ageMapping[ageLabel]?.from}
+                    label="Age From:"
+                  />
+                  <ControlledNumberInput
+                    fullWidth
+                    control={control}
+                    name={`age_mapping.${ageLabel}.to`}
+                    defaultValue={ageMapping[ageLabel]?.to}
+                    label="Age To:"
+                  />
+                </Stack>
+                <Stack direction="row" spacing={1}>
+                  <ControlledNumberInput
+                    fullWidth
+                    control={control}
+                    name={`price_by_age.${ageLabel}`}
+                    defaultValue={price}
+                    label="Price:"
+                  />
+                  <ControlledNumberInput
+                    fullWidth
+                    control={control}
+                    name={`early_bird_price_by_age.${ageLabel}`}
+                    label="Early Bird Price:"
+                  />
+                </Stack>
+              </Stack>
               <IconButton onClick={() => handleDeleteAgeRange(ageLabel)}>
                 <DeleteIcon />
               </IconButton>
             </Stack>
           </Stack>
         ))}
+        <div style={{ marginTop: '2.5rem', marginRight: '3rem' }}>
+          <Controller
+            control={control}
+            name="early_bird-date"
+            rules={{
+              validate: {
+                isValidDate: (val) => val ? moment(val, true).isValid() ? null : 'Invalid Date' : null,
+              },
+            }}
+            render={({ field }) => (
+              <LocalizationProvider dateAdapter={AdapterMoment}>
+                <DateTimePicker
+                  {...field}
+                  ampm={false}
+                  disablePast
+                  inputFormat="YYYY-MM-DD hh:mm"
+                  placeholder='Leave empty for no Early Bird'
+                  label="Early Bird End Date"
+                  openTo="month"
+                  views={[ 'year', 'month', 'day', 'hours', 'minutes' ]}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      InputLabelProps={{ shrink: true }}
+                      fullWidth
+                      helperText="yyyy-mm-dd hh:mm"
+                    />
+                  )}
+                />
+              </LocalizationProvider>
+            )}
+          />
+        </div>
       </Stack>
       <Stack mx={2} direction="row" spacing={1}>
         <TextField
