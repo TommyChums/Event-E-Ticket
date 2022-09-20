@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSnackbar } from 'notistack';
 import moment from 'moment';
 import isEmpty from 'lodash/isEmpty';
 import isFinite from 'lodash/isFinite';
@@ -20,7 +21,8 @@ import { makeAuthenticatedPostRequest } from '../../lib/api/makeAuthenticatedReq
 import getUserAmtPaidAndRequired from '../../lib/helpers/getUserAmtPaidAndRequired';
 
 export default function UserDialog({ event, open, onClose, user, updatePayment, updateUser, ...props}) {
-  const [ saveStatus, setSaveStatus ] = useState(null);
+  const { closeSnackbar, enqueueSnackbar } = useSnackbar();
+
   const [ amountPaid, setAmountPaid ] = useState(0);
   const [ currentPayment, setCurentPayment ] = useState(0);
   const [ amountRequriedToPay, setAmountRequiredToPay ] = useState(0);
@@ -28,10 +30,6 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
 
   useEffect(() => {
     if (isEmpty(user) || isEmpty(event)) onClose();
-
-    if (user.ticket_issued) {
-      setSaveStatus({ type: 'success', message: 'Ticket successfully issued!' });
-    }
 
     const paymentConfig = event.payment_config;
 
@@ -55,22 +53,29 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
   };
 
   const handlePaymentUpdate = async () => {
-    setSaveStatus(null);
     setUpdating(true);
 
     let success = true;
 
+    let issuingId = null;
+
     if (amountRequriedToPay > 0) {
       const paymentTime = moment().toISOString();
 
-      setSaveStatus({ type: 'info', message: 'Storing Payment' });
+      enqueueSnackbar('Storing Payment', {
+        variant: 'info',
+      });
+
       const { data: payment, error: insertError } = await supabase.from('registered-user-payments').insert({
         user_uuid: user.uuid,
         amount: currentPayment,
         timestamp: paymentTime,
       }).single();
 
-      setSaveStatus({ type: 'info', message: 'Updating User' });
+      enqueueSnackbar('Updating User', {
+        variant: 'info',
+      });
+
       const { data: updatedUser, error: updateError } = await supabase.from('registered-users').update({
         updated_on: paymentTime,
       }).eq('uuid', user.uuid).single();
@@ -78,7 +83,9 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
       success = !updateError && !insertError;
 
       if (!success) {
-        setSaveStatus({ type: 'error', message: insertError.message || updateError.message });
+        enqueueSnackbar(insertError.message || updateError.message, {
+          variant: 'error',
+        });
       } else {
         updateUser(updatedUser);
         updatePayment(payment);
@@ -86,18 +93,31 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
     }
 
     if (success && ((amountRequriedToPay - currentPayment) === 0)) {
-      setSaveStatus({ type: 'info', message: 'Issuing ticket...' });
+      enqueueSnackbar(`Issuing ticket to ${user.email}`, {
+        variant: 'info',
+        persist: true,
+        action: (id) => { issuingId = id },
+      });
+
       const { data: { user: issuedUser }, error: issueError } = await makeAuthenticatedPostRequest('/api/issue-ticket', { user_uuid: user.uuid });
 
+      closeSnackbar(issuingId);
+
       if (issueError) {
-        setSaveStatus({ type: 'error', message: issueError.message });
+        enqueueSnackbar(`Error isuing ticket to ${user.email}: ${issueError.message}`, {
+          variant: 'error',
+        });
       } else {
-        setSaveStatus({ type: 'success', message: 'Ticket successfully issued!' });
+        enqueueSnackbar(`Ticket successfully issued to ${user.email}!`, {
+          variant: 'success',
+        });
 
         updateUser(issuedUser);
       }
     } else if (success) {
-      setSaveStatus({ type: 'success', message: 'Payment stored and User Updated' });
+      enqueueSnackbar('Payment stored and User Updated', {
+        variant: 'success',
+      });
     }
 
     setUpdating(false);
@@ -106,7 +126,7 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
 
   return (
     <Dialog {...props} open={open} onClose={onClose}>
-      { saveStatus && <Alert severity={saveStatus.type}>{saveStatus.message}</Alert> }
+      { user.ticket_issued && <Alert severity="success">Ticket Successfully Issued</Alert> }
       <DialogTitle>{user.first_name} {user.last_name}</DialogTitle>
       <DialogContent>
         <Stack direction="column" spacing={2}>

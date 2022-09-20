@@ -145,6 +145,21 @@ export default function Layout({ children }) {
                 </Button>
               ))}
             </Box>
+            <Typography
+              variant="h4"
+              noWrap
+              sx={{
+                flexGrow: 1,
+                display: { xs: 'none', md: 'flex' },
+                fontFamily: 'monospace',
+                fontWeight: 700,
+                letterSpacing: '.5rem',
+                color: 'inherit',
+                textDecoration: 'none',
+              }}
+            >
+              MANAGEMENT DASHBOARD
+            </Typography>
             <Box sx={{ flexGrow: 0 }}>
               <Button
                 disabled={signingOut}

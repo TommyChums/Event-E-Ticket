@@ -5,7 +5,7 @@ import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 
-export default function ImgUpload({ avatar, name, onUpload, defaultValue, value, maxWidth, maxHeight, width, height, altText, children = null }) {
+export default function ImgUpload({ avatar, disabled, name, onUpload, defaultValue, value, maxWidth, maxHeight, width, height, altText, children = null }) {
   const uploadInputRef = useRef(null);
   const [ imgSrc, setImgSrc ] = useState(value);
 
@@ -47,12 +47,16 @@ export default function ImgUpload({ avatar, name, onUpload, defaultValue, value,
 
   return (
     <Stack position="relative" width="100%" justifyContent="center">
-      <Button
-        sx={{ padding: 0, position: 'absolute', top: '42.26%', left: '50%', margin: 0, transform: 'translate(-50%, -50%)', zIndex: 2 }}
-        onClick={() => uploadInputRef.current?.click()}
-      >
-        <UploadFileIcon fontSize="large" />
-      </Button>
+      {
+        !disabled && (
+          <Button
+            sx={{ padding: 0, position: 'absolute', top: '42.26%', left: '50%', margin: 0, transform: 'translate(-50%, -50%)', zIndex: 2 }}
+            onClick={() => uploadInputRef.current?.click()}
+          >
+            <UploadFileIcon fontSize="large" />
+          </Button>
+        )
+      }
       {
         avatar ? (
           <Stack>

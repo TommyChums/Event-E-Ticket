@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
+import { useSnackbar } from 'notistack';
 import { Controller, useController, useForm } from 'react-hook-form';
 import { decode } from 'base64-arraybuffer';
 import { ColorPicker, toColor } from "react-color-palette";
@@ -13,7 +14,6 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
-import Alert from '@mui/material/Alert';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -91,12 +91,15 @@ function ControlledLocation({ control, name, defaultValue, rules, ...props }) {
 };
 
 export default function EventForm({ event = {
+  uuid: v4(),
   ticket_template: {},
   ticket_config: {},
   original_ticket_template: {},
+  is_published: false,
 }, onSave }) {
+  const { enqueueSnackbar } = useSnackbar();
+
   const [ pricingDialogOpen, setPricingDialogOpen ] = useState(false);
-  const [ updatingStatus, setUpdatingStatus ] = useState(null);
   const [ saving, setSaving ] = useState(false);
 
   const {
@@ -128,19 +131,25 @@ export default function EventForm({ event = {
 
   const { isValid, isDirty, isSubmitting } = formState;
 
-  const submitDisabled = saving || !isValid || !isDirty || isSubmitting;
+  const eventPublished = event.is_published;
+
+  const submitDisabled = eventPublished || saving || !isValid || !isDirty || isSubmitting;
 
   const onSubmit = async (data) => {
     setSaving(true);
     if (data.logo !== event.logo) {
-      setUpdatingStatus({ type: 'info', message: 'Uploading Logo' });
+      enqueueSnackbar('Uploading Logo', {
+        variant: 'info',
+      });
       
       const logoBucket = 'event-logos';
 
       const { imgKey, error } = await replaceStorageImg(data.logo, logoBucket, event.uuid, event.logo);
 
       if (error) {
-        setUpdatingStatus({ type: 'error', message: `Logo Upload: ${error.message}` });
+        enqueueSnackbar(`Failed to upload Logo: ${error.message}`, {
+          variant: 'error',
+        });
         setSaving(false);
         return;
       }
@@ -150,7 +159,9 @@ export default function EventForm({ event = {
         bucket: logoBucket,
       };
 
-      setUpdatingStatus({ type: 'info', message: 'Uploaded Logo' });
+      enqueueSnackbar('Uploaded Logo', {
+        variant: 'success',
+      });
     } else {
       delete data.logo;
     }
@@ -161,14 +172,18 @@ export default function EventForm({ event = {
       if (data.ticket_template[ageLabel] !== event.ticket_template[ageLabel]) {
         const displayAgeLabel = startCase(ageLabel);
 
-        setUpdatingStatus({ type: 'info', message: `Uploading Ticket Template for ${displayAgeLabel}` });
+        enqueueSnackbar(`Uploading Ticket Template for ${displayAgeLabel}`, {
+          variant: 'info',
+        });
   
         const ticketBucket = 'event-ticket-templates';
   
         const { imgKey, error } = await replaceStorageImg(templateInfo, ticketBucket, event.uuid, event.ticket_template[ageLabel]);
   
         if (error) {
-          setUpdatingStatus({ type: 'error', message: `Ticket Upload for ${displayAgeLabel}: ${error.message}` });
+          enqueueSnackbar(`Failed to upload Ticket for ${displayAgeLabel}: ${error.message}`, {
+            variant: 'error',
+          });
           setSaving(false);
           return;
         }
@@ -179,7 +194,9 @@ export default function EventForm({ event = {
           config: data.ticket_config[ageLabel],
         };
     
-        setUpdatingStatus({ type: 'info', message: `Uploaded Ticket Template for ${displayAgeLabel}` });
+        enqueueSnackbar(`Uploaded Ticket Template for ${displayAgeLabel}`, {
+          variant: 'success',
+        });
       } else if (!isEqual(data.ticket_config[ageLabel], event.ticket_config[ageLabel])) {
         data.ticket_template[ageLabel] = {
           ...typeof templateInfo === 'object' && templateInfo,
@@ -207,7 +224,9 @@ export default function EventForm({ event = {
     delete data.original_ticket_template;
     delete data.ticket_config;
 
-    setUpdatingStatus({ type: 'info', message: 'Updating Event' });
+    enqueueSnackbar('Updating Event', {
+      variant: 'info',
+    });
 
     const { data: newEvent, error } = await supabase.from('events')
       .update({
@@ -216,9 +235,13 @@ export default function EventForm({ event = {
       }).eq('uuid', event.uuid).single();
 
     if (error) {
-      setUpdatingStatus({ type: 'error', message: error.message });
+      enqueueSnackbar(error.message, {
+        variant: 'error',
+      });
     } else {
-      setUpdatingStatus({ type: 'success', message: 'Event Updated' });
+      enqueueSnackbar('Event Updated', {
+        variant: 'success',
+      });
       console.log('newEvent', { ...newEvent })
       onSave(newEvent);
     }
@@ -231,7 +254,6 @@ export default function EventForm({ event = {
 
   return (
     <Container maxWidth="md" sx={{ marginBottom: '2rem' }}>
-      <Alert onClose={() => setUpdatingStatus(null)} sx={{ visibility: updatingStatus ? 'visible' : 'hidden' }} severity={updatingStatus?.type}>{updatingStatus?.message}</Alert>
       <form
         onKeyDown={preventEnterSubmit}
         onSubmit={handleSubmit(onSubmit)}
@@ -256,6 +278,7 @@ export default function EventForm({ event = {
                   height={120}
                   maxWidth={500}
                   maxHeight={500}
+                  disabled={eventPublished}
                 />
               )}
             />
@@ -266,6 +289,7 @@ export default function EventForm({ event = {
             render={({ field }) => (
               <TextField
                 {...field}
+                disabled={eventPublished}
                 id="outlined-host"
                 label="Host"
                 variant="outlined"
@@ -278,6 +302,7 @@ export default function EventForm({ event = {
             render={({ field }) => (
               <TextField
                 {...field}
+                disabled={eventPublished}
                 id="outlined-name"
                 label="Name"
                 variant="outlined"
@@ -290,6 +315,7 @@ export default function EventForm({ event = {
             render={({ field }) => (
               <TextField
                 {...field}
+                disabled={eventPublished}
                 id="outlined-description"
                 label="Description"
                 multiline
@@ -306,8 +332,9 @@ export default function EventForm({ event = {
                 <LocalizationProvider dateAdapter={AdapterMoment}>
                   <DateTimePicker
                     {...field}
+                    disabled={eventPublished}
                     disablePast
-                    inputFormat="YYYY-MM-DD hh:mm"
+                    inputFormat="YYYY-MM-DD hh:mm A"
                     label="Start Date"
                     InputLabelProps={{ shrink: true }}
                     openTo="month"
@@ -330,8 +357,9 @@ export default function EventForm({ event = {
                 <LocalizationProvider dateAdapter={AdapterMoment}>
                   <DateTimePicker
                     {...field}
+                    disabled={eventPublished}
                     disablePast
-                    inputFormat="YYYY-MM-DD hh:mm"
+                    inputFormat="YYYY-MM-DD hh:mm A"
                     label="End Date"
                     InputLabelProps={{ shrink: true }}
                     openTo="month"
@@ -350,6 +378,7 @@ export default function EventForm({ event = {
           </Stack>
           <ControlledLocation
             control={control}
+            disabled={eventPublished}
             name="venue"
             placeholder="Search Google Maps"
             defaultValue={event.venue}
@@ -365,6 +394,7 @@ export default function EventForm({ event = {
             render={({ field }) => (
               <PricingDialog
                 {...field}
+                disabled={eventPublished}
                 open={pricingDialogOpen}
                 unregister={unregister}
                 onClose={() => setPricingDialogOpen(false)}
@@ -394,6 +424,7 @@ export default function EventForm({ event = {
                       render={({ field }) => (
                           <ImgUpload
                             {...field}
+                            disabled={eventPublished}
                             onUpload={field.onChange}
                             width={TICKET_IMAGE_WIDTH}
                             height={TICKET_IMAGE_HEIGHT}
@@ -408,6 +439,7 @@ export default function EventForm({ event = {
                                 <div style={{ width: TICKET_IMAGE_WIDTH, height: TICKET_IMAGE_HEIGHT, position: 'absolute', top: 0, alignSelf: 'center' }}>
                                   <ResizableQrCode
                                     {...field}
+                                    disabled={eventPublished}
                                     scale={QR_CODE_SCALE}
                                     maxHeight={TICKET_IMAGE_HEIGHT}
                                     config={field.value}
@@ -420,43 +452,49 @@ export default function EventForm({ event = {
                           </ImgUpload>
                       )}
                     />
-                    <Typography component='label' htmlFor={`qrcode-colour-${ageLabel}`} variant="subtitle1" >QRCode Colour:</Typography>
-                    <Stack id={`qrcode-colour-${ageLabel}`} direction="row" justifyContent="center" spacing={1}>
-                      <Controller
-                        control={control}
-                        name={`ticket_config.${ageLabel}.colour.light`}
-                        render={({ field }) => (
-                          <ColorPicker
-                            width={(TICKET_IMAGE_WIDTH / 2) - 5}
-                            height={TICKET_IMAGE_HEIGHT}
-                            color={field.value || toColor('hex', '#fff')}
-                            onChange={(e) => {
-                              field.onChange(e);
-                            }}
-                            alpha
-                            hideHSV
-                            hideRGB
-                          />
-                        )}
-                      />
-                      <Controller
-                        control={control}
-                        name={`ticket_config.${ageLabel}.colour.dark`}
-                        render={({ field }) => (
-                          <ColorPicker
-                            width={(TICKET_IMAGE_WIDTH / 2) - 5}
-                            height={TICKET_IMAGE_HEIGHT}
-                            color={field.value || toColor('hex', '#000')}
-                            onChange={(e) => {
-                              field.onChange(e);
-                            }}
-                            alpha
-                            hideHSV
-                            hideRGB
-                          />
-                        )}
-                      />
-                    </Stack>
+                    {
+                      !eventPublished && (
+                        <>
+                          <Typography component='label' htmlFor={`qrcode-colour-${ageLabel}`} variant="subtitle1" >QRCode Colour:</Typography>
+                          <Stack id={`qrcode-colour-${ageLabel}`} direction="row" justifyContent="center" spacing={1}>
+                            <Controller
+                              control={control}
+                              name={`ticket_config.${ageLabel}.colour.light`}
+                              render={({ field }) => (
+                                <ColorPicker
+                                  width={(TICKET_IMAGE_WIDTH / 2) - 5}
+                                  height={TICKET_IMAGE_HEIGHT}
+                                  color={field.value || toColor('hex', '#fff')}
+                                  onChange={(e) => {
+                                    field.onChange(e);
+                                  }}
+                                  alpha
+                                  hideHSV
+                                  hideRGB
+                                />
+                              )}
+                            />
+                            <Controller
+                              control={control}
+                              name={`ticket_config.${ageLabel}.colour.dark`}
+                              render={({ field }) => (
+                                <ColorPicker
+                                  width={(TICKET_IMAGE_WIDTH / 2) - 5}
+                                  height={TICKET_IMAGE_HEIGHT}
+                                  color={field.value || toColor('hex', '#000')}
+                                  onChange={(e) => {
+                                    field.onChange(e);
+                                  }}
+                                  alpha
+                                  hideHSV
+                                  hideRGB
+                                />
+                              )}
+                            />
+                          </Stack>
+                        </>
+                      )
+                    }
                   </Stack>
                 </AccordionDetails>
               </Accordion>

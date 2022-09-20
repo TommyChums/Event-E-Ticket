@@ -3,6 +3,7 @@ import 'react-resizable/css/styles.css';
 import "react-color-palette/lib/css/styles.css";
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { SnackbarProvider } from 'notistack';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 import Layout from '../components/Layout';
@@ -42,9 +43,11 @@ export default function App({ Component, pageProps }) {
 
   return (
     <ThemeProvider theme={theme}>
-      <Layout>
-        <Component {...pageProps} />
-      </Layout>
+      <SnackbarProvider maxSnack={3}>
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
+      </SnackbarProvider>
     </ThemeProvider>
   );
 };

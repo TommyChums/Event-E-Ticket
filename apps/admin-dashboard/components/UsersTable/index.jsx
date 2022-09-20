@@ -100,10 +100,10 @@ const headCells = [
     label: 'Paid In Full',
   },
   {
-    id: 'updated_on',
+    id: 'created_on',
     type: 'text',
     disablePadding: true,
-    label: 'Updated On',
+    label: 'Registration Time',
   },
 ];
 
@@ -316,7 +316,7 @@ export default function EnhancedTable({ loading, users, usersEvent, updatePaymen
                             <TableCell align="left">{row.last_name}</TableCell>
                             <TableCell align="left">{row.age}</TableCell>
                             <TableCell align="left">{row.ticket_issued ? 'Yes' : 'No' }</TableCell>
-                            <TableCell align="left">{moment(row.updated_on).format('LLL')}</TableCell>
+                            <TableCell align="left">{moment(row.created_on).format('LLL')}</TableCell>
                           </TableRow>
                         );
                       })
