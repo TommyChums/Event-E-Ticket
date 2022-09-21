@@ -36,7 +36,7 @@ export default async function handler(req, res) {
 
     const userPrice = `$${priceByAge[userAgeMapping] || 0}`;
 
-    const registrationPugPath = fs.readFileSync(path.join(process.cwd(), 'assets/email-templates/tmp-registration.html')).toString();
+    const registrationPugPath = fs.readFileSync(path.join(process.cwd(), 'assets/email-templates/registration.html')).toString();
  
     // const compileRegistration = pug.compileFile(registrationPugPath);
     const compileRegistration = Handlebars.compile(registrationPugPath);
@@ -44,7 +44,7 @@ export default async function handler(req, res) {
     const ticketHtml = compileRegistration({
       eventTitle: event.name?.toUpperCase(),
       userFirstName: registeredUser.first_name,
-      eventStartTime: moment(event.start_date).format('LLLL'),
+      eventStartTime: moment(event.start_date).utcOffset(-4).format('LLLL') + " AST",
       ticketPrice: userPrice,
       eventVenueAddress: event.venue,
       registrationNumber: registeredUser.registration_number,
