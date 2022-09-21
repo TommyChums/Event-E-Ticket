@@ -6,6 +6,7 @@
         "^build",
         "$NEXT_PUBLIC_SUPABASE_URL",
         "$NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "$SUPABASE_SERVICE_KEY",
         "$LD_LIBRARY_PATH",
         "$NEXT_PUBLIC_MAPS_API_KEY",
         "$EMAIL_PASS",
