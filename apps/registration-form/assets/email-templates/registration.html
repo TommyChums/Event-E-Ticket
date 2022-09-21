@@ -9,6 +9,10 @@
         box-sizing: border-box;
       }
 
+      :root {
+        --priimary-color: #ecc721;
+      }
+
       body {
         margin: 0;
         padding: 0;
@@ -26,6 +30,14 @@
 
       p {
         line-height: inherit;
+      }
+
+      .primary-text-colour {
+        color: var(--priimary-color);
+      }
+
+      .primary-background-colour {
+        background-color: var(--priimary-color);
       }
 
       .desktop_hide,
@@ -77,6 +89,41 @@
           display: table !important;
           max-height: none !important;
         }
+      }
+
+      .see-you-there-text {
+        font-size: 62px;
+        letter-spacing: 2px;
+        font-weight: 1000;
+        font-family: Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;
+        margin: 0;
+      }
+      .overlapping-text-container {
+        position: relative;
+        width: 565px;
+        margin: 1rem 0;
+        line-height: 58px;
+      }
+      .background-text {
+        opacity: 0.8;
+        -webkit-text-fill-color: black;
+        -webkit-text-stroke-width: 1.5px;
+        -webkit-text-stroke-color: var(--priimary-color);
+      }
+      .foreground-text {
+        -webkit-text-fill-color: white;
+        -webkit-text-stroke-width: 1px;
+        -webkit-text-stroke-color: white;
+        position: absolute;
+        top: 11%;
+        left: 5%;
+        color: white;
+      }
+
+      .svg-icon {
+        width: 20px;
+        fill: var(--priimary-color);
+        margin-left: 6px;
       }
     </style>
   </head>
@@ -157,7 +204,7 @@
                                 <td class="pad" style="width: 100%; padding-right: 0; padding-left: 0">
                                   <div class="alignment" align="center" style="line-height: 10px">
                                     <img
-                                      src="https://d15k2d11r6t6rl.cloudfront.net/public/users/BeeFree/beefree-wwqqt7lgl3/spartan%20logo.png"
+                                      src="{{logoUrl}}"
                                       style="
                                         display: block;
                                         height: auto;
@@ -167,8 +214,8 @@
                                         padding-top: 16px;
                                       "
                                       width="204"
-                                      alt="Hero Image Placeholder"
-                                      title="Hero Image Placeholder"
+                                      alt="{{eventTitle}}"
+                                      title="{{eventTitle}}"
                                     />
                                   </div>
                                 </td>
@@ -186,20 +233,10 @@
                               <tr>
                                 <td class="pad" style="width: 100%; padding-right: 0; padding-left: 0">
                                   <div class="alignment" align="center" style="line-height: 10px">
-                                    <img
-                                      class="big"
-                                      src="https://d1oco4z2z1fhwp.cloudfront.net/templates/default/3296/MCC_confirmation_type_seeyouthere.png"
-                                      style="
-                                        display: block;
-                                        height: auto;
-                                        border: 0;
-                                        width: 565px;
-                                        max-width: 100%;
-                                      "
-                                      width="565"
-                                      alt="See You There Typography"
-                                      title="See You There Typography"
-                                    />
+                                    <div class="overlapping-text-container big">
+                                      <p class="background-text see-you-there-text">SEE YOU THERE</p>
+                                      <p class="foreground-text see-you-there-text">SEE YOU THERE</p>
+                                    </div>
                                   </div>
                                 </td>
                               </tr>
@@ -226,7 +263,6 @@
                                   <h1
                                     style="
                                       margin: 0;
-                                      color: #ecc721;
                                       font-size: 30px;
                                       font-family: Montserrat, Trebuchet MS, Lucida Grande,
                                         Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;
@@ -238,6 +274,7 @@
                                       margin-top: 0;
                                       margin-bottom: 0;
                                     "
+                                    class="primary-text-colour"
                                   >
                                     <strong>
                                       <span class="tinyMce-placeholder"> {{eventTitle}} </span>
@@ -432,7 +469,9 @@
                                           mso-line-height-alt: 16.8px;
                                         "
                                       >
-                                        <span style="font-size: 30px"><strong>TICKET DETAILS</strong></span>
+                                        <span style="font-size: 30px" class="primary-text-colour"
+                                          ><strong>TICKET DETAILS</strong></span
+                                        >
                                       </p>
                                     </div>
                                   </div>
@@ -611,7 +650,7 @@
                                           style="
                                             font-size: 1px;
                                             line-height: 1px;
-                                            border-top: 1px solid #3de6e8;
+                                            border-top: 1px solid var(--priimary-color);
                                           "
                                         >
                                           <span>&#8202;</span>
@@ -892,7 +931,7 @@
                                           style="
                                             font-size: 1px;
                                             line-height: 1px;
-                                            border-top: 1px solid #3de6e8;
+                                            border-top: 1px solid var(--priimary-color);
                                           "
                                         >
                                           <span>&#8202;</span>
@@ -1001,7 +1040,9 @@
                                           mso-line-height-alt: 16.8px;
                                         "
                                       >
-                                        <span style="font-size: 30px"><strong>EVENT DETAILS</strong></span>
+                                        <span style="font-size: 30px" class="primary-text-colour"
+                                          ><strong>EVENT DETAILS</strong></span
+                                        >
                                       </p>
                                     </div>
                                   </div>
@@ -1158,20 +1199,15 @@
                                                 padding-right: 25px;
                                               "
                                             >
-                                              <img
-                                                class="icon"
-                                                alt="Calendar Icon"
-                                                src="https://d1oco4z2z1fhwp.cloudfront.net/templates/default/3296/MCC_confirmation_icon_calendar.png"
-                                                height="32"
-                                                width="32"
-                                                align="center"
-                                                style="
-                                                  display: block;
-                                                  height: auto;
-                                                  margin: 0 auto;
-                                                  border: 0;
-                                                "
-                                              />
+                                              <svg
+                                                class="svg-icon"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                viewBox="0 0 448 512"
+                                              >
+                                                <path
+                                                  d="M152 64H296V24C296 10.75 306.7 0 320 0C333.3 0 344 10.75 344 24V64H384C419.3 64 448 92.65 448 128V448C448 483.3 419.3 512 384 512H64C28.65 512 0 483.3 0 448V128C0 92.65 28.65 64 64 64H104V24C104 10.75 114.7 0 128 0C141.3 0 152 10.75 152 24V64zM48 448C48 456.8 55.16 464 64 464H384C392.8 464 400 456.8 400 448V192H48V448z"
+                                                />
+                                              </svg>
                                             </td>
                                             <td
                                               style="
@@ -1297,20 +1333,17 @@
                                                 href="https://www.google.com/maps/search/?api=1&query=Corner Ramlal Trace Ext, &, HHHJ+6PH, Uriah Butler Hwy, Charlieville, Trinidad and Tobago&query_place_id=ChIJg09iGL0ANowRgBn_xZpnMuc"
                                                 target="_blank"
                                                 style="text-decoration: none"
-                                                ><img
-                                                  class="icon"
-                                                  alt="Location Icon"
-                                                  src="https://d1oco4z2z1fhwp.cloudfront.net/templates/default/3296/MCC_confirmation_icon_location.png"
-                                                  height="32"
-                                                  width="32"
-                                                  align="center"
-                                                  style="
-                                                    display: block;
-                                                    height: auto;
-                                                    margin: 0 auto;
-                                                    border: 0;
-                                                  "
-                                              /></a>
+                                              >
+                                                <svg
+                                                  xmlns="http://www.w3.org/2000/svg"
+                                                  viewBox="0 0 384 512"
+                                                  class="svg-icon"
+                                                >
+                                                  <path
+                                                    d="M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 256c-35.3 0-64-28.7-64-64s28.7-64 64-64s64 28.7 64 64s-28.7 64-64 64z"
+                                                  />
+                                                </svg>
+                                              </a>
                                             </td>
                                             <td
                                               style="
@@ -1540,7 +1573,7 @@
                                 <td class="pad" style="width: 100%; padding-right: 0; padding-left: 0">
                                   <div class="alignment" align="center" style="line-height: 10px">
                                     <img
-                                      src="https://d15k2d11r6t6rl.cloudfront.net/public/users/BeeFree/beefree-wwqqt7lgl3/RFC%20Logo%20FInal-01%20%281%29.png"
+                                      src="{{rlcLogo}}"
                                       style="
                                         display: block;
                                         height: auto;
@@ -1549,8 +1582,8 @@
                                         max-width: 100%;
                                       "
                                       width="136"
-                                      alt="Your Logo Placeholder"
-                                      title="Your Logo Placeholder"
+                                      alt="Reformation Life Centre"
+                                      title="Reformation Life Centre"
                                     />
                                   </div>
                                 </td>
@@ -1582,27 +1615,33 @@
                                           <a
                                             href="https://www.facebook.com/ReformationLifeCentre"
                                             target="_blank"
-                                            ><img
-                                              src="https://app-rsrc.getbee.io/public/resources/social-networks-icon-sets/t-only-logo-white/facebook@2x.png"
-                                              width="32"
-                                              height="32"
-                                              alt="Facebook"
-                                              title="Facebook"
-                                              style="display: block; height: auto; border: 0"
-                                          /></a>
+                                          >
+                                            <svg
+                                              xmlns="http://www.w3.org/2000/svg"
+                                              viewBox="0 0 512 512"
+                                              class="svg-icon"
+                                            >
+                                              <path
+                                                d="M504 256C504 119 393 8 256 8S8 119 8 256c0 123.78 90.69 226.38 209.25 245V327.69h-63V256h63v-54.64c0-62.15 37-96.48 93.67-96.48 27.14 0 55.52 4.84 55.52 4.84v61h-31.28c-30.8 0-40.41 19.12-40.41 38.73V256h68.78l-11 71.69h-57.78V501C413.31 482.38 504 379.78 504 256z"
+                                              />
+                                            </svg>
+                                          </a>
                                         </td>
                                         <td style="padding: 0 2px 0 2px">
                                           <a
                                             href="https://www.youtube.com/ReformationLifeCentreRLC"
                                             target="_blank"
-                                            ><img
-                                              src="https://app-rsrc.getbee.io/public/resources/social-networks-icon-sets/t-only-logo-white/youtube@2x.png"
-                                              width="32"
-                                              height="32"
-                                              alt="YouTube"
-                                              title="YouTube"
-                                              style="display: block; height: auto; border: 0"
-                                          /></a>
+                                          >
+                                            <svg
+                                              xmlns="http://www.w3.org/2000/svg"
+                                              viewBox="0 0 576 512"
+                                              class="svg-icon"
+                                            >
+                                              <path
+                                                d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305zm-317.51 213.508V175.185l142.739 81.205-142.739 81.201z"
+                                              />
+                                            </svg>
+                                          </a>
                                         </td>
                                       </tr>
                                     </table>

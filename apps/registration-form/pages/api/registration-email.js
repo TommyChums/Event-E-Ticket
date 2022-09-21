@@ -36,6 +36,10 @@ export default async function handler(req, res) {
 
     const userPrice = `$${priceByAge[userAgeMapping] || 0}`;
 
+    const { publicURL: logoUrl } = supabase.storage.from(event.logo?.bucket).getPublicUrl(event.logo?.key);
+    
+    const { publicURL: rlcLogo } = supabase.storage.from('church-assets').getPublicUrl('logo.png');
+
     const registrationPugPath = fs.readFileSync(path.join(process.cwd(), 'assets/email-templates/registration.html')).toString();
  
     // const compileRegistration = pug.compileFile(registrationPugPath);
@@ -48,7 +52,9 @@ export default async function handler(req, res) {
       ticketPrice: userPrice,
       eventVenueAddress: event.venue,
       registrationNumber: registeredUser.registration_number,
-      replySubject: `Event Registration: ${event.name}`
+      replySubject: `Event Registration: ${event.name}`,
+      logoUrl,
+      rlcLogo,
     });
 
     const transporter = nodemailer.createTransport({
