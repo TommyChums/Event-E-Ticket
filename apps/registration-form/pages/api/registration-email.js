@@ -7,7 +7,13 @@ import findKey from 'lodash/findKey';
 import moment from 'moment';
 import fs from 'fs';
 
-import supabase, { auththenticatedSupabase } from "../../lib/supabase";
+import supabase from "../../lib/supabase";
+
+const auththenticatedSupabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY,
+);
+
 
 function svgImgUrl(svgName, primaryColour) {
   const { publicURL } = supabase.storage.from('church-assets').getPublicUrl(`email-images/${primaryColour}/${svgName}.png`);
@@ -97,9 +103,10 @@ export default async function handler(req, res) {
       userFirstName: registeredUser.first_name,
       eventStartTime: moment(event.start_date).utcOffset(-4).format('LLLL') + " AST",
       ticketPrice: userPrice,
-      eventVenueAddress: event.venue,
+      eventVenueAddress: event.venue.address,
       registrationNumber: registeredUser.registration_number,
       replySubject: `Event Registration: ${event.name}`,
+      eventVenueGoogleLink: `https://www.google.com/maps/search/?api=1&query=${event.venue?.address}&query_place_id=${event.venue?.place_id}`,
       logoUrl,
       rlcLogo,
       primaryColour,
