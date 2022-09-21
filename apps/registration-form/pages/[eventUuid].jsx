@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Head from 'next/head'
 import { Controller, useForm } from 'react-hook-form';
+import { v4, parse } from 'uuid';
 import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
@@ -15,6 +16,8 @@ import moment from 'moment';
 import isEmpty from 'lodash/isEmpty';
 
 import supabase from "../lib/supabase";
+
+const registrationNumberFromUuid = (uuid) => Buffer.from(parse(uuid)).readUint32BE(0);
 
 export default function RegistrationForm({ event }) {
   const [ saving, setSaving ] = useState(false);
@@ -53,6 +56,8 @@ export default function RegistrationForm({ event }) {
   const onSubmit = async (data) => {
     const age = moment().diff(data.date_of_birth, 'years');
 
+    const userUuid = v4();
+
     setInfo({ type: 'info', message: `Registering for event...` });
     setSaving(true);
 
@@ -60,8 +65,10 @@ export default function RegistrationForm({ event }) {
       .from('registered-users')
       .insert([{
         ...data,
+        uuid: userUuid,
         age,
         registered_event: event.uuid,
+        registration_number: registrationNumberFromUuid(userUuid),
       }]).single();
 
     if (error) {

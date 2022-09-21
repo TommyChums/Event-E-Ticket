@@ -1,8 +1,10 @@
 import nodemailer from 'nodemailer';
 import pug from 'pug';
+import Handlebars from 'handlebars';
 import path from 'path';
 import findKey from 'lodash/findKey';
 import moment from 'moment';
+import fs from 'fs';
 
 import supabase from "../../lib/supabase";
 
@@ -34,15 +36,19 @@ export default async function handler(req, res) {
 
     const userPrice = `$${priceByAge[userAgeMapping] || 0}`;
 
-    const registrationPugPath = path.join(process.cwd(), 'assets/email-templates/registration.pug');
+    const registrationPugPath = fs.readFileSync(path.join(process.cwd(), 'assets/email-templates/tmp-registration.html')).toString();
  
-    const compileRegistration = pug.compileFile(registrationPugPath);
+    // const compileRegistration = pug.compileFile(registrationPugPath);
+    const compileRegistration = Handlebars.compile(registrationPugPath);
 
     const ticketHtml = compileRegistration({
-      eventName: event.name,
-      firstName: registeredUser.first_name,
-      startTime: moment(event.start_date).format('LLLL'),
+      eventTitle: event.name?.toUpperCase(),
+      userFirstName: registeredUser.first_name,
+      eventStartTime: moment(event.start_date).format('LLLL'),
       ticketPrice: userPrice,
+      eventVenueAddress: event.venue,
+      registrationNumber: registeredUser.registration_number,
+      replySubject: `Event Registration: ${event.name}`
     });
 
     const transporter = nodemailer.createTransport({
