@@ -162,7 +162,7 @@ export default function RegistrationForm({ event }) {
                     {...field}
                     onChange={({ target }) => {
                       const { value } = target;
-                      field.onChange(startCase(value));
+                      field.onChange(startCase(value.toLowerCase()));
                     }}
                     disabled={registrationDisabled}
                     error={!!errors.first_name}
@@ -185,7 +185,7 @@ export default function RegistrationForm({ event }) {
                     {...field}
                     onChange={({ target }) => {
                       const { value } = target;
-                      field.onChange(startCase(value));
+                      field.onChange(startCase(value.toLowerCase()));
                     }}
                     disabled={registrationDisabled}
                     error={!!errors.last_name}
