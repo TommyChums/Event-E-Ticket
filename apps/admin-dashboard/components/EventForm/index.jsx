@@ -61,32 +61,52 @@ async function replaceStorageImg(b64ImgData, bucket, eventUuid, oldPath) {
   };
 };
 
-function ControlledLocation({ control, name, defaultValue, rules, ...props }) {
-  const { field: { onChange, value } } = useController({ control, name, defaultValue, rules });
+function ControlledLocation({ control, name, defaultValue = {}, rules, ...props }) {
+  const addressName = `${name}.address`;
+  const placeIdName = `${name}.place_id`;
+  const { field: { onChange: onAddressChange, value: addressValue } } = useController({ control, name: addressName, defaultValue: defaultValue?.address, rules });
+  const { field: { onChange: onPlaceIdChange, value: placeIdValue } } = useController({ control, name: placeIdName, defaultValue: defaultValue?.place_id, rules });
 
   const { ref: materialRef } = usePlacesWidget({
     apiKey: process.env.NEXT_PUBLIC_MAPS_API_KEY,
-    onPlaceSelected: (place) => onChange(place.formatted_address),
+    onPlaceSelected: (place) => {
+      onAddressChange(place.formatted_address);
+      onPlaceIdChange(place.place_id);
+    },
     options: {
       types: [],
       fields: [
         "formatted_address",
+        "place_id",
       ],
       componentRestrictions: { country: 'tt' },
     },
   });
 
   return (
-    <TextField
-      {...props}
-      inputRef={materialRef}
-      onChange={onChange}
-      name={name}
-      id="outlined-venue"
-      label="Location"
-      variant="outlined"
-      value={value}
-    />
+    <>
+      <TextField
+        {...props}
+        inputRef={materialRef}
+        onChange={onAddressChange}
+        name={addressName}
+        id="outlined-venue"
+        label="Address"
+        variant="outlined"
+        value={addressValue}
+      />
+      <TextField
+        {...props}
+        name={placeIdName}
+        id="outlined-venue"
+        label="Place id"
+        variant="outlined"
+        value={placeIdValue}
+        style={{
+          display: 'none',
+        }}
+      />
+    </>
   )
 };
 
