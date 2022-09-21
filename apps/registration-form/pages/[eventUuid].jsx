@@ -92,7 +92,7 @@ export default function RegistrationForm({ event }) {
           justifyContent: 'center',
           alignItems: 'center',
           textAlign: 'center',
-          mergin: '2rem 0',
+          padding: '1rem 1rem 5rem',
         }}
       >
         <Stack sx={{ margin: registrationDisabled ? '0' : '0 0 2rem' }} direction="column" spacing={1.5}>
