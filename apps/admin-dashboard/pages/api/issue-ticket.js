@@ -106,7 +106,7 @@ export default async function handler(req, res) {
       service: 'gmail',
       auth: {
         user: 'techteam@reformationlifecentre.org',
-        pass: 'bsaxpzkffwvzihnz',
+        pass: process.env.EMAIL_PASS,
       },
     });
   

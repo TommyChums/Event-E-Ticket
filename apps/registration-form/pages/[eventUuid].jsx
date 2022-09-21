@@ -56,22 +56,26 @@ export default function RegistrationForm({ event }) {
     setInfo({ type: 'info', message: `Registering for event...` });
     setSaving(true);
 
-    const { error } = await supabase
+    const { data: newUser, error } = await supabase
       .from('registered-users')
       .insert([{
         ...data,
         age,
         registered_event: event.uuid,
-      }]);
+      }]).single();
 
     if (error) {
       setInfo({ type: 'error', message: `Error while registering: ${error.message}` });
     } else {
       setInfo({ type: 'success', message: 'Registration Successful!' });
       setTimeout(() => setInfo(null), 3000);
+      // Don't await this, just let it be done in the background
+      fetch(`/api/registration-email?user_uuid=${newUser.uuid}`)
+        .catch((e) => `[NON-FATAL ERROR] - Sending registration email ${e.message}`);
     }
 
-    setSaving(false)
+    setSaving(false);
+
   };
 
   return (
