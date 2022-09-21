@@ -9,6 +9,7 @@
         "$SUPABASE_SERVICE_KEY",
         "$LD_LIBRARY_PATH",
         "$NEXT_PUBLIC_MAPS_API_KEY",
+        "$MAPS_API_KEY",
         "$EMAIL_PASS",
         "$LOCAL",
         "$PWD"

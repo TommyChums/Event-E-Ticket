@@ -64,12 +64,16 @@ async function replaceStorageImg(b64ImgData, bucket, eventUuid, oldPath) {
 function ControlledLocation({ control, name, defaultValue = {}, rules, ...props }) {
   const addressName = `${name}.address`;
   const placeIdName = `${name}.place_id`;
+  const geocodeName = `${name}.geocode`;
   const { field: { onChange: onAddressChange, value: addressValue } } = useController({ control, name: addressName, defaultValue: defaultValue?.address, rules });
   const { field: { onChange: onPlaceIdChange, value: placeIdValue } } = useController({ control, name: placeIdName, defaultValue: defaultValue?.place_id, rules });
+  const { field: { onChange: onGeocodeChange, value: geocodeValue } } = useController({ control, name: geocodeName, defaultValue: defaultValue?.geocode, rules });
 
   const { ref: materialRef } = usePlacesWidget({
     apiKey: process.env.NEXT_PUBLIC_MAPS_API_KEY,
     onPlaceSelected: (place) => {
+      const geocodeString = `${place.geometry.location.lat()},${place.geometry.location.lng()}`;
+      onGeocodeChange(geocodeString);
       onAddressChange(place.formatted_address);
       onPlaceIdChange(place.place_id);
     },
@@ -78,6 +82,7 @@ function ControlledLocation({ control, name, defaultValue = {}, rules, ...props 
       fields: [
         "formatted_address",
         "place_id",
+        "geometry",
       ],
       componentRestrictions: { country: 'tt' },
     },
@@ -90,7 +95,7 @@ function ControlledLocation({ control, name, defaultValue = {}, rules, ...props 
         inputRef={materialRef}
         onChange={onAddressChange}
         name={addressName}
-        id="outlined-venue"
+        id="outlined-venue-address"
         label="Address"
         variant="outlined"
         value={addressValue}
@@ -98,10 +103,21 @@ function ControlledLocation({ control, name, defaultValue = {}, rules, ...props 
       <TextField
         {...props}
         name={placeIdName}
-        id="outlined-venue"
+        id="outlined-venue-placeId"
         label="Place id"
         variant="outlined"
         value={placeIdValue}
+        style={{
+          display: 'none',
+        }}
+      />
+      <TextField
+        {...props}
+        name={geocodeName}
+        id="outlined-venue-geocode"
+        label="Geocode"
+        variant="outlined"
+        value={geocodeValue}
         style={{
           display: 'none',
         }}

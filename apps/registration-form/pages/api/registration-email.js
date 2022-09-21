@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import fetch from 'node-fetch';
 import nodemailer from 'nodemailer';
 import { decode } from 'base64-arraybuffer';
 import sharp from 'sharp';
@@ -15,6 +16,34 @@ const auththenticatedSupabase = createClient(
   process.env.SUPABASE_SERVICE_KEY,
 );
 
+function locationImgUrl(placeId) {
+  const { publicURL } = supabase.storage.from('church-assets').getPublicUrl(`location-images/${placeId}/location.png`);
+
+  return publicURL;
+};
+
+async function getVenueImgUrl(placeId, geocode) {
+  if (!placeId) return '';
+
+  const { data: locationImgFile } = await supabase.storage.from('church-assets').list(`location-images/${placeId}`, {
+    limit: 1,
+    offset: 0,
+    sortBy: { column: 'name', order: 'asc' },
+    search: 'location.png',
+  });
+
+  if (locationImgFile.length) {
+    return locationImgUrl(placeId);
+  }
+
+  const res = await fetch(`https://maps.googleapis.com/maps/api/staticmap?zoom=14&size=400x400&key=${process.env.MAPS_API_KEY}&markers=|${geocode}`);
+
+  const locationImgArrayBuffer = await res.arrayBuffer();
+
+  await auththenticatedSupabase.storage.from('church-assets').upload(`location-images/${placeId}/location.png`, locationImgArrayBuffer, { contentType: 'image/png', upsert: true });
+
+  return locationImgUrl(placeId);
+}
 
 function svgImgUrl(svgName, primaryColour) {
   const { publicURL } = supabase.storage.from('church-assets').getPublicUrl(`email-images/${primaryColour}/${svgName}.png`);
@@ -87,11 +116,12 @@ export default async function handler(req, res) {
     
     const { publicURL: rlcLogo } = supabase.storage.from('church-assets').getPublicUrl('logo.png');
 
-    const [ calendarIcon, locationIcon, facebookIcon, youtubeIcon ] = await Promise.all([
+    const [ calendarIcon, locationIcon, facebookIcon, youtubeIcon, eventVenueLocationImg ] = await Promise.all([
       getImgUrl('calendar', primaryColour),
       getImgUrl('location', primaryColour),
       getImgUrl('facebook', primaryColour),
       getImgUrl('youtube', primaryColour),
+      getVenueImgUrl(event.venue?.place_id, event.venue?.geocode),
     ]);
 
     const registrationPugPath = fs.readFileSync(path.join(process.cwd(), 'assets/email-templates/registration.html')).toString();
@@ -108,6 +138,7 @@ export default async function handler(req, res) {
       registrationNumber: registeredUser.registration_number,
       replySubject: `Event Registration: ${event.name}`,
       eventVenueGoogleLink: `https://www.google.com/maps/search/?api=1&query=${event.venue?.address}&query_place_id=${event.venue?.place_id}`,
+      eventVenueLocationImg,
       logoUrl,
       rlcLogo,
       primaryColour,
