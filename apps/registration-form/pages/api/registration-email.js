@@ -1,3 +1,4 @@
+import { createClient } from '@supabase/supabase-js';
 import nodemailer from 'nodemailer';
 import { decode } from 'base64-arraybuffer';
 import sharp from 'sharp';

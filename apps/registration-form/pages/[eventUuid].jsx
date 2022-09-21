@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import Head from 'next/head'
 import { Controller, useForm } from 'react-hook-form';
 import { v4, parse } from 'uuid';
+import isEmpty from 'lodash/isEmpty';
+import startCase from 'lodash/startCase';
 import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
@@ -13,7 +15,6 @@ import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import moment from 'moment';
-import isEmpty from 'lodash/isEmpty';
 
 import supabase from "../lib/supabase";
 
@@ -133,36 +134,71 @@ export default function RegistrationForm({ event }) {
           >
           <Stack direction="column" spacing={4}>
             <Alert sx={{ visibility: info ? 'visible' : 'hidden' }} severity={info?.type}>{info?.message}</Alert>
-            <TextField
-              {...register("email", { validate: { required: (val) => val ? null : 'Required' } })}
-              disabled={registrationDisabled}
-              error={!!errors.email}
-              helperText={errors.email?.message}
-              id="outlined-email"
-              label="Email *"
-              variant="outlined"
-              type="email"
+            <Controller
+              control={control}
+              name="email"
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  disabled={registrationDisabled}
+                  error={!!errors.email}
+                  helperText={errors.email?.message}
+                  id="outlined-email"
+                  label="Email *"
+                  variant="outlined"
+                  type="email"
+                />
+              )}
+              rules={{
+                required: 'Required',
+              }}
             />
             <Stack sx={{ justifyContent: 'space-between' }} direction="row" spacing={2}>
-              <TextField
-                {...register("first_name", { validate: { required: (val) => val ? null : 'Required' } })}
-                disabled={registrationDisabled}
-                error={!!errors.first_name}
-                helperText={errors.first_name?.message}
-                id="outlined-first-name"
-                label="First Name *"
-                variant="outlined"
-                type="text"
+              <Controller
+                control={control}
+                name="first_name"
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    onChange={({ target }) => {
+                      const { value } = target;
+                      field.onChange(startCase(value));
+                    }}
+                    disabled={registrationDisabled}
+                    error={!!errors.first_name}
+                    helperText={errors.first_name?.message}
+                    id="outlined-first-name"
+                    label="First Name *"
+                    variant="outlined"
+                    type="text"
+                  />
+                )}
+                rules={{
+                  required: 'Required',
+                }}
               />
-              <TextField
-                {...register("last_name", { validate: { required: (val) => val ? null : 'Required' } })}
-                disabled={registrationDisabled}
-                error={!!errors.last_name}
-                helperText={errors.last_name?.message}
-                id="outlined-last-name"
-                label="Last Name *"
-                variant="outlined"
-                type="text"
+              <Controller
+                control={control}
+                name="last_name"
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    onChange={({ target }) => {
+                      const { value } = target;
+                      field.onChange(startCase(value));
+                    }}
+                    disabled={registrationDisabled}
+                    error={!!errors.last_name}
+                    helperText={errors.last_name?.message}
+                    id="outlined-last-name"
+                    label="Last Name *"
+                    variant="outlined"
+                    type="text"
+                  />
+                )}
+                rules={{
+                  required: 'Required',
+                }}
               />
             </Stack>
             <Controller
