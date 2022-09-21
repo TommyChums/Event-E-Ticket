@@ -91,38 +91,8 @@
         }
       }
 
-      .see-you-there-text {
-        font-size: 62px;
-        letter-spacing: 2px;
-        font-weight: 1000;
-        font-family: Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;
-        margin: 0;
-      }
-      .overlapping-text-container {
-        position: relative;
-        width: 565px;
-        margin: 1rem 0;
-        line-height: 58px;
-      }
-      .background-text {
-        opacity: 0.8;
-        -webkit-text-fill-color: black;
-        -webkit-text-stroke-width: 1.5px;
-        -webkit-text-stroke-color: {{primaryColour}};
-      }
-      .foreground-text {
-        -webkit-text-fill-color: white;
-        -webkit-text-stroke-width: 1px;
-        -webkit-text-stroke-color: white;
-        position: absolute;
-        top: 11%;
-        left: 5%;
-        color: white;
-      }
-
       .svg-icon {
         width: 20px;
-        fill: {{primaryColour}};
         margin-left: 6px;
       }
     </style>
@@ -233,10 +203,19 @@
                               <tr>
                                 <td class="pad" style="width: 100%; padding-right: 0; padding-left: 0">
                                   <div class="alignment" align="center" style="line-height: 10px">
-                                    <div class="overlapping-text-container big">
-                                      <p class="background-text see-you-there-text">SEE YOU THERE</p>
-                                      <p class="foreground-text see-you-there-text">SEE YOU THERE</p>
-                                    </div>
+                                    <img
+                                      src="{{seeYouThereImage}}"
+                                      style="
+                                        display: block;
+                                        height: auto;
+                                        border: 0;
+                                        width: 204px;
+                                        max-width: 100%;
+                                      "
+                                      width="204"
+                                      alt="See you there"
+                                      title="See you there"
+                                    />
                                   </div>
                                 </td>
                               </tr>

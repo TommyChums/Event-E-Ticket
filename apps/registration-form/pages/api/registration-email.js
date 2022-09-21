@@ -116,6 +116,8 @@ export default async function handler(req, res) {
     
     const { publicURL: rlcLogo } = supabase.storage.from('church-assets').getPublicUrl('logo.png');
 
+    const { publicURL: seeYouThereImage } = supabase.storage.from('church-assets').getPublicUrl('email-images/see-you-there.png');
+
     const [ calendarIcon, locationIcon, facebookIcon, youtubeIcon, eventVenueLocationImg ] = await Promise.all([
       getImgUrl('calendar', primaryColour),
       getImgUrl('location', primaryColour),
@@ -139,6 +141,7 @@ export default async function handler(req, res) {
       replySubject: `Event Registration: ${event.name}`,
       eventVenueGoogleLink: `https://www.google.com/maps/search/?api=1&query=${event.venue?.address}&query_place_id=${event.venue?.place_id}`,
       eventVenueLocationImg,
+      seeYouThereImage,
       logoUrl,
       rlcLogo,
       primaryColour,
