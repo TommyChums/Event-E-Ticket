@@ -148,8 +148,6 @@ export default async function handler(req, res) {
       youtubeIcon,
     });
 
-    fs.writeFileSync('email.html', ticketHtml);
-
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
