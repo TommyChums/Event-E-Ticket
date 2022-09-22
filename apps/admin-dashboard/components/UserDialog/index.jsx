@@ -27,6 +27,7 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
   const [ currentPayment, setCurentPayment ] = useState(0);
   const [ amountRequriedToPay, setAmountRequiredToPay ] = useState(0);
   const [ updating, setUpdating ] = useState(false);
+  const [ issuingTicket, setIssuingTicket ] = useState(false);
 
   useEffect(() => {
     if (isEmpty(user) || isEmpty(event)) onClose();
@@ -52,12 +53,39 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
     }
   };
 
+  const handleIssueTicket = async () => {
+    setIssuingTicket(true);
+    let issuingId = null;
+
+    enqueueSnackbar(`Issuing ticket to ${user.email}`, {
+      variant: 'info',
+      persist: true,
+      action: (id) => { issuingId = id },
+    });
+
+    const { data: { user: issuedUser }, error: issueError } = await makeAuthenticatedPostRequest('/api/issue-ticket', { user_uuid: user.uuid });
+
+    closeSnackbar(issuingId);
+
+    if (issueError) {
+      enqueueSnackbar(`Error isuing ticket to ${user.email}: ${issueError.message}`, {
+        variant: 'error',
+      });
+    } else {
+      enqueueSnackbar(`Ticket successfully issued to ${user.email}!`, {
+        variant: 'success',
+      });
+
+      updateUser(issuedUser);
+    }
+
+    setIssuingTicket(false);
+  };
+
   const handlePaymentUpdate = async () => {
     setUpdating(true);
 
     let success = true;
-
-    let issuingId = null;
 
     if (amountRequriedToPay > 0) {
       const paymentTime = moment().toISOString();
@@ -90,34 +118,12 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
         updateUser(updatedUser);
         updatePayment(payment);
       }
-    }
 
-    if (success && ((amountRequriedToPay - currentPayment) === 0)) {
-      enqueueSnackbar(`Issuing ticket to ${user.email}`, {
-        variant: 'info',
-        persist: true,
-        action: (id) => { issuingId = id },
-      });
-
-      const { data: { user: issuedUser }, error: issueError } = await makeAuthenticatedPostRequest('/api/issue-ticket', { user_uuid: user.uuid });
-
-      closeSnackbar(issuingId);
-
-      if (issueError) {
-        enqueueSnackbar(`Error isuing ticket to ${user.email}: ${issueError.message}`, {
-          variant: 'error',
-        });
-      } else {
-        enqueueSnackbar(`Ticket successfully issued to ${user.email}!`, {
-          variant: 'success',
-        });
-
-        updateUser(issuedUser);
-      }
-    } else if (success) {
       enqueueSnackbar('Payment stored and User Updated', {
         variant: 'success',
       });
+    } else if ((amountRequriedToPay - currentPayment) === 0) {
+      await handleIssueTicket();
     }
 
     setUpdating(false);
@@ -127,18 +133,19 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
   return (
     <Dialog {...props} open={open} onClose={onClose}>
       { user.ticket_issued && <Alert severity="success">Ticket Successfully Issued</Alert> }
-      <DialogTitle>{user.first_name} {user.last_name}</DialogTitle>
-      <DialogContent>
-        <Stack direction="column" spacing={2}>
+      <DialogTitle style={{ padding: "16px 12px 0px" }}>{user.first_name} {user.last_name}</DialogTitle>
+      <DialogContent style={{ padding: '20px 12px' }}>
+        <Stack direction="column" spacing={2} width="100%">
           <Typography>
             Amount Required: ${amountRequriedToPay}
           </Typography>
           <Typography>
             Amount Paid: ${amountPaid}
           </Typography>
-          <div>
+          <div style={{ width: '100%' }}>
             <InputLabel htmlFor="outlined-adornment-amount">Current payment</InputLabel>
             <OutlinedInput
+              fullWidth
               id="outlined-adornment-amount"
               value={currentPayment}
               onChange={updateCurrentPayment}
@@ -148,21 +155,36 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
           </div>
         </Stack>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button 
-          disabled={
-            user.ticket_issued ||
-            updating ||
-            (currentPayment <= 0 &&
-            amountRequriedToPay > 0) ||
-            (amountRequriedToPay <= 0 &&
-            user.ticket_issued)
-          } 
-          onClick={handlePaymentUpdate}
-        >
-          {updating ? 'Updating' : 'Update'}
-        </Button>
+      <DialogActions sx={{ px: '12px' }}>
+        <Stack spacing={1} width="100%">
+          <Stack direction="row" spacing={1} justifyContent="space-between">
+            <Button
+              sx={{ width: '9rem' }}
+              variant="contained"
+              disabled={
+                user.ticket_issued ||
+                updating ||
+                issuingTicket ||
+                (currentPayment <= 0 &&
+                amountRequriedToPay > 0) ||
+                (amountRequriedToPay <= 0 &&
+                user.ticket_issued)
+              } 
+              onClick={handlePaymentUpdate}
+            >
+              {updating ? 'Adding ' : 'Add Payment'}
+            </Button>
+            <Button variant="outlined" onClick={onClose}>Cancel</Button>
+          </Stack>
+          <Button
+            sx={{ width: '100%' }}
+            variant="contained"
+            disabled={user.ticket_issued || updating || issuingTicket} 
+            onClick={handleIssueTicket}
+          >
+            {issuingTicket ? 'Issuing Ticket' : 'Issue Ticket'}
+          </Button>
+        </Stack>
       </DialogActions>
     </Dialog>
   );

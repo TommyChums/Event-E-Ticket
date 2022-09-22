@@ -148,6 +148,7 @@ export default function EventForm({ event = {
     watch,
   } = useForm({
     mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: { ...event },
   });
 
@@ -167,9 +168,13 @@ export default function EventForm({ event = {
 
   const { isValid, isDirty, isSubmitting } = formState;
 
-  const eventPublished = event.is_published;
+  const eventPublished = !event.is_published;
 
   const submitDisabled = eventPublished || saving || !isValid || !isDirty || isSubmitting;
+
+  const requiredRules = {
+    required: 'Required',
+  };
 
   const onSubmit = async (data) => {
     setSaving(true);
@@ -317,6 +322,7 @@ export default function EventForm({ event = {
                   disabled={eventPublished}
                 />
               )}
+              rules={requiredRules}
             />
           </div>
           <Controller
@@ -331,6 +337,7 @@ export default function EventForm({ event = {
                 variant="outlined"
               />
             )}
+            rules={requiredRules}
           />
           <Controller
             control={control}
@@ -344,6 +351,7 @@ export default function EventForm({ event = {
                 variant="outlined"
               />
             )}
+            rules={requiredRules}
           />
           <Controller
             control={control}
@@ -385,6 +393,7 @@ export default function EventForm({ event = {
                   />
                 </LocalizationProvider>
               )}
+              rules={requiredRules}
             />
             <Controller
               control={control}
@@ -410,6 +419,61 @@ export default function EventForm({ event = {
                   />
                 </LocalizationProvider>
               )}
+              rules={requiredRules}
+            />
+          </Stack>
+          <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+            <Controller
+              control={control}
+              name="register_by_date"
+              render={({ field }) => (
+                <LocalizationProvider dateAdapter={AdapterMoment}>
+                  <DateTimePicker
+                    {...field}
+                    disabled={eventPublished}
+                    disablePast
+                    inputFormat="YYYY-MM-DD hh:mm A"
+                    label="Registration End Date"
+                    InputLabelProps={{ shrink: true }}
+                    openTo="month"
+                    views={[ 'year', 'month', 'day', 'hours', 'minutes' ]}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        fullWidth
+                        helperText="yyyy-mm-dd hh:mm"
+                      />
+                    )}
+                  />
+                </LocalizationProvider>
+              )}
+              rules={requiredRules}
+            />
+            <Controller
+              control={control}
+              name="doors_open_by_date"
+              render={({ field }) => (
+                <LocalizationProvider dateAdapter={AdapterMoment}>
+                  <DateTimePicker
+                    {...field}
+                    disabled={eventPublished}
+                    disablePast
+                    inputFormat="YYYY-MM-DD hh:mm A"
+                    label="Doors Open By"
+                    InputLabelProps={{ shrink: true }}
+                    openTo="month"
+                    views={[ 'year', 'month', 'day', 'hours', 'minutes' ]}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        fullWidth
+                        helperText="yyyy-mm-dd hh:mm"
+                      />
+                    )}
+                  />
+                </LocalizationProvider>
+              )}
+              rules={requiredRules}
             />
           </Stack>
           <ControlledLocation
@@ -419,6 +483,7 @@ export default function EventForm({ event = {
             placeholder="Search Google Maps"
             defaultValue={event.venue}
             InputLabelProps={{ shrink: true }}
+            rules={requiredRules}
           />
           <Typography variant="h6">
             Ticket Information

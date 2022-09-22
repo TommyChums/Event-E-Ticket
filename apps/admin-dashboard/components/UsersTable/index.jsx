@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import moment from 'moment';
+import escapeRegExp from 'lodash/escapeRegExp';
 import filter from 'lodash/filter';
 import find from 'lodash/find';
 import PropTypes from 'prop-types';
@@ -87,10 +88,22 @@ const headCells = [
     label: 'Last Name',
   },
   {
+    id: 'email',
+    type: 'text',
+    disablePadding: false,
+    label: 'Email',
+  },
+  {
     id: 'age',
     type: 'number',
     disablePadding: false,
     label: 'Age',
+  },
+  {
+    id: 'registration_number',
+    type: 'number',
+    disablePadding: true,
+    label: 'Registration Number',
   },
   {
     id: 'ticket_issued',
@@ -175,7 +188,11 @@ const EnhancedTableToolbar = (props) => {
           id="outlined-search"
           fullWidth
           label="Search"
-          onChange={({ target }) => props.setSearchValue(target.value)}
+          onChange={({ target }) => {
+            const { value } = target;
+
+            props.setSearchValue(value.trimStart());
+          }}
           size="small"
           value={props.searchValue}
         />
@@ -250,12 +267,18 @@ export default function EnhancedTable({ loading, users, usersEvent, updatePaymen
   };
 
   useEffect(() => {
-    const searchedUsers = filter((users), ({ first_name, last_name, ticket_issued }) => {
-      const searchRegex = new RegExp(searchValue, 'i');
+    const searchedUsers = filter((users), ({ first_name, last_name, ticket_issued, email, registration_number }) => {
+      const searchRegex = new RegExp(escapeRegExp(searchValue), 'i');
 
       const ticketIssuedCheck = paidInFullOnly ? ticket_issued : indeterminate ? !ticket_issued : true;
 
-      return ticketIssuedCheck && (searchRegex.test(first_name) || searchRegex.test(last_name));
+      return ticketIssuedCheck && (
+        searchRegex.test(first_name) ||
+        searchRegex.test(last_name) ||
+        searchRegex.test(`${first_name} ${last_name}`) ||
+        searchRegex.test(email) ||
+        searchRegex.test(registration_number)
+      );
     });
 
     setRows(searchedUsers);
@@ -314,7 +337,9 @@ export default function EnhancedTable({ loading, users, usersEvent, updatePaymen
                           >
                             <TableCell align="left">{row.first_name}</TableCell>
                             <TableCell align="left">{row.last_name}</TableCell>
+                            <TableCell align="left">{row.email}</TableCell>
                             <TableCell align="left">{row.age}</TableCell>
+                            <TableCell align="left">{row.registration_number}</TableCell>
                             <TableCell align="left">{row.ticket_issued ? 'Yes' : 'No' }</TableCell>
                             <TableCell align="left">{moment(row.created_on).format('LLL')}</TableCell>
                           </TableRow>

@@ -64,10 +64,7 @@ export default async function handler(req, res) {
 
     const ticketTemplateBuffer = Buffer.from( await ticketTemplate.arrayBuffer() );
 
-    const qrCodeInfo = JSON.stringify({
-      user_uuid,
-      issued_at,
-    });
+    const qrCodeInfo = `${registeredUser.registration_number}`;
 
     const qrCodeOptions = {};
 
