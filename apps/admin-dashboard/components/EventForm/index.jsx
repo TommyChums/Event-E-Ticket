@@ -18,6 +18,7 @@ import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
@@ -180,6 +181,12 @@ export default function EventForm({ event = {
 }, onSave }) {
   const { enqueueSnackbar } = useSnackbar();
 
+  const isSmallScreen = useMediaQuery('(max-width:780px)');
+
+  const [ ticketImageWidth, setTicketImageWidth ] = useState(TICKET_IMAGE_WIDTH);
+  const [ ticketImageHeight, setTicketImageHeight ] = useState(TICKET_IMAGE_HEIGHT);
+  const [ qrCodeScale, setQrCodeScale ] = useState(QR_CODE_SCALE);
+
   const [ pricingDialogOpen, setPricingDialogOpen ] = useState(false);
   const [ saving, setSaving ] = useState(false);
 
@@ -202,6 +209,23 @@ export default function EventForm({ event = {
       reset(event);
     }
   }, [ event, getValues, reset ]);
+
+  useEffect(() => {
+    console.log('iss', isSmallScreen);
+    if (isSmallScreen) {
+      const newWidth = TICKET_IMAGE_WIDTH / 2;
+      const newHeight = TICKET_IMAGE_HEIGHT / 2;
+      const newScale = MAX_TICKET_WIDTH / newWidth;
+
+      setTicketImageWidth(newWidth);
+      setTicketImageHeight(newHeight);
+      setQrCodeScale(newScale);
+    } else {
+      setTicketImageWidth(TICKET_IMAGE_WIDTH);
+      setTicketImageHeight(TICKET_IMAGE_HEIGHT);
+      setQrCodeScale(QR_CODE_SCALE);
+    }
+  }, [ isSmallScreen ]);
 
   const lightColourValue = useCallback((ageLabel) => (
     watch(`ticket_config.${ageLabel}.colour.light`)?.hex
@@ -572,8 +596,8 @@ export default function EventForm({ event = {
                             {...field}
                             disabled={eventPublished}
                             onUpload={field.onChange}
-                            width={TICKET_IMAGE_WIDTH}
-                            height={TICKET_IMAGE_HEIGHT}
+                            width={ticketImageWidth}
+                            height={ticketImageHeight}
                             maxWidth={MAX_TICKET_WIDTH}
                             maxHeight={MAX_TICKET_HEIGHT}
                             altText={`${startCase(ageLabel)} Ticket`}
@@ -582,12 +606,12 @@ export default function EventForm({ event = {
                               control={control}
                               name={`ticket_config.${ageLabel}.position`}
                               render={({ field }) => (
-                                <div style={{ width: TICKET_IMAGE_WIDTH, height: TICKET_IMAGE_HEIGHT, position: 'absolute', top: 0, alignSelf: 'center' }}>
+                                <div style={{ width: ticketImageWidth, height: ticketImageHeight, position: 'absolute', top: 0, alignSelf: 'center' }}>
                                   <ResizableQrCode
                                     {...field}
                                     disabled={eventPublished}
-                                    scale={QR_CODE_SCALE}
-                                    maxHeight={TICKET_IMAGE_HEIGHT}
+                                    scale={qrCodeScale}
+                                    maxHeight={ticketImageHeight}
                                     config={field.value}
                                     lightColour={lightColourValue(ageLabel)}
                                     darkColour={darkColourValue(ageLabel)}
@@ -606,14 +630,14 @@ export default function EventForm({ event = {
                             <ControlledColourPicker
                               control={control}
                               name={`ticket_config.${ageLabel}.colour.light`}
-                              width={(TICKET_IMAGE_WIDTH / 2) - 5}
-                              height={TICKET_IMAGE_HEIGHT}
+                              width={(ticketImageWidth / 2) - 5}
+                              height={ticketImageHeight}
                             />
                             <ControlledColourPicker
                               control={control}
                               name={`ticket_config.${ageLabel}.colour.dark`}
-                              width={(TICKET_IMAGE_WIDTH / 2) - 5}
-                              height={TICKET_IMAGE_HEIGHT}
+                              width={(ticketImageWidth / 2) - 5}
+                              height={ticketImageHeight}
                             />
                           </Stack>
                         </>
@@ -632,8 +656,8 @@ export default function EventForm({ event = {
             <ControlledColourPicker
               control={control}
               name="branding.primary_colour"
-              width={TICKET_IMAGE_WIDTH}
-              height={TICKET_IMAGE_HEIGHT}
+              width={ticketImageWidth}
+              height={ticketImageHeight}
             />
           </Stack>
           <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
