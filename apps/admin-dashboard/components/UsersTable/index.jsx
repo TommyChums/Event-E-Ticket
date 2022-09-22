@@ -110,7 +110,7 @@ const headCells = [
     type: 'boolean',
     disablePadding: false,
     disableSorting: true,
-    label: 'Paid In Full',
+    label: 'Ticket Issued',
   },
   {
     id: 'created_on',
@@ -200,7 +200,7 @@ const EnhancedTableToolbar = (props) => {
           sx={{ width: '175px', marginRight: '1rem' }}
           control={<Checkbox checked={props.paidInFullOnly} indeterminate={props.indeterminate} />}
           onChange={props.onPaidInFullClick}
-          label="Paid in full"
+          label="Ticket Issued"
           labelPlacement="start"
         />
       </Stack>

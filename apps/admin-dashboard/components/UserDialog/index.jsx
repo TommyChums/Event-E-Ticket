@@ -167,8 +167,7 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
                 issuingTicket ||
                 (currentPayment <= 0 &&
                 amountRequriedToPay > 0) ||
-                (amountRequriedToPay <= 0 &&
-                user.ticket_issued)
+                amountRequriedToPay <= 0
               } 
               onClick={handlePaymentUpdate}
             >
