@@ -237,7 +237,7 @@ export default function EventForm({ event = {
 
   const { isValid, isDirty, isSubmitting } = formState;
 
-  const eventPublished = !event.is_published;
+  const eventPublished = event.is_published;
 
   const submitDisabled = eventPublished || saving || !isValid || !isDirty || isSubmitting;
 
