@@ -135,6 +135,7 @@ export default async function handler(req, res) {
       eventTitle: event.name?.toUpperCase(),
       userFirstName: registeredUser.first_name,
       eventStartTime: moment(event.start_date).utcOffset(-4).format('LLLL') + " AST",
+      openingTime: moment(event.doors_open_by_date).utcOffset(-4).format('LT') + " AST",
       ticketPrice: userPrice,
       eventVenueAddress: event.venue.address,
       registrationNumber: registeredUser.registration_number,
