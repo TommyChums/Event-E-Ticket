@@ -5,3 +5,11 @@ export default function NotFound(props) {
     <div>NotFound</div>
   );
 };
+
+export function getStaticProps() {
+  return {
+    props: {
+      notFound: true,
+    },
+  };
+};

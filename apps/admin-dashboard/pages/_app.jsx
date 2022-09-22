@@ -29,17 +29,31 @@ export default function App({ Component, pageProps }) {
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       await updateSupabaseCookie(event, session);
-      if (session && router.pathname === '/login') {
-        router.push('/events');
-      } else if (!session && router.pathname !== '/login') {
+      const needsPasswordUpdate = session && session.user?.user_metadata?.temp_password;
+
+      if ((!session && router.pathname !== '/login') || needsPasswordUpdate) {
         router.push('/login');
-      }
+      } else if (session && router.pathname === '/login') {
+        router.push('/events');
+      } 
     });
 
     return () => {
       authListener?.unsubscribe();
     };
   });
+
+  useEffect(() => {
+    if (pageProps?.notFound) {
+      router.push('/login');
+    }
+  }, [ pageProps, router ]);
+
+  if (pageProps?.notFound) {
+    return (
+      <Component {...pageProps} />
+    );
+  };
 
   return (
     <ThemeProvider theme={theme}>
