@@ -105,7 +105,7 @@ export default function ResizableQrCode({ scale = 1, disabled, maxHeight, config
 
   return (
     <Draggable
-      disabled
+      disabled={disabled}
       defaultPosition={{
         x: positionSize.x,
         y: positionSize.y,

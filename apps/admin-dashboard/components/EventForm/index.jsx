@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useSnackbar } from 'notistack';
 import { Controller, useController, useForm } from 'react-hook-form';
 import { decode } from 'base64-arraybuffer';
@@ -124,6 +124,51 @@ function ControlledLocation({ control, name, defaultValue = {}, rules, ...props 
       />
     </>
   )
+};
+
+function ControlledColourPicker({ control, name, defaultValue = toColor('hex', '#000'), rules, ...props }) {
+  const { field: { onChange, value } } = useController({ control, name, defaultValue, rules });
+  
+  const [ internalValue, setInternalValue ] = useState(value || defaultValue);
+
+  const colourChangeRef = useRef(null);
+
+  const changeControlledValue = (val) => {
+    colourChangeRef.current = setTimeout(() => {
+      // Attempt to update the value after 150ms
+      // but cancel it on every change event.
+      // This is an attempt to only update it after
+      // the user is done changing the value
+      onChange(val);
+    }, 150);
+  };
+
+  // To handle reset since colour doesn't update
+  // on state change due to reset
+  useEffect(() => {
+    if (internalValue.hex !== value?.hex) {
+      setInternalValue(value);
+    }
+  }, [ value ]);
+
+  return (
+    <ColorPicker
+      alpha
+      hideHSV
+      hideRGB
+      width={TICKET_IMAGE_WIDTH}
+      height={TICKET_IMAGE_HEIGHT}
+      {...props}
+      color={internalValue}
+      // Can't use until the fix for the inputs to call onChangeComplete
+      // onChangeComplete={onChange}
+      onChange={(e) => {
+        clearTimeout(colourChangeRef.current);
+        changeControlledValue(e);
+        setInternalValue(e);
+      }}
+    />
+  );
 };
 
 export default function EventForm({ event = {
@@ -558,39 +603,17 @@ export default function EventForm({ event = {
                         <>
                           <Typography component='label' htmlFor={`qrcode-colour-${ageLabel}`} variant="subtitle1" >QRCode Colour:</Typography>
                           <Stack id={`qrcode-colour-${ageLabel}`} direction="row" justifyContent="center" spacing={1}>
-                            <Controller
+                            <ControlledColourPicker
                               control={control}
                               name={`ticket_config.${ageLabel}.colour.light`}
-                              render={({ field }) => (
-                                <ColorPicker
-                                  width={(TICKET_IMAGE_WIDTH / 2) - 5}
-                                  height={TICKET_IMAGE_HEIGHT}
-                                  color={field.value || toColor('hex', '#fff')}
-                                  onChange={(e) => {
-                                    field.onChange(e);
-                                  }}
-                                  alpha
-                                  hideHSV
-                                  hideRGB
-                                />
-                              )}
+                              width={(TICKET_IMAGE_WIDTH / 2) - 5}
+                              height={TICKET_IMAGE_HEIGHT}
                             />
-                            <Controller
+                            <ControlledColourPicker
                               control={control}
                               name={`ticket_config.${ageLabel}.colour.dark`}
-                              render={({ field }) => (
-                                <ColorPicker
-                                  width={(TICKET_IMAGE_WIDTH / 2) - 5}
-                                  height={TICKET_IMAGE_HEIGHT}
-                                  color={field.value || toColor('hex', '#000')}
-                                  onChange={(e) => {
-                                    field.onChange(e);
-                                  }}
-                                  alpha
-                                  hideHSV
-                                  hideRGB
-                                />
-                              )}
+                              width={(TICKET_IMAGE_WIDTH / 2) - 5}
+                              height={TICKET_IMAGE_HEIGHT}
                             />
                           </Stack>
                         </>
@@ -601,6 +624,18 @@ export default function EventForm({ event = {
               </Accordion>
             ))
           }
+          <Typography variant="h6">
+            Registration / Email Information
+          </Typography>
+          <Stack justifyContent="center" alignItems="center">
+            <Typography component='label' htmlFor="branding.primary_colour" variant="subtitle1" >Primary Branding Colour:</Typography>
+            <ControlledColourPicker
+              control={control}
+              name="branding.primary_colour"
+              width={TICKET_IMAGE_WIDTH}
+              height={TICKET_IMAGE_HEIGHT}
+            />
+          </Stack>
           <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
             <Button disabled={submitDisabled} fullWidth variant="contained" type="submit">Save</Button>
             <Button disabled={saving} fullWidth variant="outlined" type="reset">Reset</Button>

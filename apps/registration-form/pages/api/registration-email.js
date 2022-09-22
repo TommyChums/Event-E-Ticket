@@ -110,7 +110,7 @@ export default async function handler(req, res) {
     const userPrice = `$${priceByAge[userAgeMapping] || 0}`;
 
     // TODO: Get from event itself
-    const primaryColour = '#ecc721';
+    const primaryColour = event.branding?.primary_colour?.hex || '#020648';
 
     const { publicURL: logoUrl } = supabase.storage.from(event.logo?.bucket).getPublicUrl(event.logo?.key);
     
