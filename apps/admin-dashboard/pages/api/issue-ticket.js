@@ -1,13 +1,25 @@
 import QRCode from 'qrcode';
 import nodemailer from 'nodemailer';
-import pug from 'pug';
+import Handlebars from 'handlebars';
 import path from 'path';
 import findKey from 'lodash/findKey';
 import isEmpty from 'lodash/isEmpty';
 import moment from 'moment';
 import sharp from 'sharp';
+import fs from 'fs';
 
 import supabase from "../../lib/supabase";
+
+function svgImgUrl(svgName, primaryColour) {
+  const { publicURL } = supabase.storage.from('church-assets').getPublicUrl(`email-images/${primaryColour}/${svgName}.png`);
+
+  return publicURL;
+};
+
+function getImgUrl(svgName, primaryColour) {
+  const colourFolder = primaryColour.replace('#', '');
+  return svgImgUrl(svgName, colourFolder);
+}
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
@@ -87,16 +99,43 @@ export default async function handler(req, res) {
       return buffer.toString('base64');
     });
 
-    const eventTicketPugPath = path.join(process.cwd(), 'assets/email-templates/event-ticket.pug');
+    const primaryColour = event.branding?.primary_colour?.hex || '#020648';
+
+    const { publicURL: logoUrl } = supabase.storage.from(event.logo?.bucket).getPublicUrl(event.logo?.key);
+    
+    const { publicURL: rlcLogo } = supabase.storage.from('church-assets').getPublicUrl('logo.png');
+
+    const { publicURL: seeYouThereImage } = supabase.storage.from('church-assets').getPublicUrl('email-images/see-you-there.png');
+
+    const [
+      calendarIcon,
+      locationIcon,
+      facebookIcon,
+      youtubeIcon
+    ] = [
+      getImgUrl('calendar', primaryColour),
+      getImgUrl('location', primaryColour),
+      getImgUrl('facebook', primaryColour),
+      getImgUrl('youtube', primaryColour),
+    ];
+
+    const eventTicketHtmlPath = fs.readFileSync(path.join(process.cwd(), 'assets/email-templates/event-ticket.html')).toString();
  
-    const compileEventTicket = pug.compileFile(eventTicketPugPath);
+    const compileEventTicket = Handlebars.compile(eventTicketHtmlPath);
 
     const ticketHtml = compileEventTicket({
-      pageTitle: `${event.host} - ${event.name}`,
-      eventHost: event.host,
-      eventName: event.name,
-      startTime: moment(event.start_date).format('LLLL'),
-      eventVenue: event.venue,
+      eventTitle: event.name?.toUpperCase(),
+      userFirstName: registeredUser.first_name,
+      registrationNumber: registeredUser.registration_number,
+      replySubject: `Event Ticket: ${event.name}`,
+      seeYouThereImage,
+      logoUrl,
+      rlcLogo,
+      primaryColour,
+      calendarIcon,
+      locationIcon,
+      facebookIcon,
+      youtubeIcon,
     });
 
     const transporter = nodemailer.createTransport({
