@@ -4,6 +4,7 @@ import "react-color-palette/lib/css/styles.css";
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { SnackbarProvider } from 'notistack';
+import { ConfirmProvider } from 'material-ui-confirm';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 import Layout from '../components/Layout';
@@ -57,11 +58,13 @@ export default function App({ Component, pageProps }) {
 
   return (
     <ThemeProvider theme={theme}>
-      <SnackbarProvider maxSnack={3}>
-        <Layout>
-          <Component {...pageProps} />
-        </Layout>
-      </SnackbarProvider>
+      <ConfirmProvider>
+        <SnackbarProvider maxSnack={3}>
+          <Layout>
+            <Component {...pageProps} />
+          </Layout>
+        </SnackbarProvider>
+      </ConfirmProvider>
     </ThemeProvider>
   );
 };

@@ -10,29 +10,13 @@ import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs'
 
-import protectedRoute from "../../lib/helpers/protectedRoute";
 import UsersTable from "../../components/UsersTable";
-import useUsers from "../../lib/hooks/useUsers";
+import TabPanel from '../../components/TabPanel';
 import EventForm from "../../components/EventForm";
+
+import useUsers from "../../lib/hooks/useUsers";
 import useEvent from "../../lib/hooks/useEvent";
-
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        children
-      )}
-    </div>
-  );
-}
+import protectedRoute from "../../lib/helpers/protectedRoute";
 
 TabPanel.propTypes = {
   children: PropTypes.node,

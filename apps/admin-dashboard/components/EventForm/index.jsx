@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useSnackbar } from 'notistack';
+import { useConfirm } from 'material-ui-confirm';
 import { Controller, useController, useForm } from 'react-hook-form';
 import { decode } from 'base64-arraybuffer';
 import { ColorPicker, toColor } from "react-color-palette";
@@ -182,6 +183,7 @@ export default function EventForm({ event = {
   const { enqueueSnackbar } = useSnackbar();
 
   const isSmallScreen = useMediaQuery('(max-width:780px)');
+  const confirm = useConfirm();
 
   const [ ticketImageWidth, setTicketImageWidth ] = useState(TICKET_IMAGE_WIDTH);
   const [ ticketImageHeight, setTicketImageHeight ] = useState(TICKET_IMAGE_HEIGHT);
@@ -189,6 +191,7 @@ export default function EventForm({ event = {
 
   const [ pricingDialogOpen, setPricingDialogOpen ] = useState(false);
   const [ saving, setSaving ] = useState(false);
+  const [ eventPublished, setEventPublished ] = useState(event.is_published);
 
   const {
     control,
@@ -208,10 +211,11 @@ export default function EventForm({ event = {
     if (event.updated_on !== getValues('updated_on')) {
       reset(event);
     }
-  }, [ event, getValues, reset ]);
+
+    setEventPublished(event.is_published);
+  }, [ event, getValues, reset, setEventPublished ]);
 
   useEffect(() => {
-    console.log('iss', isSmallScreen);
     if (isSmallScreen) {
       const newWidth = TICKET_IMAGE_WIDTH / 2;
       const newHeight = TICKET_IMAGE_HEIGHT / 2;
@@ -237,12 +241,62 @@ export default function EventForm({ event = {
 
   const { isValid, isDirty, isSubmitting } = formState;
 
-  const eventPublished = event.is_published;
-
   const submitDisabled = eventPublished || saving || !isValid || !isDirty || isSubmitting;
 
   const requiredRules = {
     required: 'Required',
+  };
+
+  const handleOnPublish = async () => {
+    setSaving(true);
+
+    try {
+      await confirm({
+        title: 'Are you sure you wish to publish this event?',
+        description: 'Published events can no longer be edited. All information here is considered final.',
+        confirmationText: 'Publish',
+        cancellationText: 'Cancel',
+        allowClose: false,
+        confirmationButtonProps: {
+          variant: 'contained',
+          color: 'error',
+        },
+        cancellationButtonProps: {
+          variant: 'outlined',
+        },
+      });
+
+      enqueueSnackbar('Publishing Event', {
+        variant: 'info',
+      });
+  
+      const { data: publishedEvent, error } = await supabase.from('events')
+        .update({
+          is_published: true,
+          updated_on: moment().toISOString(),
+        }).eq('uuid', event.uuid).single();
+  
+      if (error) {
+        enqueueSnackbar(`Failed to publish event: ${error.message}`, {
+          variant: 'error',
+        });
+      } else {
+        enqueueSnackbar('Event Published', {
+          variant: 'success',
+        });
+  
+        onSave(publishedEvent);
+      }
+    } catch(e) {
+      console.log('Publishing cancelled');
+    }
+    
+    setSaving(false);
+  };
+
+  const handleOnDelete = async () => {
+    console.log('Event Deleted');
+    // const { data: publishedEvent, error } = await supabase.from('events')
   };
 
   const onSubmit = async (data) => {
@@ -663,6 +717,30 @@ export default function EventForm({ event = {
           <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
             <Button disabled={submitDisabled} fullWidth variant="contained" type="submit">Save</Button>
             <Button disabled={saving} fullWidth variant="outlined" type="reset">Reset</Button>
+          </Stack>
+          <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
+            <Button
+              sx={{ mr: 1 }}
+              disabled={eventPublished || saving || !isValid}
+              fullWidth
+              onClick={handleOnPublish}
+              variant="contained"
+              type="button"
+            >
+              Publish Event
+            </Button>
+            <Button
+              // TODO: Setup the ability to delete an event
+              disabled
+              // disabled={eventPublished || saving}
+              fullWidth
+              onClick={handleOnDelete}
+              color="error"
+              variant="contained"
+              type="button"
+            >
+              Delete Event
+            </Button>
           </Stack>
         </Stack>
       </form>
