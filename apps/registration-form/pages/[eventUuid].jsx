@@ -259,7 +259,7 @@ export async function getStaticPaths() {
 export async function getStaticProps({ params }) {
   const { data: event } = await supabase.from('events').select('*').eq('uuid', params.eventUuid).single();
 
-  console.log('For event.uuid:', eventUuid);
+  console.log('For event.uuid:', params.eventUuid);
   console.log('Event:', event);
 
   if (isEmpty(event)) {
