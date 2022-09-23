@@ -25,18 +25,18 @@ import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 
-function ControlledNumberInput({ control, name, defaultValue, ...props }) {
+function ControlledNumberInput({ control, name, defaultValue, required = true, ...props }) {
   const { field, fieldState: { error } } = useController({
     control,
     name,
     defaultValue,
-    rules: {
+    rules: required ? {
       required: 'Required',
       pattern: {
         value: /^[0-9]+$/,
         message: 'Whole Number',
       },
-    },
+    } : {},
   });
 
   return (
@@ -227,6 +227,7 @@ export default function PricingDialog(props) {
                       control={control}
                       name={`early_bird_price_by_age.${ageLabel}`}
                       label="Early Bird Price:"
+                      required={false}
                     />
                   </Stack>
                 </Stack>

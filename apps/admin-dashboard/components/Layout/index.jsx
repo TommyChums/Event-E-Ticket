@@ -13,7 +13,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import supabase from '../../lib/supabase';
 
-const pages = [ { label: 'Events', path: '/events' } ];
+const pages = [ { label: 'Existing Events', path: '/events' }, { label: 'Create Event', path: '/events/new' } ];
 
 export default function Layout({ children }) {
   const router = useRouter();
@@ -115,12 +115,7 @@ export default function Layout({ children }) {
             <Typography
               variant="h5"
               noWrap
-              component="a"
               href=""
-              onClick={(e) => {
-                e.preventDefault();
-                handlePageItemClick('/events');
-              }}
               sx={{
                 mr: 2,
                 display: { xs: 'flex', md: 'none' },
@@ -130,9 +125,15 @@ export default function Layout({ children }) {
                 letterSpacing: '.3rem',
                 color: 'inherit',
                 textDecoration: 'none',
+                width: 'min-content',
               }}
             >
-              <Image src="/images/rlc-logo.png" width={50} height={65} alt="RLC" />
+              <IconButton onClick={(e) => {
+                e.preventDefault();
+                handlePageItemClick('/events');
+              }}>
+                <Image src="/images/rlc-logo.png" width={50} height={65} alt="RLC" />
+              </IconButton>
             </Typography>
             <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
               {pages.map((page) => (
@@ -149,6 +150,9 @@ export default function Layout({ children }) {
               variant="h4"
               noWrap
               sx={{
+                position: 'absolute',
+                transform: 'translateX(-50%)',
+                left: '50%',
                 flexGrow: 1,
                 display: { xs: 'none', md: 'flex' },
                 fontFamily: 'monospace',
@@ -158,7 +162,7 @@ export default function Layout({ children }) {
                 textDecoration: 'none',
               }}
             >
-              MANAGEMENT DASHBOARD
+              EVENTS DASHBOARD
             </Typography>
             <Box sx={{ flexGrow: 0 }}>
               <Button

@@ -36,6 +36,7 @@ const TICKET_IMAGE_HEIGHT = 260;
 const QR_CODE_SCALE = MAX_TICKET_WIDTH / TICKET_IMAGE_WIDTH;
 
 function preventEnterSubmit(e) {
+  if (e.target.id === 'outlined-description') return;
   if (e.code.toLowerCase() === 'enter') e.preventDefault();
 };
 
@@ -179,7 +180,7 @@ export default function EventForm({ event = {
   ticket_config: {},
   original_ticket_template: {},
   is_published: false,
-}, onSave }) {
+}, onSave, isNew = false }) {
   const { enqueueSnackbar } = useSnackbar();
 
   const isSmallScreen = useMediaQuery('(max-width:780px)');
@@ -388,12 +389,12 @@ export default function EventForm({ event = {
     delete data.original_ticket_template;
     delete data.ticket_config;
 
-    enqueueSnackbar('Updating Event', {
+    enqueueSnackbar(`${isNew ? 'Creating' : 'Updating'} Event`, {
       variant: 'info',
     });
 
     const { data: newEvent, error } = await supabase.from('events')
-      .update({
+      [isNew ? 'insert' : 'update']({
         ...data,
         updated_on: moment().toISOString(),
       }).eq('uuid', event.uuid).single();
@@ -403,7 +404,7 @@ export default function EventForm({ event = {
         variant: 'error',
       });
     } else {
-      enqueueSnackbar('Event Updated', {
+      enqueueSnackbar(`Event ${isNew ? 'Created' : 'Updated'}`, {
         variant: 'success',
       });
       console.log('newEvent', { ...newEvent })
@@ -656,23 +657,27 @@ export default function EventForm({ event = {
                             maxHeight={MAX_TICKET_HEIGHT}
                             altText={`${startCase(ageLabel)} Ticket`}
                           >
-                            <Controller
-                              control={control}
-                              name={`ticket_config.${ageLabel}.position`}
-                              render={({ field }) => (
-                                <div style={{ width: ticketImageWidth, height: ticketImageHeight, position: 'absolute', top: 0, alignSelf: 'center' }}>
-                                  <ResizableQrCode
-                                    {...field}
-                                    disabled={eventPublished}
-                                    scale={qrCodeScale}
-                                    maxHeight={ticketImageHeight}
-                                    config={field.value}
-                                    lightColour={lightColourValue(ageLabel)}
-                                    darkColour={darkColourValue(ageLabel)}
-                                  />
-                                </div>
-                              )}
-                            />
+                            {
+                              field.value && (
+                                <Controller
+                                  control={control}
+                                  name={`ticket_config.${ageLabel}.position`}
+                                  render={({ field }) => (
+                                    <div style={{ width: ticketImageWidth, height: ticketImageHeight, position: 'absolute', top: 0, alignSelf: 'center' }}>
+                                      <ResizableQrCode
+                                        {...field}
+                                        disabled={eventPublished}
+                                        scale={qrCodeScale}
+                                        maxHeight={ticketImageHeight}
+                                        config={field.value}
+                                        lightColour={lightColourValue(ageLabel)}
+                                        darkColour={darkColourValue(ageLabel)}
+                                      />
+                                    </div>
+                                  )}
+                                />
+                              )
+                            }
                           </ImgUpload>
                       )}
                     />
@@ -715,33 +720,37 @@ export default function EventForm({ event = {
             />
           </Stack>
           <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
-            <Button disabled={submitDisabled} fullWidth variant="contained" type="submit">Save</Button>
+            <Button disabled={submitDisabled} fullWidth variant="contained" type="submit">{isNew ? 'Create' : 'Save'}</Button>
             <Button disabled={saving} fullWidth variant="outlined" type="reset">Reset</Button>
           </Stack>
-          <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
-            <Button
-              sx={{ mr: 1 }}
-              disabled={eventPublished || saving || !isValid}
-              fullWidth
-              onClick={handleOnPublish}
-              variant="contained"
-              type="button"
-            >
-              Publish Event
-            </Button>
-            <Button
-              // TODO: Setup the ability to delete an event
-              disabled
-              // disabled={eventPublished || saving}
-              fullWidth
-              onClick={handleOnDelete}
-              color="error"
-              variant="contained"
-              type="button"
-            >
-              Delete Event
-            </Button>
-          </Stack>
+          {
+            !isNew && (
+              <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
+                <Button
+                  sx={{ mr: 1 }}
+                  disabled={eventPublished || saving || !isValid}
+                  fullWidth
+                  onClick={handleOnPublish}
+                  variant="contained"
+                  type="button"
+                >
+                  Publish Event
+                </Button>
+                <Button
+                  // TODO: Setup the ability to delete an event
+                  disabled
+                  // disabled={eventPublished || saving}
+                  fullWidth
+                  onClick={handleOnDelete}
+                  color="error"
+                  variant="contained"
+                  type="button"
+                >
+                  Delete Event
+                </Button>
+              </Stack>
+            )
+          }
         </Stack>
       </form>
     </Container>

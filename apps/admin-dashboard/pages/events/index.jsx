@@ -1,23 +1,22 @@
-import { Fragment } from 'react';
 import Head from 'next/head'
 import { useRouter } from 'next/router';
-import Container from '@mui/material/Container';
-import List from '@mui/material/List';
-import ListItemButton from '@mui/material/ListItemButton';
-import Divider from '@mui/material/Divider';
-import ListItemText from '@mui/material/ListItemText';
-import ListItemAvatar from '@mui/material/ListItemAvatar';
-import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import CardMedia from '@mui/material/CardMedia';
+import { CardActionArea } from '@mui/material';
+import Grid from '@mui/material/Grid';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import map from 'lodash/map';
 
-import supabase from '../../lib/supabase';
 import protectedRoute from '../../lib/helpers/protectedRoute';
 
-export const getServerSideProps = protectedRoute(async () => {
-  const { data: events, error } = await supabase.from('events').select('*');
+export const getServerSideProps = protectedRoute(async (_, authenticatedSupabase) => {
+  const { data: events, error } = await authenticatedSupabase.from('events').select('*');
 
+  console.log('events:', events.length)
+  console.log('events:', await authenticatedSupabase.from('events').select('*').eq('uuid', '19401480-384e-4bb5-b3c4-98a8df85c892'))
   if (error) throw error;
 
   return {
@@ -26,7 +25,7 @@ export const getServerSideProps = protectedRoute(async () => {
         const logoLocation = event.logo;
 
         if (logoLocation) {
-          const { publicURL, error } = supabase.storage.from(logoLocation.bucket).getPublicUrl(logoLocation.key);
+          const { publicURL, error } = authenticatedSupabase.storage.from(logoLocation.bucket).getPublicUrl(logoLocation.key);
 
           if (error) throw error;
 
@@ -40,6 +39,7 @@ export const getServerSideProps = protectedRoute(async () => {
 });
 
 export default function EventsHome({ events }) {
+  const isSmallScreen = useMediaQuery('(max-width:900px)');
   const router = useRouter();
 
   return (
@@ -49,72 +49,64 @@ export default function EventsHome({ events }) {
         <meta property="og:title" content="Reformation Life Centre - Events" key="title" />
         <link rel="icon" type="image/x-icon" href="/images/rlc-logo.ico" />
       </Head>
-      <Container
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          textAlign: 'center',
-          padding: '2rem 0'
-        }}
-      >
-        <Stack direction="column" spacing={3}>
-          <Typography
-            sx={{ display: 'inline' }}
-            component="span"
-            variant="h4"
-            color="text.primary"
-          >
-            Welcome to Reformation Life Centre&apos;s events page.
-          </Typography>
-          <Typography
-            sx={{ display: 'inline' }}
-            component="span"
-            variant="h5"
-            color="text.primary"
-          >
-            { 
-              events.length
-                ? 'These are all our current events. Click one to manage.'
-                : 'We currently have no events scheduled. Create one.'
-            }
-          </Typography>
-        </Stack>
-        <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper', margin: '1rem 0 0' }}>
-          {
-            map(events, (event, i) => {
-              const isFirst = i === 0;
-              return (
-                <Fragment key={event.uuid}>
-                  { !isFirst ? <Divider variant="inset" component="li" /> : null}
-                  <ListItemButton alignItems="flex-start" onClick={() => router.push(`/events/${event.uuid}`)}>
-                    <ListItemAvatar>
-                      <Avatar alt={event.name} src={event.logo} />
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={event.name}
-                      secondary={
-                        <Fragment>
-                          <Typography
-                            sx={{ display: 'inline' }}
-                            component="span"
-                            variant="body2"
-                            color="text.primary"
-                          >
-                            {event.host}
+      <Stack pt={5} width="100%" justifyContent="center" alignItems="center" position="relative">
+        <Stack alignSelf="center" direction="column" maxWidth="lg" spacing={2} justifyContent="center" alignItems="center">
+          <Stack direction="column" spacing={3} justifyContent="center" alignItems="center" textAlign="center">
+            <Typography
+              sx={{ display: 'inline' }}
+              component="span"
+              variant="h4"
+              color="text.primary"
+            >
+              Welcome to Reformation Life Centre&apos;s events page.
+            </Typography>
+            <Typography
+              sx={{ display: 'inline' }}
+              component="span"
+              variant="h5"
+              color="text.primary"
+            >
+              { 
+                events.length
+                  ? 'These are all our current events. Click one to manage.'
+                  : 'We currently have no events scheduled. Create one.'
+              }
+            </Typography>
+          </Stack>
+          <Grid container width="100%" spacing={2} justifyContent={isSmallScreen ? 'center' : 'start'}>
+            {
+              map(events, (event, i) => {
+                const eventPagePath = `/events/${event.uuid}`;
+
+                return (
+                  <Grid item key={event.uuid} style={{ padding: '1rem 10px' }}>
+                    <Card sx={{ maxWidth: 280, height: '100%' }}>
+                      <CardActionArea sx={{ display: 'flex', flexDirection: 'column' }} onClick={() => router.push(eventPagePath)}>
+                        <CardMedia
+                          sx={{ width: '140px', height: '140px' }}
+                          component="img"
+                          height="140"
+                          width="140"
+                          image={event.logo}
+                          alt={event.name}
+                        />
+                        <CardContent>
+                          <Typography gutterBottom variant="h5" component="div" textAlign="center">
+                            {event.name}
                           </Typography>
-                          {` — ${event.description}` || ` — Presents ${event.name}`}
-                        </Fragment>
-                      }
-                    />
-                  </ListItemButton>
-                </Fragment>
-              );
-            })
-          }
-        </List>
-      </Container>
+                          <Typography variant="body2" color="text.secondary">
+                            {event.description}
+                          </Typography>
+                        </CardContent>
+                      </CardActionArea>
+                    </Card>
+                  </Grid>
+                );
+              })
+            }
+          </Grid>
+        </Stack>
+      </Stack>
     </>
   );  
 };
