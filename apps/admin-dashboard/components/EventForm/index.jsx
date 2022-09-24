@@ -657,27 +657,23 @@ export default function EventForm({ event = {
                             maxHeight={MAX_TICKET_HEIGHT}
                             altText={`${startCase(ageLabel)} Ticket`}
                           >
-                            {
-                              field.value && (
-                                <Controller
-                                  control={control}
-                                  name={`ticket_config.${ageLabel}.position`}
-                                  render={({ field }) => (
-                                    <div style={{ width: ticketImageWidth, height: ticketImageHeight, position: 'absolute', top: 0, alignSelf: 'center' }}>
-                                      <ResizableQrCode
-                                        {...field}
-                                        disabled={eventPublished}
-                                        scale={qrCodeScale}
-                                        maxHeight={ticketImageHeight}
-                                        config={field.value}
-                                        lightColour={lightColourValue(ageLabel)}
-                                        darkColour={darkColourValue(ageLabel)}
-                                      />
-                                    </div>
-                                  )}
-                                />
-                              )
-                            }
+                            <Controller
+                              control={control}
+                              name={`ticket_config.${ageLabel}.position`}
+                              render={({ field }) => (
+                                <div style={{ width: ticketImageWidth, height: ticketImageHeight, position: 'absolute', top: 0, alignSelf: 'center' }}>
+                                  <ResizableQrCode
+                                    {...field}
+                                    disabled={eventPublished}
+                                    scale={qrCodeScale}
+                                    maxHeight={ticketImageHeight}
+                                    config={field.value}
+                                    lightColour={lightColourValue(ageLabel)}
+                                    darkColour={darkColourValue(ageLabel)}
+                                  />
+                                </div>
+                              )}
+                            />
                           </ImgUpload>
                       )}
                     />

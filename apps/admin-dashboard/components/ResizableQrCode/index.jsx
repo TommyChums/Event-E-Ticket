@@ -23,26 +23,36 @@ export default function ResizableQrCode({ scale = 1, disabled, maxHeight, config
   const [ qrCode, setQrCode ] = useState();
 
   useEffect(() => {
-    setPositionSize({
+    const scaledConfig = {
       x: isFinite(config.x) ? config.x / scale: 0,
       y: isFinite(config.y) ? config.y / scale: 0,
       h: isFinite(config.h) ? config.h / scale: maxHeight,
       w: isFinite(config.w) ? config.w / scale: maxHeight,
-    });
-  }, [ config, scale, maxHeight ]);
+    };
+
+    if (!isEqual(scaledConfig, positionSize)) {
+      setPositionSize(scaledConfig);
+    }
+  }, [ config, scale, maxHeight, positionSize ]);
 
   useEffect(() => {
-    if (!isEqual(lightColour, colour.light)) {
-      setColour({
-        ...colour,
-        light: lightColour,
-      });
+    const newColour = {
+      ...colour,
+    };
+
+    const lightColourIsNotSame = !isEqual(lightColour, colour.light);
+    const darkColourIsNotSame = !isEqual(darkColour, colour.dark);
+
+    if (lightColourIsNotSame) {
+      newColour.light = lightColour;
     }
-    if (!isEqual(darkColour, colour.dark)) {
-      setColour({
-        ...colour,
-        dark: darkColour,
-      });
+
+    if (darkColourIsNotSame) {
+      newColour.dark = darkColour;
+    }
+
+    if (lightColourIsNotSame || darkColourIsNotSame) {
+      setColour(newColour);
     }
   }, [ lightColour, darkColour, colour ]);
 
@@ -74,9 +84,9 @@ export default function ResizableQrCode({ scale = 1, disabled, maxHeight, config
 
     if (onChange && typeof onChange === 'function') {
       onChange(scaledSize);
-    } else {
-      setPositionSize(size);
     }
+
+    setPositionSize(size);
   };
 
   const handleOnResize = (_, { size }) => {
