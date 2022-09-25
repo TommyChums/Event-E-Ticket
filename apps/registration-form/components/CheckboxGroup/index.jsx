@@ -8,7 +8,7 @@ import FormHelperText from '@mui/material/FormHelperText';
 import Checkbox from '@mui/material/Checkbox';
 import { Typography } from '@mui/material';
 
-export default function CheckboxGroup({ requiredAmt = 0, options = [], onChange, label, value }) {
+export default function CheckboxGroup({ requiredAmt = 0, options = [], disabled, onChange, label, value }) {
   const [ checkedArray, setCheckedArray ] = useState([]);
 
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function CheckboxGroup({ requiredAmt = 0, options = [], onChange,
                 <FormControlLabel
                   key={optionValue}
                   control={
-                    <Checkbox checked={checkedArray.indexOf(optionValue) !== -1} onChange={handleChange} name={optionValue} />
+                    <Checkbox disabled={disabled} checked={checkedArray.indexOf(optionValue) !== -1} onChange={handleChange} name={optionValue} />
                   }
                   label={optionLabel}
                 />

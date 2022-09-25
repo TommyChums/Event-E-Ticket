@@ -112,12 +112,12 @@ export default function RegistrationForm({ event }) {
           maxWidth: '848px'
         }}
       >
-        <Stack sx={{ margin: registrationDisabled ? '0' : '0 0 2rem' }} direction="column" spacing={1.5}>
+        <Stack sx={{ margin: '0' }} direction="column" spacing={2}>
           <Avatar alt="" variant="square" src={event.banner} sx={{ width: '100%', height: '100%', maxWidth: 800 / (isSmallScreen ? 2 : 1), maxHeight: 200 / (isSmallScreen ? 2 : 1), alignSelf: 'center', borderRadius: '4px' }} />
-          <Typography variant="h6" fontWeight="bold">
-            {event.host}
+          <Typography variant="h5" fontWeight="bold">
+            {event.name}
           </Typography>
-          <Typography variant="subtitle1">
+          <Typography variant="h6">
             {event.description || `${event.host} presents ${event.name}`}
           </Typography>
         </Stack>
@@ -127,7 +127,7 @@ export default function RegistrationForm({ event }) {
               <Typography sx={{ margin: '2rem 0 0', color: 'red' }} variant="body1" fontWeight="bold">
                 We are no longer accpeting any more registrations.
               </Typography>
-              <Typography sx={{ margin: '0 0 2rem', color: 'red' }} variant="body1" fontWeight="bold">
+              <Typography sx={{ margin: '0', color: 'red' }} variant="body1" fontWeight="bold">
                 The registration period for this event has passed.
               </Typography>
             </>
@@ -306,6 +306,7 @@ export default function RegistrationForm({ event }) {
                       render={({ field }) => (
                         <CheckboxGroup
                           {...field}
+                          disabled={registrationDisabled}
                           requiredAmt={options_required}
                           options={options}
                           label={field_label}
