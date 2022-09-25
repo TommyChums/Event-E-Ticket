@@ -13,6 +13,7 @@ import Stack from '@mui/material/Stack';
 import map from 'lodash/map';
 
 import supabase from "../lib/supabase";
+import getEventWithImgs from "../lib/getEventWithImgs";
 
 export async function getServerSideProps() {
   const { data: events, error } = await supabase.from('events').select('*');
