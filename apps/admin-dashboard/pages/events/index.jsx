@@ -72,9 +72,9 @@ export default function EventsHome({ events }) {
                 return (
                   <Grid item key={event.uuid} style={{ padding: '1rem 10px' }}>
                     <Card sx={{ maxWidth: 280, height: '100%' }}>
-                      <CardActionArea sx={{ display: 'flex', flexDirection: 'column' }} onClick={() => router.push(eventPagePath)}>
+                      <CardActionArea sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'start', height: '100%' }} onClick={() => router.push(eventPagePath)}>
                         <CardMedia
-                          sx={{ width: '140px', height: '140px' }}
+                          sx={{ width: '140px', height: '140px', alignSelf: 'center' }}
                           component="img"
                           height="140"
                           width="140"
