@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
 import Button from '@mui/material/Button'
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
@@ -18,6 +20,8 @@ const pages = [ { label: 'Existing Events', path: '/events' }, { label: 'Create 
 export default function Layout({ children }) {
   const router = useRouter();
 
+  const [ isRouting, setIsRouting ] = useState(false);
+
   const [ signingOut, setSigningOut ] = useState(false);
 
   const [ anchorElNav, setAnchorElNav ] = useState(null);
@@ -33,11 +37,15 @@ export default function Layout({ children }) {
   const handlePageItemClick = (path) => {
     handleCloseNavMenu();
     if (router.pathname !== path) {
-      router.push(path);
+      setIsRouting(true);
+      router.push(path).then(() => {
+        setIsRouting(false);
+      });
     }
   };
 
   const handleLogout = async () => {
+    setIsRouting(true);
     setSigningOut(true);
     await supabase.auth.signOut();
   };
@@ -46,12 +54,16 @@ export default function Layout({ children }) {
   if (router.pathname === '/login') {
     if (signingOut) {
       setSigningOut(false);
+      setIsRouting(false);
     }
     return children;
   }
 
   return (
     <>
+      <Backdrop open={isRouting} sx={{ color: '#fff', zIndex: 5 }}>
+        <CircularProgress />
+      </Backdrop>
       <AppBar position="static">
         <Container maxWidth={false}>
           <Toolbar disableGutters>
