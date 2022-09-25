@@ -1,7 +1,7 @@
 import isEmpty from 'lodash/isEmpty';
 import forEach from 'lodash/forEach';
 
-import supabase from "../supabase";
+import supabase from "./supabase";
 
 function getPublicURLForEventImgs(configObj, supabaseInstance) {
   let thisSupabase = supabase;

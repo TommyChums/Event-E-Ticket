@@ -13,6 +13,7 @@ import Container from '@mui/material/Container';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -24,6 +25,8 @@ import getEventWithImgs from "../lib/getEventWithImgs";
 const registrationNumberFromUuid = (uuid) => Buffer.from(parse(uuid)).readUint32BE(0);
 
 export default function RegistrationForm({ event }) {
+  const isSmallScreen = useMediaQuery('(max-width:780px)');
+
   const [ saving, setSaving ] = useState(false);
   const [ info, setInfo ] = useState(null);
 
@@ -105,9 +108,12 @@ export default function RegistrationForm({ event }) {
           textAlign: 'center',
           padding: '1rem 1rem 5rem',
         }}
+        style={{
+          maxWidth: '848px'
+        }}
       >
         <Stack sx={{ margin: registrationDisabled ? '0' : '0 0 2rem' }} direction="column" spacing={1.5}>
-          <Avatar alt="" src={event.logo} sx={{ width: 120, height: 120, alignSelf: 'center' }} />
+          <Avatar alt="" variant="square" src={event.banner} sx={{ width: '100%', height: '100%', maxWidth: 800 / (isSmallScreen ? 2 : 1), maxHeight: 200 / (isSmallScreen ? 2 : 1), alignSelf: 'center', borderRadius: '4px' }} />
           <Typography variant="h6" fontWeight="bold">
             {event.host}
           </Typography>
@@ -131,6 +137,7 @@ export default function RegistrationForm({ event }) {
           style={{
             display: 'flex',
             flexDirection: 'column',
+            width: '100%',
           }}
           onSubmit={handleSubmit(onSubmit)}
           onReset={reset}
@@ -174,6 +181,7 @@ export default function RegistrationForm({ event }) {
                     label="First Name *"
                     variant="outlined"
                     type="text"
+                    fullWidth
                   />
                 )}
                 rules={{
@@ -197,6 +205,7 @@ export default function RegistrationForm({ event }) {
                     label="Last Name *"
                     variant="outlined"
                     type="text"
+                    fullWidth
                   />
                 )}
                 rules={{
