@@ -1,57 +1,8 @@
 import { useEffect, useReducer, useRef } from "react";
-import forEach from 'lodash/forEach';
 import isEmpty from 'lodash/isEmpty';
 
+import getEventWithImgs from "../helpers/getEventWithImgs";
 import supabase from "../supabase";
-
-function getPublicURLForEventImgs(configObj) {
-  const returnObj = {
-    publicURL: '',
-    err: false,
-  };
-
-  const { publicURL, error } = supabase.storage.from(configObj.bucket).getPublicUrl(configObj.key);
-
-  if (error) returnObj.err = error.message;
-
-  returnObj.publicURL = publicURL;
-
-  return returnObj;
-}
-
-function setEventImgs(event) {
-  const logoLocation = event.logo;
-  const ticketConfig = event.ticket_template;
-  let err = false;
-
-  if (logoLocation) {
-    const { publicURL, error } = getPublicURLForEventImgs(logoLocation);
-
-    err = error;
-
-    event.logo = publicURL;
-  }
-
-  event.ticket_template = {};
-  event.ticket_config = {};
-  event.original_ticket_template = {};
-
-  if (ticketConfig) {
-    forEach(ticketConfig, (ticketInfo, ageLabel) => {
-      const { publicURL, error } = getPublicURLForEventImgs(ticketInfo);
-  
-      err = error;
-
-      event.ticket_template[ageLabel] = publicURL;
-  
-      event.ticket_config[ageLabel] = ticketConfig[ageLabel]?.config || {};
-      event.original_ticket_template = ticketConfig;
-    });
-  }
-
-
-  return { data: event, error: err };
-}
 
 export default function useEvent(eventUuid) {
   const pollRef = useRef(null);
@@ -62,7 +13,7 @@ export default function useEvent(eventUuid) {
   const [ state, dispatch ] = useReducer((state, { type, payload }) => {
     switch (type) {
       case 'RECEIVED_EVENT': {
-        const { data: eventWithImgs, error } = setEventImgs(payload);
+        const { data: eventWithImgs, error } = getEventWithImgs(payload);
 
         return {
           ...state,
@@ -72,7 +23,7 @@ export default function useEvent(eventUuid) {
       }
       case 'UPDATE':
       case 'INSERT': {
-        const { data: eventWithImgs, error } = setEventImgs(payload.new);
+        const { data: eventWithImgs, error } = getEventWithImgs(payload.new);
 
         return {
           ...state,

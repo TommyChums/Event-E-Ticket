@@ -22,17 +22,9 @@ export async function getServerSideProps() {
   return {
     props: {
       events: events.map((event) => {
-        const logoLocation = event.logo;
+        const { data } = getEventWithImgs(event, false);
 
-        if (logoLocation) {
-          const { publicURL, error } = supabase.storage.from(logoLocation.bucket).getPublicUrl(logoLocation.key);
-
-          if (error) throw error;
-
-          event.logo = publicURL;
-        }
-
-        return event;
+        return data;
       }),
     },
   };

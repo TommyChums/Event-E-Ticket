@@ -166,7 +166,7 @@ export default async function handler(req, res) {
       subject: 'Thank You for Registering', // Subject line
       html: ticketHtml, // html body
     }).then(info => {
-      console.log({info});
+      console.log(JSON.stringify({ info }));
     }).catch(console.error);
 
     return res.status(200).json({ message: `Successfully send email to ${registeredUser.email}` });

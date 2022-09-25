@@ -19,6 +19,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 import CheckboxGroup from "../components/CheckboxGroup";
 import supabase from "../lib/supabase";
+import getEventWithImgs from "../lib/getEventWithImgs";
 
 const registrationNumberFromUuid = (uuid) => Buffer.from(parse(uuid)).readUint32BE(0);
 
@@ -337,28 +338,17 @@ export async function getStaticPaths() {
 export async function getStaticProps({ params }) {
   const { data: event } = await supabase.from('events').select('*').eq('uuid', params.eventUuid).single();
 
-  console.log('For event.uuid:', params.eventUuid);
-  console.log('Event:', event);
-
   if (isEmpty(event)) {
     return {
       notFound: true,
     };
   }
 
-  const logoLocation = event.logo;
-
-  if (logoLocation) {
-    const { publicURL, error } = supabase.storage.from(logoLocation.bucket).getPublicUrl(logoLocation.key);
-
-    if (error) throw error;
-
-    event.logo = publicURL;
-  }
+  const { data: eventWithImgs } = getEventWithImgs(event, false);
 
   return {
     props: {
-      event,
+      event: eventWithImgs,
     },
     revalidate: 30,
   };

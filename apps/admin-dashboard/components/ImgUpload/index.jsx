@@ -5,7 +5,7 @@ import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 
-export default function ImgUpload({ avatar, disabled, name, onUpload, defaultValue, value, maxWidth, maxHeight, width, height, altText, children = null }) {
+export default function ImgUpload({ avatar, disabled, name, onUpload, defaultValue, value, maxWidth, maxHeight, width, height, altText, children = null, sizeText }) {
   const uploadInputRef = useRef(null);
   const [ imgSrc, setImgSrc ] = useState(value);
 
@@ -64,7 +64,7 @@ export default function ImgUpload({ avatar, disabled, name, onUpload, defaultVal
               {altText}
             </Avatar>
             <Typography component="label" htmlFor={`avatar-${name || 1}`} variant="subtitle2" sx={{ alignSelf: 'center', fontStyle: 'italic', opacity: 0.6 }}>
-              1.25&quot; x 1.25&quot;
+              {sizeText || '1.25" x 1.25"'}
             </Typography>
           </Stack>
         ) : (
@@ -73,7 +73,7 @@ export default function ImgUpload({ avatar, disabled, name, onUpload, defaultVal
               {altText}
             </Avatar>
             <Typography component="label" htmlFor={`rectangle-${name || 1}`} variant="subtitle2" sx={{ alignSelf: 'center', fontStyle: 'italic', opacity: 0.6 }}>
-              5.5&quot; x 2.125&quot;
+              {sizeText || '5.5" x 2.125"'}
             </Typography>
           </Stack>
         )

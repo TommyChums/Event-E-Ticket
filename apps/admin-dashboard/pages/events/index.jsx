@@ -11,28 +11,19 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import map from 'lodash/map';
 
 import protectedRoute from '../../lib/helpers/protectedRoute';
+import getEventWithImgs from '../../lib/helpers/getEventWithImgs';
 
 export const getServerSideProps = protectedRoute(async (_, authenticatedSupabase) => {
   const { data: events, error } = await authenticatedSupabase.from('events').select('*');
 
-  console.log('events:', events.length)
-  console.log('events:', await authenticatedSupabase.from('events').select('*').eq('uuid', '19401480-384e-4bb5-b3c4-98a8df85c892'))
   if (error) throw error;
 
   return {
     props: {
       events: events.map((event) => {
-        const logoLocation = event.logo;
+        const { data } = getEventWithImgs(event, false, authenticatedSupabase);
 
-        if (logoLocation) {
-          const { publicURL, error } = authenticatedSupabase.storage.from(logoLocation.bucket).getPublicUrl(logoLocation.key);
-
-          if (error) throw error;
-
-          event.logo = publicURL;
-        }
-
-        return event;
+        return data;
       }),
     },
   };

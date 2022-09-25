@@ -36,18 +36,23 @@ const TICKET_IMAGE_WIDTH = 660;
 const TICKET_IMAGE_HEIGHT = 260;
 const QR_CODE_SCALE = MAX_TICKET_WIDTH / TICKET_IMAGE_WIDTH;
 
+const MAX_BANNER_WIDTH = 1600;
+const MAX_BANNER_HEIGHT = 400;
+const BANNER_IMAGE_WIDTH = 640;
+const BANNER_IMAGE_HEIGHT = 160;
+
 function preventEnterSubmit(e) {
   if (e.target.id === 'outlined-description') return;
   if (e.code.toLowerCase() === 'enter') e.preventDefault();
 };
 
-async function replaceStorageImg(b64ImgData, bucket, eventUuid, oldPath) {
+async function replaceStorageImg(b64ImgData, bucket, eventUuid, oldPath, pathBeforeUuid = '') {
   const contentType = b64ImgData.split(';')[0].replace('data:', '');
   const extension = contentType.split('/')[1];
   const imgArrayBuffer = decode(b64ImgData.split(',')[1]);
   
   const { data, error } = await supabase.storage.from(bucket)
-    .upload(`${eventUuid}/${v4()}.${extension}`, imgArrayBuffer, { contentType, upsert: true });
+    .upload(`${eventUuid}/${pathBeforeUuid}${v4()}.${extension}`, imgArrayBuffer, { contentType, upsert: true });
   
   if (!error) {
     // Remove old img
@@ -60,7 +65,7 @@ async function replaceStorageImg(b64ImgData, bucket, eventUuid, oldPath) {
   }
 
   return {
-    imgKey: data.Key,
+    imgKey: data?.Key,
     error,
   };
 };
@@ -187,6 +192,8 @@ export default function EventForm({ event = {
   const isSmallScreen = useMediaQuery('(max-width:780px)');
   const confirm = useConfirm();
 
+  const [ bannerImageWidth, setBannerImageWidth ] = useState(BANNER_IMAGE_WIDTH);
+  const [ bannerImageHeight, setBannerImageHeight ] = useState(BANNER_IMAGE_HEIGHT);
   const [ ticketImageWidth, setTicketImageWidth ] = useState(TICKET_IMAGE_WIDTH);
   const [ ticketImageHeight, setTicketImageHeight ] = useState(TICKET_IMAGE_HEIGHT);
   const [ qrCodeScale, setQrCodeScale ] = useState(QR_CODE_SCALE);
@@ -204,8 +211,7 @@ export default function EventForm({ event = {
     getValues,
     watch,
   } = useForm({
-    mode: 'onBlur',
-    reValidateMode: 'onChange',
+    mode: 'onChange',
     defaultValues: { ...event },
   });
 
@@ -219,14 +225,20 @@ export default function EventForm({ event = {
 
   useEffect(() => {
     if (isSmallScreen) {
-      const newWidth = TICKET_IMAGE_WIDTH / 2;
-      const newHeight = TICKET_IMAGE_HEIGHT / 2;
-      const newScale = MAX_TICKET_WIDTH / newWidth;
-
-      setTicketImageWidth(newWidth);
-      setTicketImageHeight(newHeight);
-      setQrCodeScale(newScale);
+      const newBannerWidth = BANNER_IMAGE_WIDTH / 2;
+      const newBannerHeight = TICKET_IMAGE_HEIGHT / 2;
+      const newTicketWidth = BANNER_IMAGE_WIDTH / 2;
+      const newTicketHeight = TICKET_IMAGE_HEIGHT / 2;
+      const newQrCodeScale = MAX_TICKET_WIDTH / newTicketWidth;
+      
+      setBannerImageWidth(newBannerWidth);
+      setBannerImageHeight(newBannerHeight);
+      setTicketImageWidth(newTicketWidth);
+      setTicketImageHeight(newTicketHeight);
+      setQrCodeScale(newQrCodeScale);
     } else {
+      setBannerImageWidth(BANNER_IMAGE_WIDTH);
+      setBannerImageHeight(BANNER_IMAGE_HEIGHT);
       setTicketImageWidth(TICKET_IMAGE_WIDTH);
       setTicketImageHeight(TICKET_IMAGE_HEIGHT);
       setQrCodeScale(QR_CODE_SCALE);
@@ -308,9 +320,9 @@ export default function EventForm({ event = {
         variant: 'info',
       });
       
-      const logoBucket = 'event-logos';
+      const logoBucket = 'event-assets';
 
-      const { imgKey, error } = await replaceStorageImg(data.logo, logoBucket, event.uuid, event.logo);
+      const { imgKey, error } = await replaceStorageImg(data.logo, logoBucket, event.uuid, event.logo, 'logo/');
 
       if (error) {
         enqueueSnackbar(`Failed to upload Logo: ${error.message}`, {
@@ -330,6 +342,35 @@ export default function EventForm({ event = {
       });
     } else {
       delete data.logo;
+    }
+
+    if (data.banner !== event.banner) {
+      enqueueSnackbar('Uploading Banner', {
+        variant: 'info',
+      });
+      
+      const bannerBucket = 'event-assets';
+
+      const { imgKey, error } = await replaceStorageImg(data.banner, bannerBucket, event.uuid, event.banner, 'banner/');
+
+      if (error) {
+        enqueueSnackbar(`Failed to upload Banner: ${error.message}`, {
+          variant: 'error',
+        });
+        setSaving(false);
+        return;
+      }
+
+      data.banner = {
+        key: imgKey.replace(`${bannerBucket}/`, ''),
+        bucket: bannerBucket,
+      };
+
+      enqueueSnackbar('Uploaded Banner', {
+        variant: 'success',
+      });
+    } else {
+      delete data.banner;
     }
 
     for (let ageLabel in data.ticket_template || {}) {
@@ -445,6 +486,27 @@ export default function EventForm({ event = {
                   maxWidth={500}
                   maxHeight={500}
                   disabled={eventPublished}
+                />
+              )}
+              rules={requiredRules}
+            />
+          </div>
+          <div style={{ alignSelf: 'center' }}>
+            <Typography component='label' htmlFor="banner" variant="subtitle1" >Event Banner:</Typography>
+            <Controller
+              control={control}
+              name="banner"
+              render={({ field }) => (
+                <ImgUpload
+                  {...field}
+                  altText="Event Banner"
+                  onUpload={field.onChange}
+                  width={bannerImageWidth}
+                  height={bannerImageHeight}
+                  maxWidth={MAX_BANNER_WIDTH}
+                  maxHeight={MAX_BANNER_HEIGHT}
+                  disabled={eventPublished}
+                  sizeText={`4" x 1"`}
                 />
               )}
               rules={requiredRules}
