@@ -68,7 +68,7 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
     closeSnackbar(issuingId);
 
     if (issueError) {
-      enqueueSnackbar(`Error isuing ticket to ${user.email}: ${issueError.message}`, {
+      enqueueSnackbar(`Error isuing ticket to ${user.email}: ${issueError}`, {
         variant: 'error',
       });
     } else {

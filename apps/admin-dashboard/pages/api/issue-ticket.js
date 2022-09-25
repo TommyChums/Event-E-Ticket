@@ -81,7 +81,7 @@ export default async function handler(req, res) {
     const qrCodeOptions = {};
 
     if (config.position) {
-      qrCodeOptions.width = config.position?.w;
+      qrCodeOptions.width = config.position?.qrcode?.w;
     }
 
     if (config.colour) {
@@ -93,8 +93,29 @@ export default async function handler(req, res) {
 
     await QRCode.toFile('/tmp/qrcode.png', qrCodeInfo, qrCodeOptions);
 
+    const { count } = await supabase.from('registered-users')
+      .select(undefined, { count: 'exact', head: true })
+      .eq('ticket_issued', true)
+      .eq('registered_event', event.uuid);
+
+    let ticketNumber = (count + 1).toString();
+
+    while (ticketNumber.length <  4) {
+      ticketNumber = `0${ticketNumber}`;
+    }
+
+    await sharp({
+      text: {
+        text: `<span size="42pt" weight="bold" foreground="${config.colour?.dark?.hex}">${ticketNumber}</span>`,
+        width: config.position?.number?.w,
+        height: config.position?.number?.h,
+        rgba: true,
+      },
+    }).toFile('/tmp/number.png');
+
     const qrCodeImg = await sharp(ticketTemplateBuffer).composite([
-      { input: '/tmp/qrcode.png', top: Math.ceil(config.position?.y || 0), left: Math.ceil(config.position?.x || 0) },
+      { input: '/tmp/qrcode.png', top: Math.ceil(config.position?.qrcode?.y || 0), left: Math.ceil(config.position?.qrcode?.x || 0) },
+      { input: '/tmp/number.png', top: Math.ceil(config.position?.number?.y || 0), left: Math.ceil(config.position?.number?.x || 0) },
     ]).toBuffer().then(buffer => {
       return buffer.toString('base64');
     });
@@ -146,21 +167,27 @@ export default async function handler(req, res) {
       },
     });
   
-    await transporter.sendMail({
-      from: '"Reformation Life Centre" <techteam@reformationlifecentre.org>', // sender address
-      to: registeredUser.email, // list of receivers
-      subject: `Ticket for: ${event.name}`, // Subject line
-      html: ticketHtml, // html body
-      attachments: [
-        {
-          filename: 'Ticket.png',
-          content: qrCodeImg,
-          encoding: 'base64',
-        },
-      ],
-    }).then(info => {
-      console.log({info});
-    }).catch(console.error);
+    try {
+      await transporter.sendMail({
+        from: '"Reformation Life Centre" <techteam@reformationlifecentre.org>', // sender address
+        to: registeredUser.email, // list of receivers
+        subject: `Ticket for: ${event.name}`, // Subject line
+        html: ticketHtml, // html body
+        attachments: [
+          {
+            filename: 'Ticket.png',
+            content: qrCodeImg,
+            encoding: 'base64',
+          },
+        ],
+      }).then(info => {
+        console.log(JSON.stringify({ info }));
+      }).catch((e) => { throw e });
+    } catch (e) {
+      console.error(e);
+
+      return res.status(500).json({ error: e.message });
+    }
 
     const { data: updatedUser, error: updateError } = await supabase.from('registered-users').update({
       ticket_issued: true,

@@ -26,8 +26,9 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 
 import PricingDialog from './PricingDialog';
 import ImgUpload from '../ImgUpload';
+import ResizableQrCode from '../ResizableImage';
+import ResizableNumber from '../ResizableImage';
 import supabase from '../../lib/supabase';
-import ResizableQrCode from '../ResizableQrCode';
 
 const MAX_TICKET_WIDTH = 1650;
 const MAX_TICKET_HEIGHT = 650;
@@ -657,23 +658,61 @@ export default function EventForm({ event = {
                             maxHeight={MAX_TICKET_HEIGHT}
                             altText={`${startCase(ageLabel)} Ticket`}
                           >
-                            <Controller
-                              control={control}
-                              name={`ticket_config.${ageLabel}.position`}
-                              render={({ field }) => (
-                                <div style={{ width: ticketImageWidth, height: ticketImageHeight, position: 'absolute', top: 0, alignSelf: 'center' }}>
-                                  <ResizableQrCode
-                                    {...field}
-                                    disabled={eventPublished}
-                                    scale={qrCodeScale}
-                                    maxHeight={ticketImageHeight}
-                                    config={field.value}
-                                    lightColour={lightColourValue(ageLabel)}
-                                    darkColour={darkColourValue(ageLabel)}
-                                  />
-                                </div>
-                              )}
-                            />
+                            <>
+                              <Controller
+                                control={control}
+                                name={`ticket_config.${ageLabel}.position.qrcode`}
+                                render={({ field }) => (
+                                  <div
+                                    style={{
+                                      width: ticketImageWidth,
+                                      height: ticketImageHeight,
+                                      position: 'absolute',
+                                      top: 0,
+                                      alignSelf: 'center'
+                                    }}
+                                  >
+                                    <ResizableQrCode
+                                      {...field}
+                                      disabled={eventPublished}
+                                      scale={qrCodeScale}
+                                      maxHeight={ticketImageHeight}
+                                      config={field.value}
+                                      lightColour={lightColourValue(ageLabel)}
+                                      darkColour={darkColourValue(ageLabel)}
+                                    />
+                                  </div>
+                                )}
+                              />
+                              <Controller
+                                control={control}
+                                name={`ticket_config.${ageLabel}.position.number`}
+                                render={({ field }) => (
+                                  <div
+                                    style={{
+                                      width: ticketImageWidth,
+                                      height: ticketImageHeight,
+                                      position: 'absolute',
+                                      top: 0,
+                                      alignSelf: 'center',
+                                      pointerEvents: 'none',
+                                    }}
+                                  >
+                                    <ResizableNumber
+                                      {...field}
+                                      type="number"
+                                      disabled={eventPublished}
+                                      scale={qrCodeScale}
+                                      maxWidth={ticketImageWidth}
+                                      maxHeight={ticketImageHeight}
+                                      config={field.value}
+                                      lightColour={lightColourValue(ageLabel)}
+                                      darkColour={darkColourValue(ageLabel)}
+                                    />
+                                  </div>
+                                )}
+                              />
+                            </>
                           </ImgUpload>
                       )}
                     />
