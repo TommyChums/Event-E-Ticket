@@ -4,6 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { v4, parse } from 'uuid';
 import moment from 'moment';
 import isEmpty from 'lodash/isEmpty';
+import map from 'lodash/map';
 import startCase from 'lodash/startCase';
 import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
@@ -16,6 +17,7 @@ import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
+import CheckboxGroup from "../components/CheckboxGroup";
 import supabase from "../lib/supabase";
 
 const registrationNumberFromUuid = (uuid) => Buffer.from(parse(uuid)).readUint32BE(0);
@@ -203,6 +205,29 @@ export default function RegistrationForm({ event }) {
             </Stack>
             <Controller
               control={control}
+              name="phone_number"
+              defaultValue=""
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  disabled={registrationDisabled}
+                  error={!!errors.phone_number}
+                  helperText={errors.phone_number?.message}
+                  id="outlined-last-name"
+                  label="Phone Number"
+                  variant="outlined"
+                  type="text"
+                />
+              )}
+              rules={{
+                pattern: {
+                  value: /^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/,
+                  message: '(868) 123-4567'
+                }
+              }}
+            />
+            <Controller
+              control={control}
               name="date_of_birth"
               label="Date of Birth *"
               rules={{
@@ -233,6 +258,59 @@ export default function RegistrationForm({ event }) {
                 </LocalizationProvider>
               )}
             />
+            {
+              map(event.additional_user_information, (additionalInfoInput) => {
+                const { field_name, field_label, field_type, required, options, options_required } = additionalInfoInput;
+
+                if (field_type === 'text') {
+                  return (
+                    <Controller
+                      key={field_name}
+                      control={control}
+                      name={`additional_information.${field_name}`}
+                      defaultValue=""
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          disabled={registrationDisabled}
+                          error={!!errors[field_name]}
+                          helperText={errors[field_name]?.message}
+                          id={`outlined-${field_name}`}
+                          label={field_label}
+                          variant="outlined"
+                          type="text"
+                        />
+                      )}
+                      rules={{
+                        required: required ? 'Required' : false,
+                      }}
+                    />
+                  );
+                } else if (field_type === 'checkbox') {
+                  return (
+                    <Controller
+                      key={field_name}
+                      control={control}
+                      defaultValue={[]}
+                      name={`additional_information.${field_name}`}
+                      render={({ field }) => (
+                        <CheckboxGroup
+                          {...field}
+                          requiredAmt={options_required}
+                          options={options}
+                          label={field_label}
+                        />
+                      )}
+                      rules={{
+                        validate: {
+                          requiredSelected: (val = []) => val.length >= (options_required || 0) ? null : 'Required',
+                        },
+                      }}
+                    />
+                  );
+                }
+              })
+            }
             <Button disabled={submitDisabled} type="submit" variant="contained">
               {saving ? 'Registering' : 'Submit'}
             </Button>
