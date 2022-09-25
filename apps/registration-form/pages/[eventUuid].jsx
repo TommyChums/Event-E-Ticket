@@ -113,9 +113,9 @@ export default function RegistrationForm({ event }) {
           maxWidth: '848px'
         }}
       >
-        <Paper elevation={10}>
+        <Paper elevation={10} style={{ borderRadius: '5px' }}>
           <Stack sx={{ margin: '0' }} direction="column" spacing={2}>
-            <Avatar alt="" variant="square" src={event.banner} sx={{ width: '100%', height: '100%', maxWidth: 800 / (isSmallScreen ? 2 : 1), maxHeight: 200 / (isSmallScreen ? 2 : 1), alignSelf: 'center', borderRadius: '4px' }} />
+            <Avatar alt="" variant="square" src={event.banner} sx={{ width: '100%', height: '100%', maxWidth: 800 / (isSmallScreen ? 2 : 1), maxHeight: 200 / (isSmallScreen ? 2 : 1), alignSelf: 'center', borderRadius: '4px 4px 0 0' }} />
             <Typography variant="h5" fontWeight="bold">
               {event.name}
             </Typography>
