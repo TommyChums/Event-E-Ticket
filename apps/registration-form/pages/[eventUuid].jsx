@@ -13,6 +13,7 @@ import Container from '@mui/material/Container';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import Paper from '@mui/material/Paper';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -93,7 +94,7 @@ export default function RegistrationForm({ event }) {
   };
 
   return (
-    <>
+    <div style={{ width: '100%', height: '100%', backgroundImage: `radial-gradient(circle, white, ${event.branding?.primary_colour?.hex})` }}>
       <Head>
         <title>{`Register | ${event.name} | ${event.host} presents ${event.name}`}</title>
         <meta property="og:title" content={`${event.name} | ${event.host} presents ${event.name}`} key="title" />
@@ -112,223 +113,225 @@ export default function RegistrationForm({ event }) {
           maxWidth: '848px'
         }}
       >
-        <Stack sx={{ margin: '0' }} direction="column" spacing={2}>
-          <Avatar alt="" variant="square" src={event.banner} sx={{ width: '100%', height: '100%', maxWidth: 800 / (isSmallScreen ? 2 : 1), maxHeight: 200 / (isSmallScreen ? 2 : 1), alignSelf: 'center', borderRadius: '4px' }} />
-          <Typography variant="h5" fontWeight="bold">
-            {event.name}
-          </Typography>
-          <Typography variant="h6">
-            {event.description || `${event.host} presents ${event.name}`}
-          </Typography>
-        </Stack>
-        {
-          registrationDisabled ? (
-            <>
-              <Typography sx={{ margin: '2rem 0 0', color: 'red' }} variant="body1" fontWeight="bold">
-                We are no longer accpeting any more registrations.
-              </Typography>
-              <Typography sx={{ margin: '0', color: 'red' }} variant="body1" fontWeight="bold">
-                The registration period for this event has passed.
-              </Typography>
-            </>
-          ) : null
-        }
-        <form
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            width: '100%',
-          }}
-          onSubmit={handleSubmit(onSubmit)}
-          onReset={reset}
-          >
-          <Stack direction="column" spacing={4}>
-            <Alert sx={{ visibility: info ? 'visible' : 'hidden' }} severity={info?.type}>{info?.message}</Alert>
-            <Controller
-              control={control}
-              name="email"
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  disabled={registrationDisabled}
-                  error={!!errors.email}
-                  helperText={errors.email?.message}
-                  id="outlined-email"
-                  label="Email *"
-                  variant="outlined"
-                  type="email"
-                />
-              )}
-              rules={{
-                required: 'Required',
-              }}
-            />
-            <Stack sx={{ justifyContent: 'space-between' }} direction="row" spacing={2}>
-              <Controller
-                control={control}
-                name="first_name"
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    onChange={({ target }) => {
-                      const { value } = target;
-                      field.onChange(startCase(value.toLowerCase()));
-                    }}
-                    disabled={registrationDisabled}
-                    error={!!errors.first_name}
-                    helperText={errors.first_name?.message}
-                    id="outlined-first-name"
-                    label="First Name *"
-                    variant="outlined"
-                    type="text"
-                    fullWidth
-                  />
-                )}
-                rules={{
-                  required: 'Required',
-                }}
-              />
-              <Controller
-                control={control}
-                name="last_name"
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    onChange={({ target }) => {
-                      const { value } = target;
-                      field.onChange(startCase(value.toLowerCase()));
-                    }}
-                    disabled={registrationDisabled}
-                    error={!!errors.last_name}
-                    helperText={errors.last_name?.message}
-                    id="outlined-last-name"
-                    label="Last Name *"
-                    variant="outlined"
-                    type="text"
-                    fullWidth
-                  />
-                )}
-                rules={{
-                  required: 'Required',
-                }}
-              />
-            </Stack>
-            <Controller
-              control={control}
-              name="phone_number"
-              defaultValue=""
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  disabled={registrationDisabled}
-                  error={!!errors.phone_number}
-                  helperText={errors.phone_number?.message}
-                  id="outlined-last-name"
-                  label="Phone Number"
-                  variant="outlined"
-                  type="text"
-                />
-              )}
-              rules={{
-                pattern: {
-                  value: /^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/,
-                  message: '(868) 123-4567'
-                }
-              }}
-            />
-            <Controller
-              control={control}
-              name="date_of_birth"
-              label="Date of Birth *"
-              rules={{
-                validate: {
-                  required: (val) => val ? null : 'Required',
-                  isValidDate: (val) => moment(val, true).isValid() ? null : 'Invalid Date',
-                },
-              }}
-              render={({ field }) => (
-                <LocalizationProvider dateAdapter={AdapterMoment}>
-                  <DatePicker
-                    {...field}
-                    disableFuture
-                    inputFormat="YYYY-MM-DD"
-                    label="Date of Birth *"
-                    disabled={registrationDisabled}
-                    InputLabelProps={{ shrink: true }}
-                    openTo="year"
-                    views={[ 'year', 'month', 'day' ]}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        helperText={errors.date_of_birth?.message || 'yyyy-mm-dd'}
-                        error={!!errors.date_of_birth}
-                      />
-                    )}
-                  />
-                </LocalizationProvider>
-              )}
-            />
-            {
-              map(event.additional_user_information, (additionalInfoInput) => {
-                const { field_name, field_label, field_type, required, options, options_required } = additionalInfoInput;
-
-                if (field_type === 'text') {
-                  return (
-                    <Controller
-                      key={field_name}
-                      control={control}
-                      name={`additional_information.${field_name}`}
-                      defaultValue=""
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          disabled={registrationDisabled}
-                          error={!!errors[field_name]}
-                          helperText={errors[field_name]?.message}
-                          id={`outlined-${field_name}`}
-                          label={field_label}
-                          variant="outlined"
-                          type="text"
-                        />
-                      )}
-                      rules={{
-                        required: required ? 'Required' : false,
-                      }}
-                    />
-                  );
-                } else if (field_type === 'checkbox') {
-                  return (
-                    <Controller
-                      key={field_name}
-                      control={control}
-                      defaultValue={[]}
-                      name={`additional_information.${field_name}`}
-                      render={({ field }) => (
-                        <CheckboxGroup
-                          {...field}
-                          disabled={registrationDisabled}
-                          requiredAmt={options_required}
-                          options={options}
-                          label={field_label}
-                        />
-                      )}
-                      rules={{
-                        validate: {
-                          requiredSelected: (val = []) => val.length >= (options_required || 0) ? null : 'Required',
-                        },
-                      }}
-                    />
-                  );
-                }
-              })
-            }
-            <Button disabled={submitDisabled} type="submit" variant="contained">
-              {saving ? 'Registering' : 'Submit'}
-            </Button>
+        <Paper elevation={10}>
+          <Stack sx={{ margin: '0' }} direction="column" spacing={2}>
+            <Avatar alt="" variant="square" src={event.banner} sx={{ width: '100%', height: '100%', maxWidth: 800 / (isSmallScreen ? 2 : 1), maxHeight: 200 / (isSmallScreen ? 2 : 1), alignSelf: 'center', borderRadius: '4px' }} />
+            <Typography variant="h5" fontWeight="bold">
+              {event.name}
+            </Typography>
+            <Typography variant="h6">
+              {event.description || `${event.host} presents ${event.name}`}
+            </Typography>
           </Stack>
-        </form>
+          {
+            registrationDisabled ? (
+              <>
+                <Typography sx={{ margin: '2rem 0 0', color: 'red' }} variant="body1" fontWeight="bold">
+                  We are no longer accpeting any more registrations.
+                </Typography>
+                <Typography sx={{ margin: '0', color: 'red' }} variant="body1" fontWeight="bold">
+                  The registration period for this event has passed.
+                </Typography>
+              </>
+            ) : null
+          }
+          <form
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              width: '100%',
+            }}
+            onSubmit={handleSubmit(onSubmit)}
+            onReset={reset}
+            >
+            <Stack px={2} pb={2} direction="column" spacing={4}>
+              <Alert sx={{ visibility: info ? 'visible' : 'hidden' }} severity={info?.type}>{info?.message}</Alert>
+              <Controller
+                control={control}
+                name="email"
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    disabled={registrationDisabled}
+                    error={!!errors.email}
+                    helperText={errors.email?.message}
+                    id="outlined-email"
+                    label="Email *"
+                    variant="outlined"
+                    type="email"
+                  />
+                )}
+                rules={{
+                  required: 'Required',
+                }}
+              />
+              <Stack sx={{ justifyContent: 'space-between' }} direction="row" spacing={2}>
+                <Controller
+                  control={control}
+                  name="first_name"
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      onChange={({ target }) => {
+                        const { value } = target;
+                        field.onChange(startCase(value.toLowerCase()));
+                      }}
+                      disabled={registrationDisabled}
+                      error={!!errors.first_name}
+                      helperText={errors.first_name?.message}
+                      id="outlined-first-name"
+                      label="First Name *"
+                      variant="outlined"
+                      type="text"
+                      fullWidth
+                    />
+                  )}
+                  rules={{
+                    required: 'Required',
+                  }}
+                />
+                <Controller
+                  control={control}
+                  name="last_name"
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      onChange={({ target }) => {
+                        const { value } = target;
+                        field.onChange(startCase(value.toLowerCase()));
+                      }}
+                      disabled={registrationDisabled}
+                      error={!!errors.last_name}
+                      helperText={errors.last_name?.message}
+                      id="outlined-last-name"
+                      label="Last Name *"
+                      variant="outlined"
+                      type="text"
+                      fullWidth
+                    />
+                  )}
+                  rules={{
+                    required: 'Required',
+                  }}
+                />
+              </Stack>
+              <Controller
+                control={control}
+                name="phone_number"
+                defaultValue=""
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    disabled={registrationDisabled}
+                    error={!!errors.phone_number}
+                    helperText={errors.phone_number?.message}
+                    id="outlined-last-name"
+                    label="Phone Number"
+                    variant="outlined"
+                    type="text"
+                  />
+                )}
+                rules={{
+                  pattern: {
+                    value: /^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/,
+                    message: '(868) 123-4567'
+                  }
+                }}
+              />
+              <Controller
+                control={control}
+                name="date_of_birth"
+                label="Date of Birth *"
+                rules={{
+                  validate: {
+                    required: (val) => val ? null : 'Required',
+                    isValidDate: (val) => moment(val, true).isValid() ? null : 'Invalid Date',
+                  },
+                }}
+                render={({ field }) => (
+                  <LocalizationProvider dateAdapter={AdapterMoment}>
+                    <DatePicker
+                      {...field}
+                      disableFuture
+                      inputFormat="YYYY-MM-DD"
+                      label="Date of Birth *"
+                      disabled={registrationDisabled}
+                      InputLabelProps={{ shrink: true }}
+                      openTo="year"
+                      views={[ 'year', 'month', 'day' ]}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          helperText={errors.date_of_birth?.message || 'yyyy-mm-dd'}
+                          error={!!errors.date_of_birth}
+                        />
+                      )}
+                    />
+                  </LocalizationProvider>
+                )}
+              />
+              {
+                map(event.additional_user_information, (additionalInfoInput) => {
+                  const { field_name, field_label, field_type, required, options, options_required } = additionalInfoInput;
+
+                  if (field_type === 'text') {
+                    return (
+                      <Controller
+                        key={field_name}
+                        control={control}
+                        name={`additional_information.${field_name}`}
+                        defaultValue=""
+                        render={({ field }) => (
+                          <TextField
+                            {...field}
+                            disabled={registrationDisabled}
+                            error={!!errors[field_name]}
+                            helperText={errors[field_name]?.message}
+                            id={`outlined-${field_name}`}
+                            label={field_label}
+                            variant="outlined"
+                            type="text"
+                          />
+                        )}
+                        rules={{
+                          required: required ? 'Required' : false,
+                        }}
+                      />
+                    );
+                  } else if (field_type === 'checkbox') {
+                    return (
+                      <Controller
+                        key={field_name}
+                        control={control}
+                        defaultValue={[]}
+                        name={`additional_information.${field_name}`}
+                        render={({ field }) => (
+                          <CheckboxGroup
+                            {...field}
+                            disabled={registrationDisabled}
+                            requiredAmt={options_required}
+                            options={options}
+                            label={field_label}
+                          />
+                        )}
+                        rules={{
+                          validate: {
+                            requiredSelected: (val = []) => val.length >= (options_required || 0) ? null : 'Required',
+                          },
+                        }}
+                      />
+                    );
+                  }
+                })
+              }
+              <Button disabled={submitDisabled} type="submit" variant="contained">
+                {saving ? 'Registering' : 'Submit'}
+              </Button>
+            </Stack>
+          </form>
+        </Paper>
       </Container>
-    </>
+    </div>
   );
 };
 
