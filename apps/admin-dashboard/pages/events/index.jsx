@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import Head from 'next/head'
 import { useRouter } from 'next/router';
+import isEmpty from 'lodash/isEmpty';
+import map from 'lodash/map';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import Card from '@mui/material/Card';
@@ -11,28 +13,14 @@ import CircularProgress from '@mui/material/CircularProgress';
 import CardActionArea from '@mui/material/CardActionArea';
 import Grid from '@mui/material/Grid';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import map from 'lodash/map';
 
 import protectedRoute from '../../lib/helpers/protectedRoute';
-import getEventWithImgs from '../../lib/helpers/getEventWithImgs';
+import { useEvents } from '../../lib/state/selectors/events';
 
-export const getServerSideProps = protectedRoute(async (_, authenticatedSupabase) => {
-  const { data: events, error } = await authenticatedSupabase.from('events').select('*');
+export const getServerSideProps = protectedRoute();
 
-  if (error) throw error;
-
-  return {
-    props: {
-      events: events.map((event) => {
-        const { data } = getEventWithImgs(event, false, authenticatedSupabase);
-
-        return data;
-      }),
-    },
-  };
-});
-
-export default function EventsHome({ events }) {
+export default function EventsHome() {
+  const { events, loading } = useEvents();
   const [ isRouting, setRouting ] = useState(false);
   const isSmallScreen = useMediaQuery('(max-width:900px)');
   const router = useRouter();
@@ -52,7 +40,7 @@ export default function EventsHome({ events }) {
         <meta property="og:title" content="Reformation Life Centre - Events" key="title" />
         <link rel="icon" type="image/x-icon" href="/images/rlc-logo.ico" />
       </Head>
-      <Backdrop open={isRouting} sx={{ color: '#fff', zIndex: 5 }}>
+      <Backdrop open={isRouting || loading} sx={{ color: '#fff', zIndex: 5 }}>
         <CircularProgress />
       </Backdrop>
       <Stack pt={5} width="100%" justifyContent="center" alignItems="center" position="relative">
@@ -65,9 +53,9 @@ export default function EventsHome({ events }) {
               color="text.primary"
             >
               { 
-                events.length
-                  ? 'Select an event to manage.'
-                  : 'Create an event to manage.'
+                isEmpty(events)
+                  ? 'Create an event to manage.'
+                  : 'Select an event to manage.'
               }
             </Typography>
           </Stack>
@@ -78,7 +66,7 @@ export default function EventsHome({ events }) {
 
                 return (
                   <Grid item key={event.uuid} style={{ padding: '1rem 10px' }}>
-                    <Card sx={{ maxWidth: 280, height: '100%' }}>
+                    <Card sx={{ width: 280, height: '100%' }}>
                       <CardActionArea sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'start', height: '100%' }} onClick={() => pushToPage(eventPagePath)}>
                         <CardMedia
                           sx={{ width: '140px', height: '140px', alignSelf: 'center' }}

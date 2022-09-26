@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
-import PropTypes from 'prop-types';
 import { useRouter } from "next/router";
 import Head from 'next/head'
-import isEmpty from 'lodash/isEmpty';
 import Container from '@mui/material/Container';
 import CircularProgress from '@mui/material/CircularProgress';;
 import Backdrop from '@mui/material/Backdrop';
@@ -14,21 +12,22 @@ import UsersTable from "../../components/UsersTable";
 import TabPanel from '../../components/TabPanel';
 import EventForm from "../../components/EventForm";
 
-import useUsers from "../../lib/hooks/useUsers";
-import useEvent from "../../lib/hooks/useEvent";
+import { useEvent } from "../../lib/state/selectors/events";
 import protectedRoute from "../../lib/helpers/protectedRoute";
-
-TabPanel.propTypes = {
-  children: PropTypes.node,
-  index: PropTypes.any.isRequired,
-  value: PropTypes.any.isRequired,
-};
+import useDispatch from "../../lib/hooks/useDispatch";
+import { updateEvent } from "../../lib/state/actions/events";
+import { useEventUsers } from "../../lib/state/selectors/eventUsers";
+import { paymentUpdate, updateEventUser } from "../../lib/state/actions/eventUsers";
 
 export default function EventManagementPage() {
   const router = useRouter()
+  const dispatch = useDispatch();
+  
   const { eventUuid } = router.query
-  const { event, isLoading: eventLoading, updateEvent } = useEvent(eventUuid);
-  const { isLoading: usersLoading, users, updatePayment, updateUser } = useUsers(eventUuid);
+
+  const { event, loading: eventLoading } = useEvent(eventUuid);
+  const { eventUsers: users, loading: usersLoading } = useEventUsers(eventUuid);
+
   const [ value, setValue ] = useState(0);
 
   const [ isLoading, setIsLoading ] = useState(usersLoading || eventLoading);
@@ -41,7 +40,7 @@ export default function EventManagementPage() {
     }
   }, [ eventLoading, usersLoading ]);
 
-  const handleChange = (event, newValue) => {
+  const handleChange = (_, newValue) => {
     setValue(newValue);
   };
 
@@ -72,7 +71,7 @@ export default function EventManagementPage() {
                   marginTop: '16px',
                 }}
               >
-                <EventForm event={event} onSave={updateEvent}/>
+                <EventForm event={event} onSave={(data) => dispatch(updateEvent(data))}/>
               </Container>
             </TabPanel>
             <TabPanel index={1} value={value}>
@@ -80,8 +79,8 @@ export default function EventManagementPage() {
                 loading={isLoading}
                 users={users}
                 usersEvent={event}
-                updatePayment={updatePayment}
-                updateUser={updateUser}
+                updatePayment={(data) => dispatch(paymentUpdate({ payment: data, eventUuid }))}
+                updateUser={(data) => dispatch(updateEventUser({ user: data, eventUuid }))}
               />
             </TabPanel>
             <TabPanel index={2} value={value}>

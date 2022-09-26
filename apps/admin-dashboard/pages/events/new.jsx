@@ -6,19 +6,22 @@ import Container from '@mui/material/Container'
 import CircularProgress from '@mui/material/CircularProgress';
 
 import EventForm from '../../components/EventForm'
-import useEvent from '../../lib/hooks/useEvent';
 import protectedRoute from '../../lib/helpers/protectedRoute';
 import isAdminUser from '../../lib/helpers/isAdminUser';
+import useDispatch from '../../lib/hooks/useDispatch';
+import { updateEvent } from '../../lib/state/actions/events';
 
 export default function NewEvent() {
   const router = useRouter();
-  const { updateEvent } = useEvent();
+  const dispatch = useDispatch();
 
   const [ creating, setCreating ] = useState(false);
 
   const handleOnSave = (newEvent) => {
-    updateEvent(newEvent);
+    dispatch(updateEvent(newEvent));
+
     setCreating(true);
+
     console.log('Event Created:', newEvent);
 
     router.push(`events/${newEvent.uuid}`).then(() => {
