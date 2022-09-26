@@ -7,6 +7,8 @@ import CircularProgress from '@mui/material/CircularProgress';
 
 import EventForm from '../../components/EventForm'
 import useEvent from '../../lib/hooks/useEvent';
+import protectedRoute from '../../lib/helpers/protectedRoute';
+import isAdminUser from '../../lib/helpers/isAdminUser';
 
 export default function NewEvent() {
   const router = useRouter();
@@ -48,4 +50,16 @@ export default function NewEvent() {
       </Container>
     </>
   )
-}
+};
+
+export const getServerSideProps = protectedRoute((_, authenticatedSupabase) => {
+  const isAdmin = isAdminUser(authenticatedSupabase);
+
+  if (isAdmin) {
+    return { props: {} };
+  }
+
+  return {
+    notFound: true,
+  };
+});

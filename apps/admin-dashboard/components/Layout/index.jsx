@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import Backdrop from '@mui/material/Backdrop';
@@ -14,11 +14,23 @@ import Menu from '@mui/material/Menu';
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import supabase from '../../lib/supabase';
-
-const pages = [ { label: 'Existing Events', path: '/events' }, { label: 'Create Event', path: '/events/new' } ];
+import isAdminUser from '../../lib/helpers/isAdminUser';
 
 export default function Layout({ children }) {
   const router = useRouter();
+
+  const isAdmin = isAdminUser();
+
+  const pages = useMemo(() => {
+    const arr = [ { label: 'Existing Events', path: '/events' } ];
+
+    if (isAdmin) {
+      arr.push({ label: 'Create Event', path: '/events/new' });
+    }
+
+    return arr;
+  }, [ isAdmin ]);
+
 
   const [ isRouting, setIsRouting ] = useState(false);
 

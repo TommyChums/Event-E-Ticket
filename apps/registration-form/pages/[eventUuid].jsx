@@ -44,7 +44,6 @@ export default function RegistrationForm({ event }) {
     control,
     formState,
     handleSubmit,
-    register,
     reset,
   } = useForm({
     mode: 'onChange',
