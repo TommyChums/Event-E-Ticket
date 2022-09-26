@@ -24,6 +24,7 @@ import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 
+import defaultEvent from './defaultEvent';
 import PricingDialog from './PricingDialog';
 import ImgUpload from '../ImgUpload';
 import ResizableQrCode from '../ResizableImage';
@@ -180,13 +181,7 @@ function ControlledColourPicker({ control, name, defaultValue = toColor('hex', '
   );
 };
 
-export default function EventForm({ event = {
-  uuid: v4(),
-  ticket_template: {},
-  ticket_config: {},
-  original_ticket_template: {},
-  is_published: false,
-}, onSave, isNew = false }) {
+export default function EventForm({ event = defaultEvent, onSave, isNew = false }) {
   const { enqueueSnackbar } = useSnackbar();
 
   const isSmallScreen = useMediaQuery('(max-width:780px)');
@@ -709,6 +704,7 @@ export default function EventForm({ event = {
                     <Controller
                       control={control}
                       name={`ticket_template.${ageLabel}`}
+                      rules={requiredRules}
                       render={({ field }) => (
                           <ImgUpload
                             {...field}
