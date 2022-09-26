@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PropTypes from 'prop-types';
 import { useRouter } from "next/router";
 import Head from 'next/head'
@@ -28,8 +28,18 @@ export default function EventManagementPage() {
   const router = useRouter()
   const { eventUuid } = router.query
   const { event, isLoading: eventLoading, updateEvent } = useEvent(eventUuid);
-  const { isLoading, users, updatePayment, updateUser } = useUsers(eventUuid);
+  const { isLoading: usersLoading, users, updatePayment, updateUser } = useUsers(eventUuid);
   const [ value, setValue ] = useState(0);
+
+  const [ isLoading, setIsLoading ] = useState(usersLoading || eventLoading);
+
+  useEffect(() => {
+    if (eventLoading || usersLoading) {
+      setIsLoading(true);
+    } else {
+      setIsLoading(false);
+    }
+  }, [ eventLoading, usersLoading ]);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -42,7 +52,7 @@ export default function EventManagementPage() {
         <meta property="og:title" content={`Manage | ${event.name} | Admin Dashboard`} key="title" />
         <link rel="icon" type="image/x-icon" href={event.logo || '/images/rlc-logo.ico'} />
       </Head>
-      { !isEmpty(event) ? (
+      { !eventLoading ? (
           <Box sx={{ width: '100%', typography: 'body1' }}>
             <Box sx={{ width: '100%' }}>
               <Tabs value={value} onChange={handleChange} aria-label={`${event?.name} Menu`} variant="fullWidth" >
@@ -67,7 +77,7 @@ export default function EventManagementPage() {
             </TabPanel>
             <TabPanel index={1} value={value}>
               <UsersTable
-                loading={isLoading || eventLoading}
+                loading={isLoading}
                 users={users}
                 usersEvent={event}
                 updatePayment={updatePayment}
@@ -87,4 +97,12 @@ export default function EventManagementPage() {
   );
 };
 
-export const getServerSideProps = protectedRoute();
+export const getServerSideProps = protectedRoute(async ({ query }, authenticatedSupabase) => {
+  const { count } = await authenticatedSupabase.from('events').select(undefined, { count: 'exact', head: true }).eq('uuid', query.eventUuid);
+
+  if (count) {
+    return { props: {} };
+  }
+
+  return { notFound: true };
+});
