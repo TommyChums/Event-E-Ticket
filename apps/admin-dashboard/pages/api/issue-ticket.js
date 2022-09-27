@@ -76,23 +76,6 @@ export default async function handler(req, res) {
 
     const ticketTemplateBuffer = Buffer.from( await ticketTemplate.arrayBuffer() );
 
-    const qrCodeInfo = `${registeredUser.registration_number}`;
-
-    const qrCodeOptions = {};
-
-    if (config.position) {
-      qrCodeOptions.width = config.position?.qrcode?.w;
-    }
-
-    if (config.colour) {
-      qrCodeOptions.color = {
-        light: config.colour?.light?.hex,
-        dark: config.colour?.dark?.hex
-      }
-    }
-
-    await QRCode.toFile('/tmp/qrcode.png', qrCodeInfo, qrCodeOptions);
-
     const { count } = await supabase.from('registered-users')
       .select(undefined, { count: 'exact', head: true })
       .eq('ticket_issued', true)
@@ -112,6 +95,23 @@ export default async function handler(req, res) {
         rgba: true,
       },
     }).toFile('/tmp/number.png');
+
+    const qrCodeInfo = `${registeredUser.registration_number}-${ticketNumber}`;
+
+    const qrCodeOptions = {};
+
+    if (config.position) {
+      qrCodeOptions.width = config.position?.qrcode?.w;
+    }
+
+    if (config.colour) {
+      qrCodeOptions.color = {
+        light: config.colour?.light?.hex,
+        dark: config.colour?.dark?.hex
+      }
+    }
+
+    await QRCode.toFile('/tmp/qrcode.png', qrCodeInfo, qrCodeOptions);
 
     const qrCodeImg = await sharp(ticketTemplateBuffer).composite([
       { input: '/tmp/qrcode.png', top: Math.ceil(config.position?.qrcode?.y || 0), left: Math.ceil(config.position?.qrcode?.x || 0) },

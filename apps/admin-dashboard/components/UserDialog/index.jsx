@@ -233,6 +233,7 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
             canBeDeleted && (
               <Button
                 sx={{ width: '100%' }}
+                disabled={issuingTicket}
                 variant="contained"
                 color="error"
                 onClick={handleDeleteUser}
