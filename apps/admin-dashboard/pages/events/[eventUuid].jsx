@@ -16,8 +16,9 @@ import { useEvent } from "../../lib/state/selectors/events";
 import protectedRoute from "../../lib/helpers/protectedRoute";
 import useDispatch from "../../lib/hooks/useDispatch";
 import { updateEvent } from "../../lib/state/actions/events";
-import { useEventUsers } from "../../lib/state/selectors/eventUsers";
+import { useEventPayments, useEventUsers } from "../../lib/state/selectors/eventUsers";
 import { paymentUpdate, updateEventUser } from "../../lib/state/actions/eventUsers";
+import PaymentsTable from "../../components/PaymentsTable";
 
 export default function EventManagementPage() {
   const router = useRouter()
@@ -27,6 +28,7 @@ export default function EventManagementPage() {
 
   const { event, loading: eventLoading } = useEvent(eventUuid);
   const { eventUsers: users, loading: usersLoading } = useEventUsers(eventUuid);
+  const { payments } = useEventPayments(eventUuid);
 
   const [ value, setValue ] = useState(0);
 
@@ -84,7 +86,13 @@ export default function EventManagementPage() {
               />
             </TabPanel>
             <TabPanel index={2} value={value}>
-              <div>Payments</div>
+              <PaymentsTable
+                loading={isLoading}
+                payments={payments}
+                usersEvent={event}
+                updatePayment={(data) => dispatch(paymentUpdate({ payment: data, eventUuid }))}
+                updateUser={(data) => dispatch(updateEventUser({ user: data, eventUuid }))}
+              />
             </TabPanel>
           </Box>
       ) : (

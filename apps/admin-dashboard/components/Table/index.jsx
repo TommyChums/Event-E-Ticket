@@ -108,7 +108,7 @@ EnhancedTableHead.propTypes = {
   orderBy: PropTypes.string.isRequired,
 };
 
-export default function EnhancedTable({ columns, onRow, loading, data, headerToolbar }) {
+export default function EnhancedTable({ columns, onRow, loading, data, headerToolbar, children }) {
   const [ tableColumns, setTableColumns ] = useState(columns);
   const [ rows, setRows ] = useState([]);
   const [ order, setOrder ] = useState('asc');
@@ -207,7 +207,7 @@ export default function EnhancedTable({ columns, onRow, loading, data, headerToo
                               map(tableColumns, ({ id, hidden, render = (val) => val }) => {
                                 if (hidden) return null;
                                 return (
-                                  <TableCell key={id} align="left">{render(get(row, id, ''))}</TableCell>
+                                  <TableCell key={id} align="left">{render(get(row, id, ''), row)}</TableCell>
                                 );
                               })
                             }
@@ -285,6 +285,7 @@ export default function EnhancedTable({ columns, onRow, loading, data, headerToo
               ))}
             </MenuList>
           </div>
+          {children}
         </Paper>
       </Box>
     </>

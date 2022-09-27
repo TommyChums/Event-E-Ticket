@@ -58,7 +58,7 @@ const initialColumns = [
   {
     id: 'registration_number',
     type: 'number',
-    disablePadding: true,
+    disablePadding: false,
     label: 'Registration Number',
   },
   {
@@ -72,7 +72,7 @@ const initialColumns = [
   {
     id: 'created_on',
     type: 'text',
-    disablePadding: true,
+    disablePadding: false,
     label: 'Registration Time',
     render: (time) => moment(time).format('LLL'),
   },
@@ -89,7 +89,7 @@ const UsersTableToolbar = (props) => {
       <Typography
         sx={{ flex: '1 1 100%', maxWidth: '200px' }}
         variant="h6"
-        id="tableTitle"
+        id="users-table-title"
         component="div"
       >
         Registered Users

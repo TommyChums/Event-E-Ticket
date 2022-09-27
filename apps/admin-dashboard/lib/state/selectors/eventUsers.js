@@ -1,9 +1,37 @@
 import { useEffect, useRef } from "react";
+import forEach from 'lodash/forEach';
 import get from 'lodash/get';
+import map from 'lodash/map';
 
 import useEventsContext from "../../hooks/useEventsContext";
 import supabase from "../../supabase";
 import { eventUsersError, eventUsersLoading, receivedEventUsers } from "../actions/eventUsers";
+
+export function useEventPayments(eventUuid) {
+  const { eventUsers = {} } = useEventsContext();
+
+  let allPayments = [];
+
+  const allEventUsers = get(eventUsers.users, eventUuid, {});
+
+  forEach(allEventUsers, (eventUser) => {
+    const formattedPayments = map(eventUser.payments, (payment) => {
+      return {
+        ...payment,
+        first_name: eventUser.first_name,
+        last_name: eventUser.last_name,
+        email: eventUser.email,
+      };
+    });
+
+    allPayments = allPayments.concat(formattedPayments);
+  });
+
+  return {
+    payments: allPayments,
+    loading: eventUsers.loading,
+  };
+};
 
 export function useEventUsers(eventUuid) {
   const pollRef = useRef(null);
