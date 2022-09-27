@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSnackbar } from 'notistack';
+import { useConfirm } from 'material-ui-confirm';
 import moment from 'moment';
 import isEmpty from 'lodash/isEmpty';
 import isFinite from 'lodash/isFinite';
@@ -19,15 +20,21 @@ import Alert from '@mui/material/Alert';
 import supabase from '../../lib/supabase';
 import { makeAuthenticatedPostRequest } from '../../lib/api/makeAuthenticatedRequest';
 import getUserAmtPaidAndRequired from '../../lib/helpers/getUserAmtPaidAndRequired';
+import useDispatch from '../../lib/hooks/useDispatch';
+import { deleteEventUser } from '../../lib/state/actions/eventUsers';
 
 export default function UserDialog({ event, open, onClose, user, updatePayment, updateUser, ...props}) {
   const { closeSnackbar, enqueueSnackbar } = useSnackbar();
+  const confirm = useConfirm();
+  const dispatch = useDispatch();
 
   const [ amountPaid, setAmountPaid ] = useState(0);
   const [ currentPayment, setCurentPayment ] = useState(0);
   const [ amountRequriedToPay, setAmountRequiredToPay ] = useState(0);
   const [ updating, setUpdating ] = useState(false);
   const [ issuingTicket, setIssuingTicket ] = useState(false);
+
+  const canBeDeleted = isEmpty(user.payments) && !user.ticket_issued;
 
   useEffect(() => {
     if (isEmpty(user) || isEmpty(event)) onClose();
@@ -45,6 +52,45 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
     }
     
   }, [ event, user, onClose ]);
+
+  const handleDeleteUser = async () => {
+    try {
+      await confirm({
+        title: 'Are you sure you wish to delete this user?',
+        description: 'The user will not be notified that this was done. This action is irreversible',
+        confirmationText: 'Delete',
+        cancellationText: 'Cancel',
+        allowClose: false,
+        confirmationButtonProps: {
+          variant: 'contained',
+          color: 'error',
+        },
+        cancellationButtonProps: {
+          variant: 'outlined',
+        },
+      });
+
+      enqueueSnackbar(`Deleting ${user.first_name} ${user.last_name}`, {
+        variant: 'info',
+      });
+
+      const { error } = await supabase.from('registered-users').delete().eq('uuid', user.uuid);
+
+      if (error) {
+        enqueueSnackbar(`Failed to delete ${user.first_name} ${user.last_name}: ${error.message}`, {
+          variant: 'error',
+        });
+      } else {
+        enqueueSnackbar(`Deleted ${user.first_name} ${user.last_name}`, {
+          variant: 'success',
+        });
+
+        dispatch(deleteEventUser({ eventUuid: event.uuid, uuid: user.uuid }));
+      }
+    } catch (e) {
+      console.log('Delete cancelled')
+    }
+  };
 
   const updateCurrentPayment = ({ target: { value } }) => {
     const numberVal = toNumber(value);
@@ -183,6 +229,18 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
           >
             {issuingTicket ? 'Issuing Ticket' : 'Issue Ticket'}
           </Button>
+          {
+            canBeDeleted && (
+              <Button
+                sx={{ width: '100%' }}
+                variant="contained"
+                color="error"
+                onClick={handleDeleteUser}
+              >
+                Delete
+              </Button>
+            )
+          }
         </Stack>
       </DialogActions>
     </Dialog>

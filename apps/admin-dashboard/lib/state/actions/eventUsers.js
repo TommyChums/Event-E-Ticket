@@ -20,6 +20,11 @@ export const updateEventUser = (payload) => ({
   payload,
 });
 
+export const deleteEventUser = (payload) => ({
+  type: C.EVENT_USERS_DELETE_USER,
+  payload,
+});
+
 export const paymentUpdate = (payload) => ({
   type: C.EVENT_USERS_PAYMENT_UPDATE,
   payload,
