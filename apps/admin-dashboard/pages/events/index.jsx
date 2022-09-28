@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Head from 'next/head'
+import Head from 'next/head';
 import { useRouter } from 'next/router';
 import isEmpty from 'lodash/isEmpty';
 import map from 'lodash/map';
@@ -37,50 +37,71 @@ export default function EventsHome() {
     <>
       <Head>
         <title>Events | Admin Dashboard | Reformation Life Centre - Events</title>
-        <meta property="og:title" content="Reformation Life Centre - Events" key="title" />
-        <link rel="icon" type="image/x-icon" href="/images/rlc-logo.ico" />
+        <meta content="Reformation Life Centre - Events" key="title" property="og:title" />
+        <link href="/images/rlc-logo.ico" rel="icon" type="image/x-icon" />
       </Head>
       <Backdrop open={isRouting || loading} sx={{ color: '#fff', zIndex: 5 }}>
         <CircularProgress />
       </Backdrop>
-      <Stack pt={5} width="100%" justifyContent="center" alignItems="center" position="relative">
-        <Stack alignSelf="center" direction="column" maxWidth="lg" spacing={2} justifyContent="center" alignItems="center">
-          <Stack direction="column" spacing={3} justifyContent="center" alignItems="center" textAlign="center">
+      <Stack alignItems="center" justifyContent="center" position="relative" pt={5} width="100%">
+        <Stack
+          alignItems="center"
+          alignSelf="center"
+          direction="column"
+          justifyContent="center"
+          maxWidth="lg"
+          spacing={2}
+        >
+          <Stack
+            alignItems="center"
+            direction="column"
+            justifyContent="center"
+            spacing={3}
+            textAlign="center"
+          >
             <Typography
-              sx={{ display: 'inline' }}
-              component="span"
-              variant="h5"
               color="text.primary"
+              component="span"
+              sx={{ display: 'inline' }}
+              variant="h5"
             >
-              { 
+              {
                 isEmpty(events)
                   ? 'Create an event to manage.'
                   : 'Select an event to manage.'
               }
             </Typography>
           </Stack>
-          <Grid container width="100%" spacing={2} justifyContent={isSmallScreen ? 'center' : 'start'}>
+          <Grid container justifyContent={isSmallScreen ? 'center' : 'start'} spacing={2} width="100%">
             {
-              map(events, (event, i) => {
+              map(events, (event) => {
                 const eventPagePath = `/events/${event.uuid}`;
 
                 return (
                   <Grid item key={event.uuid} style={{ padding: '1rem 10px' }}>
                     <Card sx={{ width: 280, height: '100%' }}>
-                      <CardActionArea sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'start', height: '100%' }} onClick={() => pushToPage(eventPagePath)}>
+                      <CardActionArea
+                        onClick={() => pushToPage(eventPagePath)}
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'start',
+                          height: '100%'
+                        }}
+                      >
                         <CardMedia
-                          sx={{ width: '140px', height: '140px', alignSelf: 'center' }}
+                          alt={event.name}
                           component="img"
                           height="140"
-                          width="140"
                           image={event.logo}
-                          alt={event.name}
+                          sx={{ width: '140px', height: '140px', alignSelf: 'center' }}
+                          width="140"
                         />
                         <CardContent>
-                          <Typography gutterBottom variant="h5" component="div" textAlign="center">
+                          <Typography component="div" gutterBottom textAlign="center" variant="h5">
                             {event.name}
                           </Typography>
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography color="text.secondary" variant="body2">
                             {event.description}
                           </Typography>
                         </CardContent>
@@ -94,5 +115,5 @@ export default function EventsHome() {
         </Stack>
       </Stack>
     </>
-  );  
+  );
 };

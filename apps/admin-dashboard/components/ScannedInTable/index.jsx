@@ -25,7 +25,7 @@ import supabase from '../../lib/supabase';
 function getReadableTicketNumber(num) {
   let ticketNumber = num.toString();
 
-  while (ticketNumber.length <  4) {
+  while (ticketNumber.length < 4) {
     ticketNumber = `0${ticketNumber}`;
   };
 
@@ -37,34 +37,34 @@ const columns = [
     id: 'first_name',
     type: 'text',
     disablePadding: false,
-    label: 'First Name',
+    label: 'First Name'
   },
   {
     id: 'last_name',
     type: 'text',
     disablePadding: false,
-    label: 'Last Name',
+    label: 'Last Name'
   },
   {
     id: 'registration_number',
     type: 'text',
     disablePadding: false,
-    label: 'Registration Number',
+    label: 'Registration Number'
   },
   {
     id: 'scanned_in',
     type: 'number',
     disablePadding: false,
     label: 'Ticket Number',
-    render: getReadableTicketNumber,
+    render: getReadableTicketNumber
   },
   {
     id: 'updated_on',
     type: 'text',
     disablePadding: false,
     label: 'Entered At',
-    render: (time) => moment(time).format('LLL'),
-  },
+    render: (time) => moment(time).format('LLL')
+  }
 ];
 
 const PaymentsTableToolbar = (props) => {
@@ -87,29 +87,32 @@ const PaymentsTableToolbar = (props) => {
       let invalid = true;
 
       if (regNumber && ticketNumber) {
-        const { data: ticketUser } = await supabase.from('registered-users').select('scanned_in').eq('registration_number', regNumber).single();
+        const { data: ticketUser } = await supabase.from('registered-users')
+          .select('scanned_in')
+          .eq('registration_number', regNumber)
+          .single();
 
         if (ticketUser?.scanned_in) {
           enqueueSnackbar('This ticket was already scanned in', {
-            variant: 'error',
+            variant: 'error'
           });
         } else if (ticketUser) {
           invalid = false;
 
           const { data: updatedTicketUser, error } = await supabase.from('registered-users').update({
             scanned_in: +ticketNumber,
-            updated_on: moment().toISOString(),
+            updated_on: moment().toISOString()
           }).eq('registration_number', regNumber).single();
 
           if (error || !updatedTicketUser) {
             enqueueSnackbar('Error confirming this ticket. Please try again', {
-              variant: 'error',
+              variant: 'error'
             });
           } else {
             enqueueSnackbar('Valid Ticket', {
-              variant: 'success',
+              variant: 'success'
             });
-            
+
             props.updateUser(updatedTicketUser);
           };
         };
@@ -117,7 +120,7 @@ const PaymentsTableToolbar = (props) => {
 
       if (invalid) {
         enqueueSnackbar('Invalid Ticket', {
-          variant: 'error',
+          variant: 'error'
         });
       };
 
@@ -136,20 +139,20 @@ const PaymentsTableToolbar = (props) => {
       }}
     >
       <Typography
+        component="div"
+        id="tableTitle"
         sx={{ flex: '1 1 100%', maxWidth: '200px' }}
         variant="h6"
-        id="tableTitle"
-        component="div"
       >
         At Event
       </Typography>
       <Stack
-        sx={{ width: '100%' }}
         direction="row"
+        sx={{ width: '100%' }}
       >
         <TextField
-          id="outlined-search"
           fullWidth
+          id="outlined-search"
           label="Search"
           onChange={({ target }) => {
             const { value } = target;
@@ -160,20 +163,20 @@ const PaymentsTableToolbar = (props) => {
           value={props.searchValue}
         />
         <FormControlLabel
-          sx={{ width: '175px', marginRight: '1rem' }}
           control={
             <IconButton>
               <QrCodeScannerIcon />
             </IconButton>
           }
-          onClick={() => setOpen(true)}
           label="Scan Ticket"
           labelPlacement="start"
+          onClick={() => setOpen(true)}
+          sx={{ width: '175px', marginRight: '1rem' }}
         />
       </Stack>
       <Dialog onClose={handleClose} open={open}>
         <DialogTitle>Scan Ticket</DialogTitle>
-        <QrCodeReader delay={500} width={400} height={400} onRead={handleRead} />
+        <QrCodeReader delay={500} height={400} onRead={handleRead} width={400} />
       </Dialog>
     </Toolbar>
   );
@@ -182,7 +185,7 @@ const PaymentsTableToolbar = (props) => {
 PaymentsTableToolbar.propTypes = {
   searchValue: PropTypes.string.isRequired,
   setSearchValue: PropTypes.func.isRequired,
-  updateUser: PropTypes.func.isRequired,
+  updateUser: PropTypes.func.isRequired
 };
 
 function ScannedInTable({ loading, scannedInUsers, updateUser }) {
@@ -193,7 +196,9 @@ function ScannedInTable({ loading, scannedInUsers, updateUser }) {
   const randomUser = useRef(null);
 
   useEffect(() => {
-    const searchedUsers = filter((scannedInUsers), ({ first_name, last_name, registration_number, scanned_in }) => {
+    const searchedUsers = filter(scannedInUsers, ({
+      first_name, last_name, registration_number, scanned_in
+    }) => {
       const searchRegex = new RegExp(escapeRegExp(searchValue), 'i');
 
       return (
@@ -210,7 +215,7 @@ function ScannedInTable({ loading, scannedInUsers, updateUser }) {
 
   const onRandomClick = () => {
     const randomIndex = Math.floor(Math.random() * scannedInUsers.length);
-  
+
     randomUser.current = scannedInUsers[randomIndex];
 
     setOpen(true);
@@ -219,7 +224,6 @@ function ScannedInTable({ loading, scannedInUsers, updateUser }) {
   return (
     <Table
       columns={columns}
-      loading={loading}
       data={rows}
       headerToolbar={
         <PaymentsTableToolbar
@@ -228,6 +232,7 @@ function ScannedInTable({ loading, scannedInUsers, updateUser }) {
           updateUser={updateUser}
         />
       }
+      loading={loading}
     >
       <Toolbar
         sx={{
@@ -236,21 +241,21 @@ function ScannedInTable({ loading, scannedInUsers, updateUser }) {
         }}
       >
         <Button
-          size="small"
-          variant="contained"
           onClick={onRandomClick}
+          size="small"
           style={{
             position: 'absolute',
             right: '2rem'
           }}
+          variant="contained"
         >
           Choose Random Ticket
         </Button>
         <Modal
-          open={open}
-          onClose={() => setOpen(false)}
-          aria-labelledby="modal-modal-title"
           aria-describedby="modal-modal-description"
+          aria-labelledby="modal-modal-title"
+          onClose={() => setOpen(false)}
+          open={open}
         >
           <Box
             sx={{
@@ -261,14 +266,22 @@ function ScannedInTable({ loading, scannedInUsers, updateUser }) {
               width: 200,
               bgcolor: 'background.paper',
               boxShadow: 24,
-              p: 4,
+              p: 4
             }}
           >
-            <Typography id="modal-modal-title" variant="h6" component="h2">
-              {randomUser.current ? `${randomUser.current.first_name} ${randomUser.current.last_name}` : 'No one'}
+            <Typography component="h2" id="modal-modal-title" variant="h6">
+              {
+                randomUser.current
+                  ? `${randomUser.current.first_name} ${randomUser.current.last_name}`
+                  : 'No one'
+              }
             </Typography>
             <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-              {randomUser.current ? `Ticket Number: ${getReadableTicketNumber(randomUser.current.scanned_in)}` : ''}
+              {
+                randomUser.current
+                  ? `Ticket Number: ${getReadableTicketNumber(randomUser.current.scanned_in)}`
+                  : ''
+              }
             </Typography>
           </Box>
         </Modal>
@@ -280,11 +293,11 @@ function ScannedInTable({ loading, scannedInUsers, updateUser }) {
 ScannedInTable.propTypes = {
   loading: PropTypes.bool,
   scannedInUsers: PropTypes.oneOfType([ PropTypes.array, PropTypes.object ]).isRequired,
-  updateUser: PropTypes.func.isRequired,
+  updateUser: PropTypes.func.isRequired
 };
 
 ScannedInTable.defaultProps = {
-  loading: false,
+  loading: false
 };
 
 function isSameTable(prevProps, nextProps) {

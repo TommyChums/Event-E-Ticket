@@ -1,21 +1,25 @@
 import isEmpty from 'lodash/isEmpty';
 import forEach from 'lodash/forEach';
 
-import supabase from "../supabase";
+import supabase from '../supabase';
 
 function getPublicURLForEventImgs(configObj, supabaseInstance) {
   let thisSupabase = supabase;
 
-  if (supabaseInstance) thisSupabase = supabaseInstance;
+  if (supabaseInstance) {
+    thisSupabase = supabaseInstance;
+  }
 
   const returnObj = {
     publicURL: '',
-    error: null,
+    error: null
   };
 
   const { publicURL, error } = thisSupabase.storage.from(configObj.bucket).getPublicUrl(configObj.key);
 
-  if (error) returnObj.error = error.message;
+  if (error) {
+    returnObj.error = error.message;
+  }
 
   returnObj.publicURL = publicURL;
 
@@ -55,15 +59,15 @@ export default function getEventWithImgs(event, withTickets = true, supabaseInst
     newEvent.ticket_template = {};
     newEvent.ticket_config = {};
     newEvent.original_ticket_template = {};
-  
+
     if (ticketConfig) {
       forEach(ticketConfig, (ticketInfo, ageLabel) => {
         const { publicURL, error } = getPublicURLForEventImgs(ticketInfo, supabaseInstance);
-    
+
         err = error;
-  
+
         newEvent.ticket_template[ageLabel] = publicURL;
-    
+
         newEvent.ticket_config[ageLabel] = ticketConfig[ageLabel]?.config || {};
         newEvent.original_ticket_template = ticketConfig;
       });

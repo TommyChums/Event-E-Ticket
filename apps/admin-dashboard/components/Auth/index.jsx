@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import { useRouter } from 'next/router';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
@@ -19,8 +20,22 @@ export default function Auth({ redirectTo, updatePassword }) {
   const redirectTimeoutRef = useRef(null);
 
   const router = useRouter();
-  
+
   const user = supabase.auth.user();
+
+  const buttonText = useMemo(() => {
+    let returnText = 'Login';
+
+    if (loading) {
+      returnText = 'Logging in';
+    } else if (user && !updatePassword) {
+      returnText = 'Redirecting';
+    } else if (updatePassword) {
+      returnText = 'Update Password';
+    }
+
+    return returnText;
+  }, [ loading, user, updatePassword ]);
 
   const redirect = () => {
     redirectTimeoutRef.current = setTimeout(() => {
@@ -33,7 +48,7 @@ export default function Auth({ redirectTo, updatePassword }) {
   useEffect(() => {
     setIsMounted(true);
     return () => setIsMounted(false);
-  }, [])
+  }, []);
 
   useEffect(() => {
     clearTimeout(redirectTimeoutRef.current);
@@ -56,24 +71,24 @@ export default function Auth({ redirectTo, updatePassword }) {
   const handleLogin = async () => {
     setError(null);
     setLoading(true);
-    
+
     if (updatePassword) {
-      const { error } = await supabase.auth.update({
+      const { error: updateError } = await supabase.auth.update({
         password,
         data: {
-          temp_password: false,
-        },
+          temp_password: false
+        }
       });
-      if (error) {
-        setError(error.message);
+      if (updateError) {
+        setError(updateError.message);
         setLoading(false);
       } else {
         redirect();
       }
     } else {
-      const { error } = await supabase.auth.signIn({ email, password });
-      if (error) {
-        setError(error.message);
+      const { error: signInError } = await supabase.auth.signIn({ email, password });
+      if (signInError) {
+        setError(signInError.message);
         setLoading(false);
       } else {
         redirect();
@@ -88,60 +103,69 @@ export default function Auth({ redirectTo, updatePassword }) {
         handleLogin();
       }}
     >
-      <Stack spacing={2} direction="column">
-        { error ? (
-            <Alert severity="error">{error}</Alert>
-          ) : null
+      <Stack direction="column" spacing={2}>
+        { error ?
+          <Alert severity="error">{error}</Alert>
+          : null
         }
         {
-          !updatePassword && (
+          !updatePassword &&
             <TextField
               id="outlined-email"
               label="Email"
-              variant="outlined"
+              onChange={(e) => setEmail(e.target.value)}
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              variant="outlined"
             />
-          )
+
         }
         <TextField
           id="outlined-password"
           label="Password"
-          variant="outlined"
+          onChange={(e) => setPassword(e.target.value)}
           type="password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          variant="outlined"
         />
         {
-          updatePassword && (
+          updatePassword &&
             <TextField
-              id="outlined-password"
-              label="Confirm Password"
-              variant="outlined"
-              type="password"
               error={confirmedPasswordError}
               helperText={confirmedPasswordError || ''}
-              value={confirmedPassword}
-              onChange={(e) => setConfirmedPassword(e.target.value)}
+              id="outlined-password"
+              label="Confirm Password"
               onBlur={() => {
                 if (confirmedPassword !== password) {
-                  setConfirmedPasswordError('Password do not match')
+                  setConfirmedPasswordError('Password do not match');
                 } else {
-                  setConfirmedPasswordError(null)
+                  setConfirmedPasswordError(null);
                 }
               }}
+              onChange={(e) => setConfirmedPassword(e.target.value)}
+              type="password"
+              value={confirmedPassword}
+              variant="outlined"
             />
-          )
+
         }
         <Button
+          disabled={loading || !!user && !updatePassword || !!confirmedPasswordError}
           type="submit"
-          disabled={loading || (!!user && !updatePassword ) || !!confirmedPasswordError}
           variant="contained"
         >
-          {loading ? 'Logging in' : user && !updatePassword ? 'Redirecting ': updatePassword ? 'Update Password' : 'Login' }
+          { buttonText }
         </Button>
       </Stack>
     </form>
   );
-}
+};
+
+Auth.propTypes = {
+  redirectTo: PropTypes.string.isRequired,
+  updatePassword: PropTypes.bool
+};
+
+Auth.defaultProps = {
+  updatePassword: false
+};

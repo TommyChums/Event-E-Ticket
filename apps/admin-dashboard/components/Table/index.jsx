@@ -32,8 +32,12 @@ function descendingComparator(a, b, orderBy) {
   const momAVal = moment(aVal, true);
   const momBVal = moment(bVal, true);
 
-  if (typeof aVal === 'string') aVal = aVal.toLowerCase();
-  if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+  if (typeof aVal === 'string') {
+    aVal = aVal.toLowerCase();
+  }
+  if (typeof bVal === 'string') {
+    bVal = bVal.toLowerCase();
+  }
 
 
   if (momAVal.isValid() && momBVal.isValid()) {
@@ -71,31 +75,33 @@ function EnhancedTableHead(props) {
     <TableHead style={{ position: 'relative' }}>
       <TableRow>
         {map(columns, (column) => {
-          if (column.hidden) return null;
+          if (column.hidden) {
+            return null;
+          }
           return (
             <TableCell
-              key={column.id}
-              // align={column.numeric ? 'right' : 'left'}
               align="left"
+              key={column.id}
               padding={column.disablePadding ? 'none' : 'normal'}
               sortDirection={orderBy === column.id ? order : false}
+              // align={column.numeric ? 'right' : 'left'}
             >
               <TableSortLabel
                 active={column.disableSorting ? false : orderBy === column.id}
                 direction={orderBy === column.id ? order : 'asc'}
-                onClick={column.disableSorting ? null : createSortHandler(column.id)}
-                hideSortIcon={column.disableSorting}
                 disabled={column.disableSorting}
+                hideSortIcon={column.disableSorting}
+                onClick={column.disableSorting ? null : createSortHandler(column.id)}
               >
                 {column.label}
-                {orderBy === column.id ? (
+                {orderBy === column.id ?
                   <Box component="span" sx={visuallyHidden}>
                     {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
                   </Box>
-                ) : null}
+                  : null}
               </TableSortLabel>
             </TableCell>
-          )
+          );
         })}
       </TableRow>
     </TableHead>
@@ -103,9 +109,10 @@ function EnhancedTableHead(props) {
 }
 
 EnhancedTableHead.propTypes = {
+  columns: PropTypes.array.isRequired,
   onRequestSort: PropTypes.func.isRequired,
-  order: PropTypes.oneOf(['asc', 'desc']).isRequired,
-  orderBy: PropTypes.string.isRequired,
+  order: PropTypes.oneOf([ 'asc', 'desc' ]).isRequired,
+  orderBy: PropTypes.string.isRequired
 };
 
 export default function EnhancedTable({ columns, onRow, loading, data, headerToolbar, children }) {
@@ -116,7 +123,7 @@ export default function EnhancedTable({ columns, onRow, loading, data, headerToo
   const [ page, setPage ] = useState(0);
   const [ rowsPerPage, setRowsPerPage ] = useState(10);
 
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [ anchorEl, setAnchorEl ] = useState(null);
   const open = Boolean(anchorEl);
 
   const handleClick = (event) => {
@@ -172,109 +179,112 @@ export default function EnhancedTable({ columns, onRow, loading, data, headerToo
           }
           <TableContainer>
             <Table
-              sx={{ minWidth: 'sm' }}
               aria-labelledby="tableTitle"
               size="medium"
+              sx={{ minWidth: 'sm' }}
             >
               <EnhancedTableHead
                 columns={tableColumns}
+                onRequestSort={handleRequestSort}
                 order={order}
                 orderBy={orderBy}
-                onRequestSort={handleRequestSort}
                 rowCount={rows.length}
               />
               <TableBody>
-                { 
-                  loading ? (
+                {
+                  loading ?
                     <TableRow key="empty-row">
                       <TableCell colSpan={5}>
-                        <Skeleton sx={{ bgcolor: 'grey' }} height={53} variant="rectangular"/>
+                        <Skeleton height={53} sx={{ bgcolor: 'grey' }} variant="rectangular"/>
                       </TableCell>
                     </TableRow>
-                  ) : (
+                    :
                     rows.slice().sort(getComparator(order, orderBy))
                       .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                      .map((row) => {
-                        return (
-                          <TableRow
-                            hover
-                            onClick={() => onRow(row)}
-                            role="checkbox"
-                            tabIndex={-1}
-                            key={row.uuid}
-                          >
-                            {
-                              map(tableColumns, ({ id, hidden, render = (val) => val }) => {
-                                if (hidden) return null;
-                                return (
-                                  <TableCell key={id} align="left">{render(get(row, id, ''), row)}</TableCell>
-                                );
-                              })
-                            }
-                          </TableRow>
-                        );
-                      })
-                  )
+                      .map((row) =>
+                        <TableRow
+                          hover
+                          key={row.uuid}
+                          onClick={() => onRow(row)}
+                          role="checkbox"
+                          tabIndex={-1}
+                        >
+                          {
+                            map(tableColumns, ({ id, hidden, render = (val) => val }) => {
+                              if (hidden) {
+                                return null;
+                              }
+                              return (
+                                <TableCell align="left" key={id}>{render(get(row, id, ''), row)}</TableCell>
+                              );
+                            })
+                          }
+                        </TableRow>
+                      )
+
                 }
-                {emptyRows > 0 && (
+                {emptyRows > 0 &&
                   <TableRow
                     style={{
-                      height: (53) * emptyRows,
+                      height: 53 * emptyRows
                     }}
                   >
                     <TableCell colSpan={tableColumns.length} />
                   </TableRow>
-                )}
+                }
               </TableBody>
             </Table>
           </TableContainer>
           <div style={{ position: 'relative' }}>
             <TablePagination
-              rowsPerPageOptions={[5, 10, 25, 50]}
               component="div"
               count={rows.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
               onPageChange={handleChangePage}
               onRowsPerPageChange={handleChangeRowsPerPage}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              rowsPerPageOptions={[ 5, 10, 25, 50 ]}
               style={{
                 marginRight: '4rem'
               }}
             />
             <IconButton
-              aria-label="more"
-              id="long-button"
               aria-controls={open ? 'long-menu' : undefined}
               aria-expanded={open ? 'true' : undefined}
               aria-haspopup="true"
+              aria-label="more"
+              id="long-button"
               onClick={handleClick}
               style={{
                 position: 'absolute',
                 top: '5px',
-                right: '1.5rem',
+                right: '1.5rem'
               }}
             >
               <VisibilityIcon />
             </IconButton>
             <MenuList
-              id="long-menu"
               MenuListProps={{
-                'aria-labelledby': 'long-button',
+                'aria-labelledby': 'long-button'
               }}
               anchorEl={anchorEl}
-              open={open}
-              onClose={handleClose}
               anchorOrigin={{
                 vertical: 0,
-                horizontal: 'left',
+                horizontal: 'left'
               }}
+              id="long-menu"
+              onClose={handleClose}
+              open={open}
               transformOrigin={{
                 vertical: 'bottom',
-                horizontal: 'left',
+                horizontal: 'left'
               }}
             >
-              {map(columns, (column) => (
-                <MenuItem key={column.id} onClick={() => handleToggleColumnVisibility(column.id, column.hidden)}>
+              {map(columns, (column) =>
+                <MenuItem
+                  key={column.id}
+                  onClick={() => handleToggleColumnVisibility(column.id, column.hidden)}
+                >
                   <ListItemIcon>
                     { column.hidden ? <VisibilityOffIcon /> : <VisibilityIcon /> }
                   </ListItemIcon>
@@ -282,7 +292,7 @@ export default function EnhancedTable({ columns, onRow, loading, data, headerToo
                     {column.label}
                   </ListItemText>
                 </MenuItem>
-              ))}
+              )}
             </MenuList>
           </div>
           {children}
@@ -294,10 +304,11 @@ export default function EnhancedTable({ columns, onRow, loading, data, headerToo
 
 EnhancedTable.propTypes = {
   columns: PropTypes.array.isRequired,
+  children: PropTypes.node,
   onRow: PropTypes.func,
   loading: PropTypes.bool,
   data: PropTypes.array,
-  headerToolbar: PropTypes.node,
+  headerToolbar: PropTypes.node
 };
 
 EnhancedTable.defaultProps = {
@@ -305,4 +316,5 @@ EnhancedTable.defaultProps = {
   loading: false,
   data: [],
   headerToolbar: null,
+  children: null
 };

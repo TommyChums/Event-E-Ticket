@@ -1,11 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Backdrop from '@mui/material/Backdrop';
-import Container from '@mui/material/Container'
+import Container from '@mui/material/Container';
 import CircularProgress from '@mui/material/CircularProgress';
 
-import EventForm from '../../components/EventForm'
+import EventForm from '../../components/EventForm';
 import protectedRoute from '../../lib/helpers/protectedRoute';
 import isAdminUser from '../../lib/helpers/isAdminUser';
 import useDispatch from '../../lib/hooks/useDispatch';
@@ -27,14 +27,14 @@ export default function NewEvent() {
     router.push(`events/${newEvent.uuid}`).then(() => {
       setCreating(false);
     });
-  }
+  };
 
   return (
     <>
       <Head>
         <title>New Event</title>
-        <meta property="og:title" content="New Event" key="title" />
-        <link rel="icon" type="image/x-icon" href="/images/rlc-logo.ico" />
+        <meta content="New Event" key="title" property="og:title" />
+        <link href="/images/rlc-logo.ico" rel="icon" type="image/x-icon" />
       </Head>
       <Container
         sx={{
@@ -43,7 +43,7 @@ export default function NewEvent() {
           justifyContent: 'center',
           alignItems: 'center',
           textAlign: 'center',
-          marginTop: '16px',
+          marginTop: '16px'
         }}
       >
         <Backdrop open={creating} sx={{ color: '#fff' }}>
@@ -52,7 +52,7 @@ export default function NewEvent() {
         <EventForm isNew onSave={handleOnSave}/>
       </Container>
     </>
-  )
+  );
 };
 
 export const getServerSideProps = protectedRoute((_, authenticatedSupabase) => {
@@ -63,6 +63,6 @@ export const getServerSideProps = protectedRoute((_, authenticatedSupabase) => {
   }
 
   return {
-    notFound: true,
+    notFound: true
   };
 });

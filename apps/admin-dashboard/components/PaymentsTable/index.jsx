@@ -20,92 +20,92 @@ const columns = [
     id: 'first_name',
     type: 'text',
     disablePadding: false,
-    label: 'First Name',
+    label: 'First Name'
   },
   {
     id: 'last_name',
     type: 'text',
     disablePadding: false,
-    label: 'Last Name',
+    label: 'Last Name'
   },
   {
     id: 'email',
     type: 'text',
     disablePadding: false,
-    label: 'Email',
+    label: 'Email'
   },
   {
     id: 'amount',
     type: 'number',
     disablePadding: false,
     label: 'Amount',
-    render: (amt) => `$${amt}.00`,
+    render: (amt) => `$${amt}.00`
   },
   {
     id: 'timestamp',
     type: 'text',
     disablePadding: false,
     label: 'Paid On',
-    render: (time) => moment(time).format('LLL'),
-  },
+    render: (time) => moment(time).format('LLL')
+  }
 ];
 
 function isEarlyBird(paymentDate, earlyBirdDate) {
-  if (!earlyBirdDate) return true;
+  if (!earlyBirdDate) {
+    return true;
+  }
 
   return moment(paymentDate, true).isSameOrBefore(moment(earlyBirdDate, true));
 };
 
-const PaymentsTableToolbar = (props) => {
-  return (
-    <Toolbar
-      sx={{
-        pl: { sm: 2 },
-        pr: { xs: 1, sm: 1 }
-      }}
+const PaymentsTableToolbar = (props) =>
+  <Toolbar
+    sx={{
+      pl: { sm: 2 },
+      pr: { xs: 1, sm: 1 }
+    }}
+  >
+    <Typography
+      component="div"
+      id="tableTitle"
+      sx={{ flex: '1 1 100%', maxWidth: '200px' }}
+      variant="h6"
     >
-      <Typography
-        sx={{ flex: '1 1 100%', maxWidth: '200px' }}
-        variant="h6"
-        id="tableTitle"
-        component="div"
-      >
         User Payments
-      </Typography>
-      <Stack
-        sx={{ width: '100%' }}
-        direction="row"
-      >
-        <TextField
-          id="outlined-search"
-          fullWidth
-          label="Search"
-          onChange={({ target }) => {
-            const { value } = target;
+    </Typography>
+    <Stack
+      direction="row"
+      sx={{ width: '100%' }}
+    >
+      <TextField
+        fullWidth
+        id="outlined-search"
+        label="Search"
+        onChange={({ target }) => {
+          const { value } = target;
 
-            props.setSearchValue(value.trimStart());
-          }}
-          size="small"
-          value={props.searchValue}
-        />
-        <FormControlLabel
-          sx={{ width: '175px', marginRight: '1rem' }}
-          control={<Checkbox checked={props.earlyBirdOnly} indeterminate={props.indeterminate} />}
-          onChange={props.onEarlyBirdClick}
-          label="Early Bird"
-          labelPlacement="start"
-        />
-      </Stack>
-    </Toolbar>
-  );
-};
+          props.setSearchValue(value.trimStart());
+        }}
+        size="small"
+        value={props.searchValue}
+      />
+      <FormControlLabel
+        control={<Checkbox checked={props.earlyBirdOnly} indeterminate={props.indeterminate} />}
+        label="Early Bird"
+        labelPlacement="start"
+        onChange={props.onEarlyBirdClick}
+        sx={{ width: '175px', marginRight: '1rem' }}
+      />
+    </Stack>
+  </Toolbar>
+  ;
 
 PaymentsTableToolbar.propTypes = {
   indeterminate: PropTypes.bool.isRequired,
   onEarlyBirdClick: PropTypes.func.isRequired,
   earlyBirdOnly: PropTypes.bool.isRequired,
   searchValue: PropTypes.string.isRequired,
-  setSearchValue: PropTypes.func.isRequired,
+  setSearchValue: PropTypes.func.isRequired
 };
 
 function PaymentsTable({ loading, payments, usersEvent }) {
@@ -114,19 +114,17 @@ function PaymentsTable({ loading, payments, usersEvent }) {
   const [ earlyBirdOnly, setEarlyBirdOnly ] = useState(false);
   const [ indeterminate, setIndeterminate ] = useState(false);
 
-  const earlyBirdDate = useMemo(() => {
-    return get(usersEvent.payment_config, 'early_bird_date', null);
-  }, [ usersEvent ]);
+  const earlyBirdDate = useMemo(() =>
+    get(usersEvent.payment_config, 'early_bird_date', null)
+  , [ usersEvent ]);
 
-  const paymentsTotal = useMemo(() => {
-    return reduce(rows, (total, row) => {
-      total += row.amount || 0;
-      return total;
-    }, 0);
-  }, [ rows ]);
+  const paymentsTotal = useMemo(() => reduce(rows, (total, row) => {
+    total = total + (row.amount || 0);
+    return total;
+  }, 0), [ rows ]);
 
   useEffect(() => {
-    const searchedUserPayments = filter((payments), ({ first_name, last_name, email, amount, timestamp }) => {
+    const searchedUserPayments = filter(payments, ({ first_name, last_name, email, amount, timestamp }) => {
       const searchRegex = new RegExp(escapeRegExp(searchValue), 'i');
 
       const isEarlyBirdResult = isEarlyBird(timestamp, earlyBirdDate);
@@ -161,17 +159,17 @@ function PaymentsTable({ loading, payments, usersEvent }) {
   return (
     <Table
       columns={columns}
-      loading={loading}
       data={rows}
       headerToolbar={
         <PaymentsTableToolbar
+          earlyBirdOnly={earlyBirdOnly}
           indeterminate={indeterminate}
           onEarlyBirdClick={handleEarlyBirdClick}
-          earlyBirdOnly={earlyBirdOnly}
           searchValue={searchValue}
           setSearchValue={setSearchValue}
         />
       }
+      loading={loading}
     >
       <Toolbar
         sx={{
@@ -180,10 +178,10 @@ function PaymentsTable({ loading, payments, usersEvent }) {
         }}
       >
         <Typography
+          component="div"
+          id="payments-total"
           sx={{ flex: '1 1 100%', maxWidth: '200px', right: '2rem', position: 'absolute' }}
           variant="h6"
-          id="payments-total"
-          component="div"
         >
           {`Table Total: $${paymentsTotal}.00`}
         </Typography>
@@ -195,11 +193,11 @@ function PaymentsTable({ loading, payments, usersEvent }) {
 PaymentsTable.propTypes = {
   loading: PropTypes.bool,
   payments: PropTypes.oneOfType([ PropTypes.array, PropTypes.object ]).isRequired,
-  usersEvent: PropTypes.object.isRequired,
+  usersEvent: PropTypes.object.isRequired
 };
 
 PaymentsTable.defaultProps = {
-  loading: false,
+  loading: false
 };
 
 function isSameTable(prevProps, nextProps) {

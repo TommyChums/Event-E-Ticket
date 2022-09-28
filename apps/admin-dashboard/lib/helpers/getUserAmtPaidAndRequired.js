@@ -4,11 +4,11 @@ import moment from 'moment';
 
 export default function getUserAmtPaidAndRequired(paymentConfig, user) {
   const earlyBirdDate = paymentConfig.early_bird_date;
-    
+
   let earlyBirdPayments = false;
 
   const userAmountPaid = reduce(user.payments, (total, payment) => {
-    total += payment.amount;
+    total = total + payment.amount;
     if (earlyBirdDate) {
       earlyBirdPayments = moment(payment.timestamp).isSameOrBefore(earlyBirdDate);
     }
@@ -19,7 +19,7 @@ export default function getUserAmtPaidAndRequired(paymentConfig, user) {
 
   const userAgeMapping = findKey(paymentConfig.age_mapping, (ages) => {
     const { from: ageFrom, to: ageTo } = ages;
-    return (user.age >= ageFrom && user.age <= ageTo)
+    return user.age >= ageFrom && user.age <= ageTo;
   });
 
   const totalRequired = isEarlyBirdActive
@@ -28,6 +28,6 @@ export default function getUserAmtPaidAndRequired(paymentConfig, user) {
 
   return {
     userAmountPaid,
-    userAmountRequired: totalRequired - userAmountPaid,
+    userAmountRequired: totalRequired - userAmountPaid
   };
 };

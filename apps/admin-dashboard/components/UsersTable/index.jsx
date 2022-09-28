@@ -35,31 +35,31 @@ const initialColumns = [
     id: 'first_name',
     type: 'text',
     disablePadding: false,
-    label: 'First Name',
+    label: 'First Name'
   },
   {
     id: 'last_name',
     type: 'text',
     disablePadding: false,
-    label: 'Last Name',
+    label: 'Last Name'
   },
   {
     id: 'email',
     type: 'text',
     disablePadding: false,
-    label: 'Email',
+    label: 'Email'
   },
   {
     id: 'age',
     type: 'number',
     disablePadding: false,
-    label: 'Age',
+    label: 'Age'
   },
   {
     id: 'registration_number',
     type: 'number',
     disablePadding: false,
-    label: 'Registration Number',
+    label: 'Registration Number'
   },
   {
     id: 'ticket_issued',
@@ -67,72 +67,70 @@ const initialColumns = [
     disablePadding: false,
     disableSorting: true,
     label: 'Ticket Issued',
-    render: (issued) => issued ? 'Yes' : 'No',
+    render: (issued) => issued ? 'Yes' : 'No'
   },
   {
     id: 'created_on',
     type: 'text',
     disablePadding: false,
     label: 'Registration Time',
-    render: (time) => moment(time).format('LLL'),
-  },
+    render: (time) => moment(time).format('LLL')
+  }
 ];
 
-const UsersTableToolbar = (props) => {
-  return (
-    <Toolbar
-      sx={{
-        pl: { sm: 2 },
-        pr: { xs: 1, sm: 1 }
-      }}
+const UsersTableToolbar = (props) =>
+  <Toolbar
+    sx={{
+      pl: { sm: 2 },
+      pr: { xs: 1, sm: 1 }
+    }}
+  >
+    <Typography
+      component="div"
+      id="users-table-title"
+      sx={{ flex: '1 1 100%', maxWidth: '200px' }}
+      variant="h6"
     >
-      <Typography
-        sx={{ flex: '1 1 100%', maxWidth: '200px' }}
-        variant="h6"
-        id="users-table-title"
-        component="div"
-      >
         Registered Users
-      </Typography>
-      <Stack
-        sx={{ width: '100%' }}
-        direction="row"
-      >
-        <TextField
-          id="outlined-search"
-          fullWidth
-          label="Search"
-          onChange={({ target }) => {
-            const { value } = target;
+    </Typography>
+    <Stack
+      direction="row"
+      sx={{ width: '100%' }}
+    >
+      <TextField
+        fullWidth
+        id="outlined-search"
+        label="Search"
+        onChange={({ target }) => {
+          const { value } = target;
 
-            props.setSearchValue(value.trimStart());
-          }}
-          size="small"
-          value={props.searchValue}
-        />
-        <FormControlLabel
-          sx={{ width: '175px', marginRight: '1rem' }}
-          control={<Checkbox checked={props.paidInFullOnly} indeterminate={props.indeterminate} />}
-          onChange={props.onPaidInFullClick}
-          label="Ticket Issued"
-          labelPlacement="start"
-        />
-      </Stack>
-    </Toolbar>
-  );
-};
+          props.setSearchValue(value.trimStart());
+        }}
+        size="small"
+        value={props.searchValue}
+      />
+      <FormControlLabel
+        control={<Checkbox checked={props.paidInFullOnly} indeterminate={props.indeterminate} />}
+        label="Ticket Issued"
+        labelPlacement="start"
+        onChange={props.onPaidInFullClick}
+        sx={{ width: '175px', marginRight: '1rem' }}
+      />
+    </Stack>
+  </Toolbar>
+  ;
 
 UsersTableToolbar.propTypes = {
   indeterminate: PropTypes.bool,
   onPaidInFullClick: PropTypes.func,
   paidInFullOnly: PropTypes.bool,
   searchValue: PropTypes.string,
-  setSearchValue: PropTypes.func,
+  setSearchValue: PropTypes.func
 };
 
 UsersTableToolbar.defaultProps = {
   searchValue: '',
-  setSearchValue: () => {},
+  setSearchValue: () => {}
 };
 
 function UsersTable({ loading, users, usersEvent, updatePayment, updateUser }) {
@@ -141,33 +139,35 @@ function UsersTable({ loading, users, usersEvent, updatePayment, updateUser }) {
   const [ selectedUserUuid, setSelectedUserUuid ] = useState('');
   const [ paidInFullOnly, setPaidInFullOnly ] = useState(false);
   const [ indeterminate, setIndeterminate ] = useState(false);
-  
+
   const columns = useMemo(() => {
     const additionalUserInfo = get(usersEvent, 'additional_user_information', {});
-  
+
     const additionalColumns = map(additionalUserInfo, (additionalField) => {
       const { field_name, field_type } = additionalField;
-  
+
       const columnId = `additional_information.${field_name}`;
-  
+
       return {
         id: columnId,
         type: field_type,
         disablePadding: false,
         label: startCase(field_name),
         render: getValueRenderer(field_type),
-        hidden: true,
+        hidden: true
       };
     });
-  
+
     return [
       ...initialColumns,
-      ...additionalColumns,
+      ...additionalColumns
     ];
   }, [ usersEvent ]);
 
   useEffect(() => {
-    const searchedUsers = filter((users), ({ first_name, last_name, ticket_issued, email, registration_number }) => {
+    const searchedUsers = filter(users, ({
+      first_name, last_name, ticket_issued, email, registration_number
+    }) => {
       const searchRegex = new RegExp(escapeRegExp(searchValue), 'i');
 
       const ticketIssuedCheck = paidInFullOnly ? ticket_issued : indeterminate ? !ticket_issued : true;
@@ -205,8 +205,6 @@ function UsersTable({ loading, users, usersEvent, updatePayment, updateUser }) {
     <>
       <Table
         columns={columns}
-        onRow={onRowClick}
-        loading={loading}
         data={rows}
         headerToolbar={
           <UsersTableToolbar
@@ -217,20 +215,22 @@ function UsersTable({ loading, users, usersEvent, updatePayment, updateUser }) {
             setSearchValue={setSearchValue}
           />
         }
+        loading={loading}
+        onRow={onRowClick}
       />
       {
-        selectedUserUuid && (
+        selectedUserUuid &&
           <UserDialog
+            event={usersEvent}
             onClose={() => {
               setSelectedUserUuid('');
             }}
             open={!!selectedUserUuid}
-            user={find(rows, [ 'uuid', selectedUserUuid ]) || {}}
-            event={usersEvent}
             updatePayment={updatePayment}
             updateUser={updateUser}
+            user={find(rows, [ 'uuid', selectedUserUuid ]) || {}}
           />
-        )
+
       }
     </>
   );
@@ -241,15 +241,16 @@ UsersTable.propTypes = {
   users: PropTypes.oneOfType([ PropTypes.array, PropTypes.object ]).isRequired,
   usersEvent: PropTypes.object.isRequired,
   updatePayment: PropTypes.func.isRequired,
-  updateUser: PropTypes.func.isRequired,
+  updateUser: PropTypes.func.isRequired
 };
 
 UsersTable.defaultProps = {
-  loading: false,
+  loading: false
 };
 
 function isSameTable(prevProps, nextProps) {
-  const isSame = isEqual(prevProps.users, nextProps.users) && isEqual(prevProps.usersEvent, nextProps.usersEvent);
+  const isSame = isEqual(prevProps.users, nextProps.users)
+    && isEqual(prevProps.usersEvent, nextProps.usersEvent);
 
   return isSame;
 };

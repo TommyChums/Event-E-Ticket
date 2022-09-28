@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import { Controller, useController, useForm } from 'react-hook-form';
 import moment from 'moment';
 import forEach from 'lodash/forEach';
@@ -12,10 +13,8 @@ import IconButton from '@mui/material/IconButton';
 import DialogTitle from '@mui/material/DialogTitle';
 import Dialog from '@mui/material/Dialog';
 import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -25,7 +24,7 @@ import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 
-function ControlledNumberInput({ control, name, defaultValue, required = true, ...props }) {
+function ControlledNumberInput({ control, name, defaultValue, required, ...props }) {
   const { field, fieldState: { error } } = useController({
     control,
     name,
@@ -34,15 +33,17 @@ function ControlledNumberInput({ control, name, defaultValue, required = true, .
       required: 'Required',
       pattern: {
         value: /^[0-9]+$/,
-        message: 'Whole Number',
-      },
-    } : {},
+        message: 'Whole Number'
+      }
+    } : {}
   });
 
   return (
     <TextField
       {...props}
       {...field}
+      error={!!error}
+      helperText={error?.message}
       onChange={({ target }) => {
         const { value } = target;
 
@@ -54,10 +55,20 @@ function ControlledNumberInput({ control, name, defaultValue, required = true, .
           field.onChange(value);
         }
       }}
-      error={!!error}
-      helperText={error?.message}
     />
   );
+};
+
+ControlledNumberInput.propTypes = {
+  control: PropTypes.any.isRequired,
+  name: PropTypes.string.isRequired,
+  defaultValue: PropTypes.any,
+  required: PropTypes.any
+};
+
+ControlledNumberInput.propTypes = {
+  defaultValue: null,
+  required: true
 };
 
 export default function PricingDialog(props) {
@@ -75,20 +86,19 @@ export default function PricingDialog(props) {
   const setDefaultsFromValue = useCallback((val) => {
     if (isEmpty(val)) {
       setPricesByAge({
-        general_public: 0,
+        general_public: 0
       });
       setAgeMapping({
         general_public: {
           from: 0,
-          to: 999,
-        },
+          to: 999
+        }
       });
       setNewAgeRanges([ 'general_public' ]);
     } else {
       setPricesByAge(val.price_by_age);
       setAgeMapping(val.age_mapping);
     }
-
   }, [ setPricesByAge, setAgeMapping ]);
 
   const {
@@ -96,23 +106,23 @@ export default function PricingDialog(props) {
     handleSubmit,
     reset,
     formState: {
-      isValid,
+      isValid
     },
-    setValue,
+    setValue
   } = useForm({
     mode: 'onBlur',
     reValidateMode: 'onChange',
     defaultValues: {
-      ...value || {},
-    },
+      ...value || {}
+    }
   });
 
   useEffect(() => {
-   setDefaultsFromValue(value);
-   setAgeRangesToDelete({});
+    setDefaultsFromValue(value);
+    setAgeRangesToDelete({});
   }, [ setDefaultsFromValue, value ]);
 
-  const onSubmit = (data, e) => {
+  const onSubmit = (data) => {
     const newData = { ...data };
 
     forEach(ageRangesToDelete, (_, ageLabel) => {
@@ -133,22 +143,24 @@ export default function PricingDialog(props) {
   };
 
   const handleAddNewAgeRange = () => {
-    if (!newAgeRange) return;
+    if (!newAgeRange) {
+      return;
+    }
 
     const newCasedAgeRange = snakeCase(newAgeRange);
-    
+
     setPricesByAge({
       [newCasedAgeRange]: 0,
-      ...pricesByAge,
+      ...pricesByAge
     });
     setAgeMapping({
       [newCasedAgeRange]: {
         from: 0,
-        to: 9999,
+        to: 9999
       },
-      ...ageMapping,
+      ...ageMapping
     });
-    
+
     setNewAgeRange('');
 
     if (ageRangesToDelete[newCasedAgeRange]) {
@@ -161,13 +173,13 @@ export default function PricingDialog(props) {
 
     setNewAgeRanges([
       ...newAgeRanges,
-      newCasedAgeRange,
+      newCasedAgeRange
     ]);
   };
 
   const handleDeleteAgeRange = (ageLabel) => {
-    const newAgeMapping = {...ageMapping};
-    const newPricesByAge = {...pricesByAge};
+    const newAgeMapping = { ...ageMapping };
+    const newPricesByAge = { ...pricesByAge };
 
     delete newAgeMapping[ageLabel];
     delete newPricesByAge[ageLabel];
@@ -177,19 +189,19 @@ export default function PricingDialog(props) {
 
     setAgeRangesToDelete({
       ...ageRangesToDelete,
-      [ageLabel]: true,
+      [ageLabel]: true
     });
   };
 
   return (
-    <Dialog onClose={onReset} open={open} fullWidth>
+    <Dialog fullWidth onClose={onReset} open={open}>
       <DialogTitle>Define the pricing structure</DialogTitle>
-      <Stack mx={2} mb={4} spacing={1}>
-        {map(pricesByAge, (price, ageLabel) => (
-          <Accordion key={ageLabel} defaultExpanded={newAgeRanges.includes(ageLabel)}>
+      <Stack mb={4} mx={2} spacing={1}>
+        {map(pricesByAge, (price, ageLabel) =>
+          <Accordion defaultExpanded={newAgeRanges.includes(ageLabel)} key={ageLabel}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Stack alignItems="center" direction="row" spacing={1}>
-                <IconButton sx={{ mt: '-2px' }} onClick={() => handleDeleteAgeRange(ageLabel)}>
+                <IconButton onClick={() => handleDeleteAgeRange(ageLabel)} sx={{ mt: '-2px' }}>
                   <HighlightOffIcon sx={{ fontSize: '18px' }} />
                 </IconButton>
                 {startCase(ageLabel)}
@@ -200,33 +212,33 @@ export default function PricingDialog(props) {
                 <Stack direction="column" spacing={2} width="100%">
                   <Stack direction="row" spacing={1} >
                     <ControlledNumberInput
-                      fullWidth
                       control={control}
-                      name={`age_mapping.${ageLabel}.from`}
                       defaultValue={ageMapping[ageLabel]?.from}
+                      fullWidth
                       label="Age From:"
+                      name={`age_mapping.${ageLabel}.from`}
                     />
                     <ControlledNumberInput
-                      fullWidth
                       control={control}
-                      name={`age_mapping.${ageLabel}.to`}
                       defaultValue={ageMapping[ageLabel]?.to}
+                      fullWidth
                       label="Age To:"
+                      name={`age_mapping.${ageLabel}.to`}
                     />
                   </Stack>
                   <Stack direction="row" spacing={1}>
                     <ControlledNumberInput
-                      fullWidth
                       control={control}
-                      name={`price_by_age.${ageLabel}`}
                       defaultValue={price}
+                      fullWidth
                       label="Price:"
+                      name={`price_by_age.${ageLabel}`}
                     />
                     <ControlledNumberInput
-                      fullWidth
                       control={control}
-                      name={`early_bird_price_by_age.${ageLabel}`}
+                      fullWidth
                       label="Early Bird Price:"
+                      name={`early_bird_price_by_age.${ageLabel}`}
                       required={false}
                     />
                   </Stack>
@@ -234,38 +246,38 @@ export default function PricingDialog(props) {
               </Stack>
             </AccordionDetails>
           </Accordion>
-        ))}
+        )}
         <Stack direction="row" spacing={1} style={{ margin: '2.5rem 0 0' }}>
           <Controller
             control={control}
             name="early_bird_date"
-            rules={{
-              validate: {
-                isValidDate: (val) => val ? moment(val, true).isValid() ? null : 'Invalid Date' : null,
-              },
-            }}
-            render={({ field }) => (
+            render={({ field }) =>
               <LocalizationProvider dateAdapter={AdapterMoment}>
                 <DateTimePicker
                   {...field}
                   ampm
                   disablePast
                   inputFormat="YYYY-MM-DD hh:mm A"
-                  placeholder='Leave empty for no Early Bird'
                   label="Early Bird End Date"
                   openTo="month"
-                  views={[ 'year', 'month', 'day', 'hours', 'minutes' ]}
-                  renderInput={(params) => (
+                  placeholder='Leave empty for no Early Bird'
+                  renderInput={(params) =>
                     <TextField
                       {...params}
                       InputLabelProps={{ shrink: true }}
                       fullWidth
                       helperText="yyyy-mm-dd hh:mm"
                     />
-                  )}
+                  }
+                  views={[ 'year', 'month', 'day', 'hours', 'minutes' ]}
                 />
               </LocalizationProvider>
-            )}
+            }
+            rules={{
+              validate: {
+                isValidDate: (val) => val ? moment(val, true).isValid() ? null : 'Invalid Date' : null
+              }
+            }}
           />
           <IconButton
             onClick={() => setValue('early_bird_date', null)}
@@ -275,12 +287,12 @@ export default function PricingDialog(props) {
           </IconButton>
         </Stack>
       </Stack>
-      <Stack mx={2} direction="row" spacing={1}>
+      <Stack direction="row" mx={2} spacing={1}>
         <TextField
-          label="New Age Range"
-          variant="outlined"
-          onChange={({ target: { value } }) => setNewAgeRange(value)}
           fullWidth
+          label="New Age Range"
+          onChange={({ target }) => setNewAgeRange(target.value)}
+          variant="outlined"
         />
         <IconButton
           onClick={() => handleAddNewAgeRange()}
@@ -288,25 +300,33 @@ export default function PricingDialog(props) {
           <AddIcon />
         </IconButton>
       </Stack>
-      <Stack direction="row" sx={{ mx: 2, mr: 8, my: 2 }} spacing={1}>
+      <Stack direction="row" spacing={1} sx={{ mx: 2, mr: 8, my: 2 }}>
         <Button
           disabled={disabled || !isValid}
-          variant="contained"
-          type="button"
-          onClick={handleSubmit(onSubmit)}
           fullWidth
+          onClick={handleSubmit(onSubmit)}
+          type="button"
+          variant="contained"
         >
           Save
         </Button>
         <Button
-          variant="outlined"
-          type="button"
-          onClick={onReset}
           fullWidth
+          onClick={onReset}
+          type="button"
+          variant="outlined"
         >
           Cancel
         </Button>
       </Stack>
     </Dialog>
   );
-}
+};
+
+PricingDialog.propTypes = {
+  disabled: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  open: PropTypes.bool.isRequired,
+  value: PropTypes.any.isRequired,
+  onChange: PropTypes.func.isRequired
+};

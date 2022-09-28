@@ -1,10 +1,11 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
 import { useConfirm } from 'material-ui-confirm';
 import { Controller, useController, useForm } from 'react-hook-form';
 import { decode } from 'base64-arraybuffer';
-import { ColorPicker, toColor } from "react-color-palette";
-import { usePlacesWidget } from "react-google-autocomplete";
+import { ColorPicker, toColor } from 'react-color-palette';
+import { usePlacesWidget } from 'react-google-autocomplete';
 import { v4 } from 'uuid';
 import moment from 'moment';
 import isEqual from 'lodash/isEqual';
@@ -43,41 +44,82 @@ const BANNER_IMAGE_WIDTH = 640;
 const BANNER_IMAGE_HEIGHT = 160;
 
 function preventEnterSubmit(e) {
-  if (e.target.id === 'outlined-description') return;
-  if (e.code.toLowerCase() === 'enter') e.preventDefault();
+  if (e.target.id === 'outlined-description') {
+    return;
+  }
+  if (e.code.toLowerCase() === 'enter') {
+    e.preventDefault();
+  }
 };
 
 async function replaceStorageImg(b64ImgData, bucket, eventUuid, oldPath, pathBeforeUuid = '') {
   const contentType = b64ImgData.split(';')[0].replace('data:', '');
   const extension = contentType.split('/')[1];
   const imgArrayBuffer = decode(b64ImgData.split(',')[1]);
-  
+
   const { data, error } = await supabase.storage.from(bucket)
-    .upload(`${eventUuid}/${pathBeforeUuid}${v4()}.${extension}`, imgArrayBuffer, { contentType, upsert: true });
-  
+    .upload(
+      `${eventUuid}/${pathBeforeUuid}${v4()}.${extension}`,
+      imgArrayBuffer,
+      { contentType, upsert: true }
+    );
+
   if (!error) {
     // Remove old img
     if (oldPath) {
       const oldFileName = oldPath.split(`${bucket}/`).pop();
 
-      if (oldFileName)
-        await supabase.storage.from(bucket).remove(oldFileName)
+      if (oldFileName) {
+        await supabase.storage.from(bucket).remove(oldFileName);
+      }
     }
   }
 
   return {
     imgKey: data?.Key,
-    error,
+    error
   };
 };
 
-function ControlledLocation({ control, name, defaultValue = {}, rules, ...props }) {
+function ControlledLocation({ control, name, defaultValue, rules, ...props }) {
   const addressName = `${name}.address`;
   const placeIdName = `${name}.place_id`;
   const geocodeName = `${name}.geocode`;
-  const { field: { onChange: onAddressChange, value: addressValue } } = useController({ control, name: addressName, defaultValue: defaultValue?.address, rules });
-  const { field: { onChange: onPlaceIdChange, value: placeIdValue } } = useController({ control, name: placeIdName, defaultValue: defaultValue?.place_id, rules });
-  const { field: { onChange: onGeocodeChange, value: geocodeValue } } = useController({ control, name: geocodeName, defaultValue: defaultValue?.geocode, rules });
+  const {
+    field: {
+      onChange: onAddressChange,
+      value: addressValue
+    }
+  } = useController({
+    control,
+    name: addressName,
+    defaultValue: defaultValue?.address,
+    rules
+  });
+
+  const {
+    field: {
+      onChange: onPlaceIdChange,
+      value: placeIdValue
+    }
+  } = useController({
+    control,
+    name: placeIdName,
+    defaultValue: defaultValue?.place_id,
+    rules
+  });
+
+  const {
+    field: {
+      onChange: onGeocodeChange,
+      value: geocodeValue
+    }
+  } = useController({
+    control,
+    name: geocodeName,
+    defaultValue: defaultValue?.geocode,
+    rules
+  });
 
   const { ref: materialRef } = usePlacesWidget({
     apiKey: process.env.NEXT_PUBLIC_MAPS_API_KEY,
@@ -90,55 +132,66 @@ function ControlledLocation({ control, name, defaultValue = {}, rules, ...props 
     options: {
       types: [],
       fields: [
-        "formatted_address",
-        "place_id",
-        "geometry",
+        'formatted_address',
+        'place_id',
+        'geometry'
       ],
-      componentRestrictions: { country: 'tt' },
-    },
+      componentRestrictions: { country: 'tt' }
+    }
   });
 
   return (
     <>
       <TextField
         {...props}
-        inputRef={materialRef}
-        onChange={onAddressChange}
-        name={addressName}
         id="outlined-venue-address"
+        inputRef={materialRef}
         label="Address"
-        variant="outlined"
+        name={addressName}
+        onChange={onAddressChange}
         value={addressValue}
+        variant="outlined"
       />
       <TextField
         {...props}
-        name={placeIdName}
         id="outlined-venue-placeId"
         label="Place id"
-        variant="outlined"
-        value={placeIdValue}
+        name={placeIdName}
         style={{
-          display: 'none',
+          display: 'none'
         }}
+        value={placeIdValue}
+        variant="outlined"
       />
       <TextField
         {...props}
-        name={geocodeName}
         id="outlined-venue-geocode"
         label="Geocode"
-        variant="outlined"
-        value={geocodeValue}
+        name={geocodeName}
         style={{
-          display: 'none',
+          display: 'none'
         }}
+        value={geocodeValue}
+        variant="outlined"
       />
     </>
-  )
+  );
 };
 
-function ControlledColourPicker({ control, name, defaultValue = toColor('hex', '#000'), rules, ...props }) {
+ControlledLocation.propTypes = {
+  control: PropTypes.any.isRequired,
+  name: PropTypes.string.isRequired,
+  defaultValue: PropTypes.any,
+  rules: PropTypes.object.isRequired
+};
+
+ControlledLocation.defaultProps = {
+  defaultValue: {}
+};
+
+function ControlledColourPicker({ control, name, defaultValue, rules, ...props }) {
   const { field: { onChange, value } } = useController({ control, name, defaultValue, rules });
-  
+
   const [ internalValue, setInternalValue ] = useState(value || defaultValue);
 
   const colourChangeRef = useRef(null);
@@ -164,10 +217,10 @@ function ControlledColourPicker({ control, name, defaultValue = toColor('hex', '
   return (
     <ColorPicker
       alpha
+      height={TICKET_IMAGE_HEIGHT}
       hideHSV
       hideRGB
       width={TICKET_IMAGE_WIDTH}
-      height={TICKET_IMAGE_HEIGHT}
       {...props}
       color={internalValue}
       // Can't use until the fix for the inputs to call onChangeComplete
@@ -181,7 +234,18 @@ function ControlledColourPicker({ control, name, defaultValue = toColor('hex', '
   );
 };
 
-export default function EventForm({ event = defaultEvent, onSave, isNew = false }) {
+ControlledColourPicker.propTypes = {
+  control: PropTypes.any.isRequired,
+  name: PropTypes.string.isRequired,
+  defaultValue: PropTypes.any,
+  rules: PropTypes.object.isRequired
+};
+
+ControlledColourPicker.defaultProps = {
+  defaultValue: toColor('hex', '#000')
+};
+
+export default function EventForm({ event, onSave, isNew }) {
   const { enqueueSnackbar } = useSnackbar();
 
   const isSmallScreen = useMediaQuery('(max-width:780px)');
@@ -204,10 +268,10 @@ export default function EventForm({ event = defaultEvent, onSave, isNew = false 
     unregister,
     formState,
     getValues,
-    watch,
+    watch
   } = useForm({
     mode: 'onChange',
-    defaultValues: { ...event },
+    defaultValues: { ...event }
   });
 
   useEffect(() => {
@@ -225,7 +289,7 @@ export default function EventForm({ event = defaultEvent, onSave, isNew = false 
       const newTicketWidth = BANNER_IMAGE_WIDTH / 2;
       const newTicketHeight = TICKET_IMAGE_HEIGHT / 2;
       const newQrCodeScale = MAX_TICKET_WIDTH / newTicketWidth;
-      
+
       setBannerImageWidth(newBannerWidth);
       setBannerImageHeight(newBannerHeight);
       setTicketImageWidth(newTicketWidth);
@@ -240,20 +304,20 @@ export default function EventForm({ event = defaultEvent, onSave, isNew = false 
     }
   }, [ isSmallScreen ]);
 
-  const lightColourValue = useCallback((ageLabel) => (
+  const lightColourValue = useCallback((ageLabel) =>
     watch(`ticket_config.${ageLabel}.colour.light`)?.hex
-  ), [ watch ]);
+  , [ watch ]);
 
-  const darkColourValue = useCallback((ageLabel) => (
+  const darkColourValue = useCallback((ageLabel) =>
     watch(`ticket_config.${ageLabel}.colour.dark`)?.hex
-  ), [ watch ]);
+  , [ watch ]);
 
   const { isValid, isDirty, isSubmitting } = formState;
 
   const submitDisabled = eventPublished || saving || !isValid || !isDirty || isSubmitting;
 
   const requiredRules = {
-    required: 'Required',
+    required: 'Required'
   };
 
   const handleOnPublish = async () => {
@@ -268,38 +332,38 @@ export default function EventForm({ event = defaultEvent, onSave, isNew = false 
         allowClose: false,
         confirmationButtonProps: {
           variant: 'contained',
-          color: 'error',
+          color: 'error'
         },
         cancellationButtonProps: {
-          variant: 'outlined',
-        },
+          variant: 'outlined'
+        }
       });
 
       enqueueSnackbar('Publishing Event', {
-        variant: 'info',
+        variant: 'info'
       });
-  
+
       const { data: publishedEvent, error } = await supabase.from('events')
         .update({
           is_published: true,
-          updated_on: moment().toISOString(),
+          updated_on: moment().toISOString()
         }).eq('uuid', event.uuid).single();
-  
+
       if (error) {
         enqueueSnackbar(`Failed to publish event: ${error.message}`, {
-          variant: 'error',
+          variant: 'error'
         });
       } else {
         enqueueSnackbar('Event Published', {
-          variant: 'success',
+          variant: 'success'
         });
-  
+
         onSave(publishedEvent);
       }
-    } catch(e) {
+    } catch (e) {
       console.log('Publishing cancelled');
     }
-    
+
     setSaving(false);
   };
 
@@ -312,16 +376,22 @@ export default function EventForm({ event = defaultEvent, onSave, isNew = false 
     setSaving(true);
     if (data.logo !== event.logo) {
       enqueueSnackbar('Uploading Logo', {
-        variant: 'info',
+        variant: 'info'
       });
-      
+
       const logoBucket = 'event-assets';
 
-      const { imgKey, error } = await replaceStorageImg(data.logo, logoBucket, event.uuid, event.logo, 'logo/');
+      const { imgKey, error } = await replaceStorageImg(
+        data.logo,
+        logoBucket,
+        event.uuid,
+        event.logo,
+        'logo/'
+      );
 
       if (error) {
         enqueueSnackbar(`Failed to upload Logo: ${error.message}`, {
-          variant: 'error',
+          variant: 'error'
         });
         setSaving(false);
         return;
@@ -329,11 +399,11 @@ export default function EventForm({ event = defaultEvent, onSave, isNew = false 
 
       data.logo = {
         key: imgKey.replace(`${logoBucket}/`, ''),
-        bucket: logoBucket,
+        bucket: logoBucket
       };
 
       enqueueSnackbar('Uploaded Logo', {
-        variant: 'success',
+        variant: 'success'
       });
     } else {
       delete data.logo;
@@ -341,16 +411,22 @@ export default function EventForm({ event = defaultEvent, onSave, isNew = false 
 
     if (data.banner !== event.banner) {
       enqueueSnackbar('Uploading Banner', {
-        variant: 'info',
+        variant: 'info'
       });
-      
+
       const bannerBucket = 'event-assets';
 
-      const { imgKey, error } = await replaceStorageImg(data.banner, bannerBucket, event.uuid, event.banner, 'banner/');
+      const { imgKey, error } = await replaceStorageImg(
+        data.banner,
+        bannerBucket,
+        event.uuid,
+        event.banner,
+        'banner/'
+      );
 
       if (error) {
         enqueueSnackbar(`Failed to upload Banner: ${error.message}`, {
-          variant: 'error',
+          variant: 'error'
         });
         setSaving(false);
         return;
@@ -358,52 +434,61 @@ export default function EventForm({ event = defaultEvent, onSave, isNew = false 
 
       data.banner = {
         key: imgKey.replace(`${bannerBucket}/`, ''),
-        bucket: bannerBucket,
+        bucket: bannerBucket
       };
 
       enqueueSnackbar('Uploaded Banner', {
-        variant: 'success',
+        variant: 'success'
       });
     } else {
       delete data.banner;
     }
 
-    for (let ageLabel in data.ticket_template || {}) {
+    const ticketTemplateKeys = Object.keys(data.ticket_template || {});
+
+    for (let i = 0; i < ticketTemplateKeys.length; i = i + 1) {
+      const ageLabel = ticketTemplateKeys[i];
+
       const templateInfo = data.ticket_template[ageLabel];
 
       if (data.ticket_template[ageLabel] !== event.ticket_template[ageLabel]) {
         const displayAgeLabel = startCase(ageLabel);
 
         enqueueSnackbar(`Uploading Ticket Template for ${displayAgeLabel}`, {
-          variant: 'info',
+          variant: 'info'
         });
-  
+
         const ticketBucket = 'event-ticket-templates';
-  
-        const { imgKey, error } = await replaceStorageImg(templateInfo, ticketBucket, event.uuid, event.ticket_template[ageLabel]);
-  
+
+        const { imgKey, error } = await replaceStorageImg(
+          templateInfo,
+          ticketBucket,
+          event.uuid,
+          event.ticket_template[ageLabel]
+        );
+
         if (error) {
           enqueueSnackbar(`Failed to upload Ticket for ${displayAgeLabel}: ${error.message}`, {
-            variant: 'error',
+            variant: 'error'
           });
           setSaving(false);
           return;
         }
-    
+
         data.ticket_template[ageLabel] = {
           key: imgKey.replace(`${ticketBucket}/`, ''),
           bucket: ticketBucket,
-          config: data.ticket_config[ageLabel],
+          config: data.ticket_config[ageLabel]
         };
-    
+
         enqueueSnackbar(`Uploaded Ticket Template for ${displayAgeLabel}`, {
-          variant: 'success',
+          variant: 'success'
         });
       } else if (!isEqual(data.ticket_config[ageLabel], event.ticket_config[ageLabel])) {
         data.ticket_template[ageLabel] = {
           ...typeof templateInfo === 'object' && templateInfo,
           ...data.original_ticket_template[ageLabel] || {},
-          config: data.ticket_config[ageLabel],
+          config: data.ticket_config[ageLabel]
         };
       }
     };
@@ -421,45 +506,45 @@ export default function EventForm({ event = defaultEvent, onSave, isNew = false 
 
       return Promise.resolve();
     }));
-    
+
 
     delete data.original_ticket_template;
     delete data.ticket_config;
 
     enqueueSnackbar(`${isNew ? 'Creating' : 'Updating'} Event`, {
-      variant: 'info',
+      variant: 'info'
     });
 
     const { data: newEvent, error } = await supabase.from('events')
       [isNew ? 'insert' : 'update']({
         ...data,
-        updated_on: moment().toISOString(),
+        updated_on: moment().toISOString()
       }).eq('uuid', event.uuid).single();
 
     if (error) {
       enqueueSnackbar(error.message, {
-        variant: 'error',
+        variant: 'error'
       });
     } else {
       enqueueSnackbar(`Event ${isNew ? 'Created' : 'Updated'}`, {
-        variant: 'success',
+        variant: 'success'
       });
-      console.log('newEvent', { ...newEvent })
+      console.log('newEvent', { ...newEvent });
       onSave(newEvent);
     }
     setSaving(false);
   };
 
   const onReset = () => {
-    reset(event); 
+    reset(event);
   };
 
   return (
     <Container maxWidth="md" sx={{ marginBottom: '2rem' }}>
       <form
         onKeyDown={preventEnterSubmit}
-        onSubmit={handleSubmit(onSubmit)}
         onReset={onReset}
+        onSubmit={handleSubmit(onSubmit)}
       >
         <Stack direction="column" spacing={2}>
           <Typography variant="h6">
@@ -470,19 +555,19 @@ export default function EventForm({ event = defaultEvent, onSave, isNew = false 
             <Controller
               control={control}
               name="logo"
-              render={({ field }) => (
+              render={({ field }) =>
                 <ImgUpload
                   {...field}
-                  avatar
                   altText="Event Logo"
+                  avatar
+                  disabled={eventPublished}
+                  height={120}
+                  maxHeight={500}
+                  maxWidth={500}
                   onUpload={field.onChange}
                   width={120}
-                  height={120}
-                  maxWidth={500}
-                  maxHeight={500}
-                  disabled={eventPublished}
                 />
-              )}
+              }
               rules={requiredRules}
             />
           </div>
@@ -491,26 +576,26 @@ export default function EventForm({ event = defaultEvent, onSave, isNew = false 
             <Controller
               control={control}
               name="banner"
-              render={({ field }) => (
+              render={({ field }) =>
                 <ImgUpload
                   {...field}
                   altText="Event Banner"
-                  onUpload={field.onChange}
-                  width={bannerImageWidth}
-                  height={bannerImageHeight}
-                  maxWidth={MAX_BANNER_WIDTH}
-                  maxHeight={MAX_BANNER_HEIGHT}
                   disabled={eventPublished}
-                  sizeText={`4" x 1"`}
+                  height={bannerImageHeight}
+                  maxHeight={MAX_BANNER_HEIGHT}
+                  maxWidth={MAX_BANNER_WIDTH}
+                  onUpload={field.onChange}
+                  sizeText={'4" x 1"'}
+                  width={bannerImageWidth}
                 />
-              )}
+              }
               rules={requiredRules}
             />
           </div>
           <Controller
             control={control}
             name="host"
-            render={({ field }) => (
+            render={({ field }) =>
               <TextField
                 {...field}
                 disabled={eventPublished}
@@ -518,13 +603,13 @@ export default function EventForm({ event = defaultEvent, onSave, isNew = false 
                 label="Host"
                 variant="outlined"
               />
-            )}
+            }
             rules={requiredRules}
           />
           <Controller
             control={control}
             name="name"
-            render={({ field }) => (
+            render={({ field }) =>
               <TextField
                 {...field}
                 disabled={eventPublished}
@@ -532,75 +617,75 @@ export default function EventForm({ event = defaultEvent, onSave, isNew = false 
                 label="Name"
                 variant="outlined"
               />
-            )}
+            }
             rules={requiredRules}
           />
           <Controller
             control={control}
             name="description"
-            render={({ field }) => (
+            render={({ field }) =>
               <TextField
                 {...field}
                 disabled={eventPublished}
                 id="outlined-description"
                 label="Description"
-                multiline
                 minRows={5}
+                multiline
                 variant="outlined"
               />
-            )}
+            }
           />
           <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
             <Controller
               control={control}
               name="start_date"
-              render={({ field }) => (
+              render={({ field }) =>
                 <LocalizationProvider dateAdapter={AdapterMoment}>
                   <DateTimePicker
                     {...field}
-                    disabled={eventPublished}
+                    InputLabelProps={{ shrink: true }}
                     disablePast
+                    disabled={eventPublished}
                     inputFormat="YYYY-MM-DD hh:mm A"
                     label="Start Date"
-                    InputLabelProps={{ shrink: true }}
                     openTo="month"
-                    views={[ 'year', 'month', 'day', 'hours', 'minutes' ]}
-                    renderInput={(params) => (
+                    renderInput={(params) =>
                       <TextField
                         {...params}
                         fullWidth
                         helperText="yyyy-mm-dd hh:mm"
                       />
-                    )}
+                    }
+                    views={[ 'year', 'month', 'day', 'hours', 'minutes' ]}
                   />
                 </LocalizationProvider>
-              )}
+              }
               rules={requiredRules}
             />
             <Controller
               control={control}
               name="end_date"
-              render={({ field }) => (
+              render={({ field }) =>
                 <LocalizationProvider dateAdapter={AdapterMoment}>
                   <DateTimePicker
                     {...field}
-                    disabled={eventPublished}
+                    InputLabelProps={{ shrink: true }}
                     disablePast
+                    disabled={eventPublished}
                     inputFormat="YYYY-MM-DD hh:mm A"
                     label="End Date"
-                    InputLabelProps={{ shrink: true }}
                     openTo="month"
-                    views={[ 'year', 'month', 'day', 'hours', 'minutes' ]}
-                    renderInput={(params) => (
+                    renderInput={(params) =>
                       <TextField
                         {...params}
                         fullWidth
                         helperText="yyyy-mm-dd hh:mm"
                       />
-                    )}
+                    }
+                    views={[ 'year', 'month', 'day', 'hours', 'minutes' ]}
                   />
                 </LocalizationProvider>
-              )}
+              }
               rules={requiredRules}
             />
           </Stack>
@@ -608,63 +693,63 @@ export default function EventForm({ event = defaultEvent, onSave, isNew = false 
             <Controller
               control={control}
               name="register_by_date"
-              render={({ field }) => (
+              render={({ field }) =>
                 <LocalizationProvider dateAdapter={AdapterMoment}>
                   <DateTimePicker
                     {...field}
-                    disabled={eventPublished}
+                    InputLabelProps={{ shrink: true }}
                     disablePast
+                    disabled={eventPublished}
                     inputFormat="YYYY-MM-DD hh:mm A"
                     label="Registration End Date"
-                    InputLabelProps={{ shrink: true }}
                     openTo="month"
-                    views={[ 'year', 'month', 'day', 'hours', 'minutes' ]}
-                    renderInput={(params) => (
+                    renderInput={(params) =>
                       <TextField
                         {...params}
                         fullWidth
                         helperText="yyyy-mm-dd hh:mm"
                       />
-                    )}
+                    }
+                    views={[ 'year', 'month', 'day', 'hours', 'minutes' ]}
                   />
                 </LocalizationProvider>
-              )}
+              }
               rules={requiredRules}
             />
             <Controller
               control={control}
               name="doors_open_by_date"
-              render={({ field }) => (
+              render={({ field }) =>
                 <LocalizationProvider dateAdapter={AdapterMoment}>
                   <DateTimePicker
                     {...field}
-                    disabled={eventPublished}
+                    InputLabelProps={{ shrink: true }}
                     disablePast
+                    disabled={eventPublished}
                     inputFormat="YYYY-MM-DD hh:mm A"
                     label="Doors Open By"
-                    InputLabelProps={{ shrink: true }}
                     openTo="month"
-                    views={[ 'year', 'month', 'day', 'hours', 'minutes' ]}
-                    renderInput={(params) => (
+                    renderInput={(params) =>
                       <TextField
                         {...params}
                         fullWidth
                         helperText="yyyy-mm-dd hh:mm"
                       />
-                    )}
+                    }
+                    views={[ 'year', 'month', 'day', 'hours', 'minutes' ]}
                   />
                 </LocalizationProvider>
-              )}
+              }
               rules={requiredRules}
             />
           </Stack>
           <ControlledLocation
+            InputLabelProps={{ shrink: true }}
             control={control}
+            defaultValue={event.venue}
             disabled={eventPublished}
             name="venue"
             placeholder="Search Google Maps"
-            defaultValue={event.venue}
-            InputLabelProps={{ shrink: true }}
             rules={requiredRules}
           />
           <Typography variant="h6">
@@ -672,180 +757,221 @@ export default function EventForm({ event = defaultEvent, onSave, isNew = false 
           </Typography>
           <Controller
             control={control}
-            name="payment_config"
             defaultValue={{}}
-            render={({ field }) => (
+            name="payment_config"
+            render={({ field }) =>
               <PricingDialog
                 {...field}
                 disabled={eventPublished}
+                onClose={() => setPricingDialogOpen(false)}
                 open={pricingDialogOpen}
                 unregister={unregister}
-                onClose={() => setPricingDialogOpen(false)}
               />
-            )}
+            }
           />
           <Button
             fullWidth
-            variant="contained"
-            type="button"
             onClick={() => setPricingDialogOpen(true)}
+            type="button"
+            variant="contained"
           >
             Configure Pricing
           </Button>
           {
-            map(getValues('payment_config.age_mapping'), (_, ageLabel) => (
+            map(getValues('payment_config.age_mapping'), (_, ageLabel) =>
               <Accordion key={ageLabel}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                   <Typography>Ticket for: {startCase(ageLabel)}</Typography>
                 </AccordionSummary>
                 <AccordionDetails draggable="false">
-                  <Stack position="relative" justifyContent="center" width="100%">
-                    <Typography component='label' htmlFor="ticket_template" variant="subtitle1" >Event Ticket:</Typography>
+                  <Stack justifyContent="center" position="relative" width="100%">
+                    <Typography
+                      component='label'
+                      htmlFor="ticket_template"
+                      variant="subtitle1"
+                    >
+                      Event Ticket:
+                    </Typography>
                     <Controller
                       control={control}
                       name={`ticket_template.${ageLabel}`}
+                      render={({ field }) =>
+                        <ImgUpload
+                          {...field}
+                          altText={`${startCase(ageLabel)} Ticket`}
+                          disabled={eventPublished}
+                          height={ticketImageHeight}
+                          maxHeight={MAX_TICKET_HEIGHT}
+                          maxWidth={MAX_TICKET_WIDTH}
+                          onUpload={field.onChange}
+                          width={ticketImageWidth}
+                        >
+                          <>
+                            <Controller
+                              control={control}
+                              name={`ticket_config.${ageLabel}.position.qrcode`}
+                              render={({ field: qrcodeField }) =>
+                                <div
+                                  style={{
+                                    width: ticketImageWidth,
+                                    height: ticketImageHeight,
+                                    position: 'absolute',
+                                    top: 0,
+                                    alignSelf: 'center'
+                                  }}
+                                >
+                                  <ResizableQrCode
+                                    {...qrcodeField}
+                                    config={qrcodeField.value}
+                                    darkColour={darkColourValue(ageLabel)}
+                                    disabled={eventPublished}
+                                    lightColour={lightColourValue(ageLabel)}
+                                    maxHeight={ticketImageHeight}
+                                    scale={qrCodeScale}
+                                  />
+                                </div>
+                              }
+                            />
+                            <Controller
+                              control={control}
+                              name={`ticket_config.${ageLabel}.position.number`}
+                              render={({ field: numberField }) =>
+                                <div
+                                  style={{
+                                    width: ticketImageWidth,
+                                    height: ticketImageHeight,
+                                    position: 'absolute',
+                                    top: 0,
+                                    alignSelf: 'center',
+                                    pointerEvents: 'none'
+                                  }}
+                                >
+                                  <ResizableNumber
+                                    {...numberField}
+                                    config={numberField.value}
+                                    darkColour={darkColourValue(ageLabel)}
+                                    disabled={eventPublished}
+                                    lightColour={lightColourValue(ageLabel)}
+                                    maxHeight={ticketImageHeight}
+                                    maxWidth={ticketImageWidth}
+                                    scale={qrCodeScale}
+                                    type="number"
+                                  />
+                                </div>
+                              }
+                            />
+                          </>
+                        </ImgUpload>
+                      }
                       rules={requiredRules}
-                      render={({ field }) => (
-                          <ImgUpload
-                            {...field}
-                            disabled={eventPublished}
-                            onUpload={field.onChange}
-                            width={ticketImageWidth}
-                            height={ticketImageHeight}
-                            maxWidth={MAX_TICKET_WIDTH}
-                            maxHeight={MAX_TICKET_HEIGHT}
-                            altText={`${startCase(ageLabel)} Ticket`}
-                          >
-                            <>
-                              <Controller
-                                control={control}
-                                name={`ticket_config.${ageLabel}.position.qrcode`}
-                                render={({ field }) => (
-                                  <div
-                                    style={{
-                                      width: ticketImageWidth,
-                                      height: ticketImageHeight,
-                                      position: 'absolute',
-                                      top: 0,
-                                      alignSelf: 'center'
-                                    }}
-                                  >
-                                    <ResizableQrCode
-                                      {...field}
-                                      disabled={eventPublished}
-                                      scale={qrCodeScale}
-                                      maxHeight={ticketImageHeight}
-                                      config={field.value}
-                                      lightColour={lightColourValue(ageLabel)}
-                                      darkColour={darkColourValue(ageLabel)}
-                                    />
-                                  </div>
-                                )}
-                              />
-                              <Controller
-                                control={control}
-                                name={`ticket_config.${ageLabel}.position.number`}
-                                render={({ field }) => (
-                                  <div
-                                    style={{
-                                      width: ticketImageWidth,
-                                      height: ticketImageHeight,
-                                      position: 'absolute',
-                                      top: 0,
-                                      alignSelf: 'center',
-                                      pointerEvents: 'none',
-                                    }}
-                                  >
-                                    <ResizableNumber
-                                      {...field}
-                                      type="number"
-                                      disabled={eventPublished}
-                                      scale={qrCodeScale}
-                                      maxWidth={ticketImageWidth}
-                                      maxHeight={ticketImageHeight}
-                                      config={field.value}
-                                      lightColour={lightColourValue(ageLabel)}
-                                      darkColour={darkColourValue(ageLabel)}
-                                    />
-                                  </div>
-                                )}
-                              />
-                            </>
-                          </ImgUpload>
-                      )}
                     />
                     {
-                      !eventPublished && (
+                      !eventPublished &&
                         <>
-                          <Typography component='label' htmlFor={`qrcode-colour-${ageLabel}`} variant="subtitle1" >QRCode Colour:</Typography>
-                          <Stack id={`qrcode-colour-${ageLabel}`} direction="row" justifyContent="center" spacing={1}>
+                          <Typography
+                            component='label'
+                            htmlFor={`qrcode-colour-${ageLabel}`}
+                            variant="subtitle1"
+                          >
+                            QRCode Colour:
+                          </Typography>
+                          <Stack
+                            direction="row"
+                            id={`qrcode-colour-${ageLabel}`}
+                            justifyContent="center"
+                            spacing={1}
+                          >
                             <ControlledColourPicker
                               control={control}
-                              name={`ticket_config.${ageLabel}.colour.light`}
-                              width={(ticketImageWidth / 2) - 5}
                               height={ticketImageHeight}
+                              name={`ticket_config.${ageLabel}.colour.light`}
+                              width={ticketImageWidth / 2 - 5}
                             />
                             <ControlledColourPicker
                               control={control}
-                              name={`ticket_config.${ageLabel}.colour.dark`}
-                              width={(ticketImageWidth / 2) - 5}
                               height={ticketImageHeight}
+                              name={`ticket_config.${ageLabel}.colour.dark`}
+                              width={ticketImageWidth / 2 - 5}
                             />
                           </Stack>
                         </>
-                      )
+
                     }
                   </Stack>
                 </AccordionDetails>
               </Accordion>
-            ))
+            )
           }
           <Typography variant="h6">
             Registration / Email Information
           </Typography>
-          <Stack justifyContent="center" alignItems="center">
-            <Typography component='label' htmlFor="branding.primary_colour" variant="subtitle1" >Primary Branding Colour:</Typography>
+          <Stack alignItems="center" justifyContent="center">
+            <Typography
+              component='label'
+              htmlFor="branding.primary_colour"
+              variant="subtitle1"
+            >
+              Primary Branding Colour:
+            </Typography>
             <ControlledColourPicker
               control={control}
+              height={ticketImageHeight}
               name="branding.primary_colour"
               width={ticketImageWidth}
-              height={ticketImageHeight}
             />
           </Stack>
           <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
-            <Button disabled={submitDisabled} fullWidth variant="contained" type="submit">{isNew ? 'Create' : 'Save'}</Button>
-            <Button disabled={saving} fullWidth variant="outlined" type="reset">Reset</Button>
+            <Button
+              disabled={submitDisabled}
+              fullWidth
+              type="submit"
+              variant="contained"
+            >
+              {isNew ? 'Create' : 'Save'}
+            </Button>
+            <Button disabled={saving} fullWidth type="reset" variant="outlined">Reset</Button>
           </Stack>
           {
-            !isNew && (
+            !isNew &&
               <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
                 <Button
-                  sx={{ mr: 1 }}
                   disabled={eventPublished || saving || !isValid}
                   fullWidth
                   onClick={handleOnPublish}
-                  variant="contained"
+                  sx={{ mr: 1 }}
                   type="button"
+                  variant="contained"
                 >
                   Publish Event
                 </Button>
                 <Button
                   // TODO: Setup the ability to delete an event
-                  disabled
+                  color="error"
                   // disabled={eventPublished || saving}
+                  disabled
                   fullWidth
                   onClick={handleOnDelete}
-                  color="error"
-                  variant="contained"
                   type="button"
+                  variant="contained"
                 >
                   Delete Event
                 </Button>
               </Stack>
-            )
+
           }
         </Stack>
       </form>
     </Container>
   );
-}
+};
+
+EventForm.propTypes = {
+  event: PropTypes.object,
+  onSave: PropTypes.func.isRequired,
+  isNew: PropTypes.bool
+};
+
+EventForm.defaultProps = {
+  event: defaultEvent,
+  isNew: false
+};

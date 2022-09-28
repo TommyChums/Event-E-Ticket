@@ -1,13 +1,15 @@
+import PropTypes from 'prop-types';
+
 import Auth from '../components/Auth';
 import LoginLayout from '../components/Layout/LoginLayout';
 import supabase from '../lib/supabase';
 
-export default function LoginPage({ updatePassword = false }) {
+export default function LoginPage({ updatePassword }) {
   return (
     <LoginLayout title={updatePassword ? 'Update Password' : 'Login'}>
       <Auth
-        updatePassword={updatePassword}
         redirectTo="/events"
+        updatePassword={updatePassword}
       />
     </LoginLayout>
   );
@@ -22,11 +24,19 @@ export async function getServerSideProps(context) {
 
   if (needsPasswordUpdate) {
     return {
-      props: { updatePassword: true },
+      props: { updatePassword: true }
     };
   } else if (user) {
     return { props: {}, redirect: { destination: '/events', permanent: false } };
   }
 
   return { props: {} };
+};
+
+LoginPage.propTypes = {
+  updatePassword: PropTypes.bool
+};
+
+LoginPage.defaultProps = {
+  updatePassword: false
 };

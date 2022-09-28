@@ -1,7 +1,8 @@
 import '../assets/css/global.css';
 import 'react-resizable/css/styles.css';
-import "react-color-palette/lib/css/styles.css";
+import 'react-color-palette/lib/css/styles.css';
 import { useEffect, useRef } from 'react';
+import PropTypes from 'prop-types';
 import { useRouter } from 'next/router';
 import { SnackbarProvider } from 'notistack';
 import { ConfirmProvider } from 'material-ui-confirm';
@@ -18,13 +19,13 @@ const theme = createTheme({
   palette: {
     primary: {
       // Purple and green play nicely together.
-      main: '#673ab7',
+      main: '#673ab7'
     },
     secondary: {
       // This is green.A700 as hex.
-      main: '#651fff',
-    },
-  },
+      main: '#651fff'
+    }
+  }
 });
 
 function ContextualisedApp({ children, notFound }) {
@@ -34,16 +35,18 @@ function ContextualisedApp({ children, notFound }) {
   const authenticatedUser = supabase.auth.user();
 
   useEffect(() => {
-    if (!authenticatedUser) return;
+    if (!authenticatedUser) {
+      return;
+    }
 
     async function getEvents() {
       dispatch(eventsLoadingAction(true));
       const { data: events, error } = await supabase.from('events').select('*');
-      
+
       if (error) {
         dispatch(eventsErrorAction(error));
       }
-      
+
       dispatch(receivedEventsAction(events));
       dispatch(eventsLoadingAction(false));
     };
@@ -75,6 +78,15 @@ function ContextualisedApp({ children, notFound }) {
   );
 };
 
+ContextualisedApp.propTypes = {
+  children: PropTypes.node.isRequired,
+  notFound: PropTypes.bool
+};
+
+ContextualisedApp.defaultProps = {
+  notFound: false
+};
+
 export default function App({ Component, pageProps }) {
   const router = useRouter();
 
@@ -83,11 +95,11 @@ export default function App({ Component, pageProps }) {
       await updateSupabaseCookie(event, session);
       const needsPasswordUpdate = session && session.user?.user_metadata?.temp_password;
 
-      if ((!session && router.pathname !== '/login') || needsPasswordUpdate) {
+      if (!session && router.pathname !== '/login' || needsPasswordUpdate) {
         router.push('/login');
       } else if (session && router.pathname === '/login') {
         router.push('/events');
-      } 
+      }
     });
 
     return () => {
@@ -114,4 +126,9 @@ export default function App({ Component, pageProps }) {
       </ThemeProvider>
     </EventsProvider>
   );
+};
+
+App.propTypes = {
+  Component: PropTypes.node.isRequired,
+  pageProps: PropTypes.object.isRequired
 };

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import isEqual from 'lodash/isEqual';
 import QRCode from 'qrcode';
 import { ResizableBox } from 'react-resizable';
@@ -11,18 +12,30 @@ const getScaledConfig = (config, scale, maxHeight, maxWidth, isNumberType) => ({
   x: isFinite(config.x) ? config.x / scale: 0,
   y: isFinite(config.y) ? config.y / scale: 0,
   h: isFinite(config.h) ? config.h / scale: isNumberType ? 115 : maxHeight,
-  w: isFinite(config.w) ? config.w / scale: isNumberType ? 40 : maxWidth,
-})
+  w: isFinite(config.w) ? config.w / scale: isNumberType ? 40 : maxWidth
+});
 
-export default function ResizableImage({ scale = 1, disabled, maxHeight, maxWidth, config = {}, onChange, lightColour, darkColour, type = 'qrcode' }) {
+export default function ResizableImage({
+  scale,
+  disabled,
+  maxHeight,
+  maxWidth,
+  config,
+  onChange,
+  lightColour,
+  darkColour,
+  type
+}) {
   const thisMaxWidth = typeof maxWidth !== 'undefined' ? maxWidth : maxHeight;
   const isNumber = type === 'number';
 
-  const [ positionSize, setPositionSize ] = useState(getScaledConfig(config, scale, maxHeight, thisMaxWidth, isNumber));
+  const [ positionSize, setPositionSize ] = useState(
+    getScaledConfig(config, scale, maxHeight, thisMaxWidth, isNumber)
+  );
 
   const [ colour, setColour ] = useState({
     light: '#fff',
-    dark: '#000',
+    dark: '#000'
   });
 
   const [ resizableImage, setResizableImage ] = useState();
@@ -45,7 +58,7 @@ export default function ResizableImage({ scale = 1, disabled, maxHeight, maxWidt
 
   useEffect(() => {
     const newColour = {
-      ...colour,
+      ...colour
     };
 
     const lightColourIsNotSame = !isEqual(lightColour, colour.light);
@@ -72,11 +85,12 @@ export default function ResizableImage({ scale = 1, disabled, maxHeight, maxWidt
             type: 'image/png',
             color: {
               dark: colour?.dark,
-              light: colour?.light,
-            },
+              light: colour?.light
+            }
           }, (err, url) => {
-            if (err) console.error(err);
-            else {
+            if (err) {
+              console.error(err);
+            } else {
               setResizableImage(url);
             }
             resolve();
@@ -103,7 +117,7 @@ export default function ResizableImage({ scale = 1, disabled, maxHeight, maxWidt
     updateSize({
       ...positionSize,
       w: size.width,
-      h: size.height,
+      h: size.height
     });
   };
 
@@ -111,7 +125,7 @@ export default function ResizableImage({ scale = 1, disabled, maxHeight, maxWidt
     setPositionSize({
       ...positionSize,
       w: size.width,
-      h: size.height,
+      h: size.height
     });
   };
 
@@ -119,27 +133,27 @@ export default function ResizableImage({ scale = 1, disabled, maxHeight, maxWidt
     updateSize({
       ...positionSize,
       x,
-      y,
+      y
     });
   };
 
   return (
     <Draggable
-      disabled={disabled}
-      defaultPosition={{
-        x: positionSize.x,
-        y: positionSize.y,
-      }}
-      position={{
-        x: positionSize.x,
-        y: positionSize.y,
-      }}
-      onStop={handleOnMove}
       bounds="parent"
       cancel='.react-resizable-handle-se'
+      defaultPosition={{
+        x: positionSize.x,
+        y: positionSize.y
+      }}
+      disabled={disabled}
+      onStop={handleOnMove}
+      position={{
+        x: positionSize.x,
+        y: positionSize.y
+      }}
     >
       {
-        isNumber ? (
+        isNumber ?
           <p
             id="number-node"
             style={{
@@ -153,35 +167,61 @@ export default function ResizableImage({ scale = 1, disabled, maxHeight, maxWidt
               verticalAlign: 'center',
               padding: `${20 / scale}px ${10 / scale}px`,
               margin: 0,
-              lineHeight: 0,
+              lineHeight: 0
             }}
           >
             0001
-        </p>
-        ) : (
-        <ResizableBox
-          width={positionSize.w}
-          height={positionSize.h}
-          resizeHandles={disabled || isNumber ? [] : [ 'se' ]}
-          minConstraints={isNumber ? [ 0, 0 ] : [ 100, 100 ]}
-          maxConstraints={[ maxHeight, thisMaxWidth ]}
-          onResize={handleOnInternalResize}
-          onResizeStop={handleOnResize}
-          lockAspectRatio
-          draggableOpts={{
-            disabled: disabled,
-          }}
-          style={{
-            pointerEvents: !isNumber ? 'auto' : 'none',
-          }}
-        >
+          </p>
+          :
+          <ResizableBox
+            draggableOpts={{
+              disabled: disabled
+            }}
+            height={positionSize.h}
+            lockAspectRatio
+            maxConstraints={[ maxHeight, thisMaxWidth ]}
+            minConstraints={isNumber ? [ 0, 0 ] : [ 100, 100 ]}
+            onResize={handleOnInternalResize}
+            onResizeStop={handleOnResize}
+            resizeHandles={disabled || isNumber ? [] : [ 'se' ]}
+            style={{
+              pointerEvents: !isNumber ? 'auto' : 'none'
+            }}
+            width={positionSize.w}
+          >
 
-          <Avatar style={{ pointerEvents: 'auto' }} imgProps={{ draggable: false }} sx={{ width: positionSize.w, height: positionSize.h }} variant="square" alt={type} src={resizableImage}>
-            {type}
-          </Avatar>
-        </ResizableBox>
-        )
+            <Avatar
+              alt={type}
+              imgProps={{ draggable: false }}
+              src={resizableImage}
+              style={{ pointerEvents: 'auto' }}
+              sx={{ width: positionSize.w, height: positionSize.h }}
+              variant="square"
+            >
+              {type}
+            </Avatar>
+          </ResizableBox>
+
       }
     </Draggable>
   );
+};
+
+ResizableImage.propTypes = {
+  scale: PropTypes.number,
+  disabled: PropTypes.bool,
+  maxHeight: PropTypes.number.isRequired,
+  maxWidth: PropTypes.number.isRequired,
+  config: PropTypes.object,
+  onChange: PropTypes.func.isRequired,
+  lightColour: PropTypes.object.isRequired,
+  darkColour: PropTypes.object.isRequired,
+  type: PropTypes.string
+};
+
+ResizableImage.defaultProps = {
+  scale: 1,
+  disabled: false,
+  config: {},
+  type: 'qrcode'
 };

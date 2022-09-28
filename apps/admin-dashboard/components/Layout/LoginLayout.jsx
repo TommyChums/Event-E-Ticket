@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import Head from 'next/head';
 import Image from 'next/image';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -26,8 +27,12 @@ export default function LoginLayout({ title, children }) {
     <>
       <Head>
         <title>{`${title} | Admin Dashboard | Reformation Life Centre - Events`}</title>
-        <meta property="og:title" content={`${title} | Admin Dashboard | Reformation Life Centre - Events`} key="title" />
-        <link rel="icon" type="image/x-icon" href="/images/rlc-logo.ico" />
+        <meta
+          content={`${title} | Admin Dashboard | Reformation Life Centre - Events`}
+          key="title"
+          property="og:title"
+        />
+        <link href="/images/rlc-logo.ico" rel="icon" type="image/x-icon" />
       </Head>
       <div
         style={{
@@ -45,11 +50,25 @@ export default function LoginLayout({ title, children }) {
             width: containerWidth
           }}
         >
-          <Image width={170} height={170} src="/images/rlc-logo-globe.png" alt="RLC Admin Dashoard" />
-          <Typography sx={{ marginBottom: '2rem' }} variant="h5" gutterBottom fontWeight="bold">Events Dashboard</Typography>
+          <Image alt="RLC Admin Dashoard" height={170} src="/images/rlc-logo-globe.png" width={170} />
+          <Typography
+            fontWeight="bold"
+            gutterBottom
+            sx={{
+              marginBottom: '2rem'
+            }}
+            variant="h5"
+          >
+            Events Dashboard
+          </Typography>
           {children}
         </div>
       </div>
     </>
   );
+};
+
+LoginLayout.propTypes = {
+  title: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired
 };

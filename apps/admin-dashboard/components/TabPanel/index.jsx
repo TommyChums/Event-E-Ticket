@@ -5,15 +5,15 @@ export default function TabPanel(props) {
 
   return (
     <div
-      role="tabpanel"
+      aria-labelledby={`simple-tab-${index}`}
       hidden={value !== index}
       id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
+      role="tabpanel"
       {...other}
     >
-      {value === index && (
+      {value === index &&
         children
-      )}
+      }
     </div>
   );
 };
@@ -21,5 +21,5 @@ export default function TabPanel(props) {
 TabPanel.propTypes = {
   children: PropTypes.node,
   index: PropTypes.any.isRequired,
-  value: PropTypes.any.isRequired,
+  value: PropTypes.any.isRequired
 };

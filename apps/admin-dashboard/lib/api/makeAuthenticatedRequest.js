@@ -1,4 +1,4 @@
-import supabase from "../supabase";
+import supabase from '../supabase';
 
 export default async function makeAuthenticatedRequest(url, method = 'GET', body = null) {
   const accessToken = supabase.auth.session().access_token;
@@ -13,16 +13,16 @@ export default async function makeAuthenticatedRequest(url, method = 'GET', body
     method: upperMethod,
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${accessToken}`,
+      Authorization: `Bearer ${accessToken}`
     },
-    credentials: 'same-origin',
+    credentials: 'same-origin'
   };
 
   if (upperMethod === 'POST' && body) {
     fetchConfig.body = JSON.stringify(body);
   }
 
-  const apiResponse = await fetch(url, fetchConfig).then((res) => res)
+  const apiResponse = await fetch(url, fetchConfig).then((res) => res);
 
   const apiResponseJson = await apiResponse.json();
 
@@ -35,6 +35,6 @@ export function makeAuthenticatedPostRequest(url, body) {
   return makeAuthenticatedRequest(url, 'POST', body);
 };
 
-export function makeAuthenticatedGetRequest(url, body) {
+export function makeAuthenticatedGetRequest(url) {
   return makeAuthenticatedRequest(url, 'GET');
 };

@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
-import Button from '@mui/material/Button'
+import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import AppBar from '@mui/material/AppBar';
@@ -80,10 +81,9 @@ export default function Layout({ children }) {
         <Container maxWidth={false}>
           <Toolbar disableGutters>
             <Typography
-              variant="h6"
-              noWrap
               component="a"
               href=""
+              noWrap
               onClick={(e) => {
                 e.preventDefault();
                 handlePageItemClick('/events');
@@ -95,51 +95,51 @@ export default function Layout({ children }) {
                 fontWeight: 700,
                 letterSpacing: '.3rem',
                 color: 'inherit',
-                textDecoration: 'none',
+                textDecoration: 'none'
               }}
+              variant="h6"
             >
-              <Image src="/images/rlc-logo.png" width={50} height={65} alt="RLC" />
+              <Image alt="RLC" height={65} src="/images/rlc-logo.png" width={50} />
             </Typography>
             <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
               <IconButton
-                size="large"
-                aria-label="account of current user"
                 aria-controls="menu-appbar"
                 aria-haspopup="true"
-                onClick={handleOpenNavMenu}
+                aria-label="account of current user"
                 color="inherit"
+                onClick={handleOpenNavMenu}
+                size="large"
               >
                 <MenuIcon />
               </IconButton>
               <Menu
-                id="menu-appbar"
                 anchorEl={anchorElNav}
                 anchorOrigin={{
                   vertical: 'bottom',
-                  horizontal: 'left',
+                  horizontal: 'left'
                 }}
+                id="menu-appbar"
                 keepMounted
+                onClose={handleCloseNavMenu}
+                open={Boolean(anchorElNav)}
+                sx={{
+                  display: { xs: 'block', md: 'none' }
+                }}
                 transformOrigin={{
                   vertical: 'top',
-                  horizontal: 'left',
-                }}
-                open={Boolean(anchorElNav)}
-                onClose={handleCloseNavMenu}
-                sx={{
-                  display: { xs: 'block', md: 'none' },
+                  horizontal: 'left'
                 }}
               >
-                {pages.map((page) => (
+                {pages.map((page) =>
                   <MenuItem key={page.path} onClick={() => handlePageItemClick(page.path)}>
                     <Typography textAlign="center">{page.label}</Typography>
                   </MenuItem>
-                ))}
+                )}
               </Menu>
             </Box>
             <Typography
-              variant="h5"
-              noWrap
               href=""
+              noWrap
               sx={{
                 mr: 2,
                 display: { xs: 'flex', md: 'none' },
@@ -149,18 +149,19 @@ export default function Layout({ children }) {
                 letterSpacing: '.3rem',
                 color: 'inherit',
                 textDecoration: 'none',
-                width: 'min-content',
+                width: 'min-content'
               }}
+              variant="h5"
             >
               <IconButton onClick={(e) => {
                 e.preventDefault();
                 handlePageItemClick('/events');
               }}>
-                <Image src="/images/rlc-logo.png" width={50} height={65} alt="RLC" />
+                <Image alt="RLC" height={65} src="/images/rlc-logo.png" width={50} />
               </IconButton>
             </Typography>
             <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-              {pages.map((page) => (
+              {pages.map((page) =>
                 <Button
                   key={page.path}
                   onClick={() => handlePageItemClick(page.path)}
@@ -168,10 +169,9 @@ export default function Layout({ children }) {
                 >
                   {page.label}
                 </Button>
-              ))}
+              )}
             </Box>
             <Typography
-              variant="h4"
               noWrap
               sx={{
                 position: 'absolute',
@@ -183,8 +183,9 @@ export default function Layout({ children }) {
                 fontWeight: 700,
                 letterSpacing: '.5rem',
                 color: 'inherit',
-                textDecoration: 'none',
+                textDecoration: 'none'
               }}
+              variant="h4"
             >
               EVENTS DASHBOARD
             </Typography>
@@ -205,4 +206,8 @@ export default function Layout({ children }) {
       </main>
     </>
   );
+};
+
+Layout.propTypes = {
+  children: PropTypes.node.isRequired
 };
