@@ -101,16 +101,11 @@ const PaymentsTableToolbar = (props) => {
 };
 
 PaymentsTableToolbar.propTypes = {
-  indeterminate: PropTypes.bool,
-  onPaidInFullClick: PropTypes.func,
-  paidInFullOnly: PropTypes.bool,
-  searchValue: PropTypes.string,
-  setSearchValue: PropTypes.func,
-};
-
-PaymentsTableToolbar.defaultProps = {
-  searchValue: '',
-  setSearchValue: () => {},
+  indeterminate: PropTypes.bool.isRequired,
+  onEarlyBirdClick: PropTypes.func.isRequired,
+  earlyBirdOnly: PropTypes.bool.isRequired,
+  searchValue: PropTypes.string.isRequired,
+  setSearchValue: PropTypes.func.isRequired,
 };
 
 function PaymentsTable({ loading, payments, usersEvent }) {
@@ -131,7 +126,7 @@ function PaymentsTable({ loading, payments, usersEvent }) {
   }, [ rows ]);
 
   useEffect(() => {
-    const searchedUsers = filter((payments), ({ first_name, last_name, email, amount, timestamp }) => {
+    const searchedUserPayments = filter((payments), ({ first_name, last_name, email, amount, timestamp }) => {
       const searchRegex = new RegExp(escapeRegExp(searchValue), 'i');
 
       const isEarlyBirdResult = isEarlyBird(timestamp, earlyBirdDate);
@@ -147,7 +142,7 @@ function PaymentsTable({ loading, payments, usersEvent }) {
       );
     });
 
-    setRows(searchedUsers);
+    setRows(searchedUserPayments);
   }, [ payments, searchValue, earlyBirdOnly, indeterminate, earlyBirdDate ]);
 
   const handleEarlyBirdClick = ({ target: { checked } }) => {
@@ -201,8 +196,6 @@ PaymentsTable.propTypes = {
   loading: PropTypes.bool,
   payments: PropTypes.oneOfType([ PropTypes.array, PropTypes.object ]).isRequired,
   usersEvent: PropTypes.object.isRequired,
-  updatePayment: PropTypes.func.isRequired,
-  updateUser: PropTypes.func.isRequired,
 };
 
 PaymentsTable.defaultProps = {

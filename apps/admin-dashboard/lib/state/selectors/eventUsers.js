@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import filter from 'lodash/filter';
 import forEach from 'lodash/forEach';
 import get from 'lodash/get';
 import map from 'lodash/map';
@@ -6,6 +7,17 @@ import map from 'lodash/map';
 import useEventsContext from "../../hooks/useEventsContext";
 import supabase from "../../supabase";
 import { eventUsersError, eventUsersLoading, receivedEventUsers } from "../actions/eventUsers";
+
+export function useScannedInUsers(eventUuid) {
+  const { eventUsers = {} } = useEventsContext();
+
+  const allEventUsers = get(eventUsers.users, eventUuid, {});
+
+  return {
+    scannedInUsers: filter(allEventUsers, ({ scanned_in }) => typeof scanned_in === 'number'),
+    loading: eventUsers.loading,
+  };
+};
 
 export function useEventPayments(eventUuid) {
   const { eventUsers = {} } = useEventsContext();

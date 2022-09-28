@@ -28,6 +28,7 @@
     "react-dom": "18.2.0",
     "react-google-autocomplete": "^2.7.0",
     "react-hook-form": "^7.35.0",
+    "react-qrcode-reader": "^1.0.1",
     "react-resizable": "^3.0.4",
     "sharp": "^0.31.0",
     "ui": "*",

@@ -7,18 +7,20 @@ import Backdrop from '@mui/material/Backdrop';
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs'
+import PlaceIcon from '@mui/icons-material/Place';
 
 import UsersTable from "../../components/UsersTable";
 import TabPanel from '../../components/TabPanel';
 import EventForm from "../../components/EventForm";
+import PaymentsTable from "../../components/PaymentsTable";
+import ScannedInTable from "../../components/ScannedInTable";
 
 import { useEvent } from "../../lib/state/selectors/events";
 import protectedRoute from "../../lib/helpers/protectedRoute";
 import useDispatch from "../../lib/hooks/useDispatch";
 import { updateEvent } from "../../lib/state/actions/events";
-import { useEventPayments, useEventUsers } from "../../lib/state/selectors/eventUsers";
+import { useEventPayments, useEventUsers, useScannedInUsers } from "../../lib/state/selectors/eventUsers";
 import { paymentUpdate, updateEventUser } from "../../lib/state/actions/eventUsers";
-import PaymentsTable from "../../components/PaymentsTable";
 
 export default function EventManagementPage() {
   const router = useRouter()
@@ -29,6 +31,7 @@ export default function EventManagementPage() {
   const { event, loading: eventLoading } = useEvent(eventUuid);
   const { eventUsers: users, loading: usersLoading } = useEventUsers(eventUuid);
   const { payments } = useEventPayments(eventUuid);
+  const { scannedInUsers } = useScannedInUsers(eventUuid);
 
   const [ value, setValue ] = useState(0);
 
@@ -60,6 +63,7 @@ export default function EventManagementPage() {
                 <Tab label="Config" value={0} />
                 <Tab label="Users" value={1} />
                 <Tab label="Payments" value={2} />
+                <Tab label="At Event" value={3} icon={<PlaceIcon fontSize="small" />} iconPosition="start" sx={{ minHeight: 0 }} />
               </Tabs>
             </Box>
             <TabPanel index={0} value={value}>
@@ -90,7 +94,12 @@ export default function EventManagementPage() {
                 loading={isLoading}
                 payments={payments}
                 usersEvent={event}
-                updatePayment={(data) => dispatch(paymentUpdate({ payment: data, eventUuid }))}
+              />
+            </TabPanel>
+            <TabPanel index={3} value={value}>
+              <ScannedInTable
+                loading={isLoading}
+                scannedInUsers={scannedInUsers}
                 updateUser={(data) => dispatch(updateEventUser({ user: data, eventUuid }))}
               />
             </TabPanel>
