@@ -211,17 +211,20 @@ ResizableImage.propTypes = {
   scale: PropTypes.number,
   disabled: PropTypes.bool,
   maxHeight: PropTypes.number.isRequired,
-  maxWidth: PropTypes.number.isRequired,
+  maxWidth: PropTypes.number,
   config: PropTypes.object,
   onChange: PropTypes.func.isRequired,
-  lightColour: PropTypes.object.isRequired,
-  darkColour: PropTypes.object.isRequired,
+  lightColour: PropTypes.string,
+  darkColour: PropTypes.string,
   type: PropTypes.string
 };
 
 ResizableImage.defaultProps = {
-  scale: 1,
-  disabled: false,
   config: {},
+  disabled: false,
+  maxWidth: undefined,
+  lightColour: undefined,
+  darkColour: undefined,
+  scale: 1,
   type: 'qrcode'
 };

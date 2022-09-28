@@ -62,12 +62,12 @@ function ControlledNumberInput({ control, name, defaultValue, required, ...props
 ControlledNumberInput.propTypes = {
   control: PropTypes.any.isRequired,
   name: PropTypes.string.isRequired,
-  defaultValue: PropTypes.any,
-  required: PropTypes.any
+  defaultValue: PropTypes.number,
+  required: PropTypes.bool
 };
 
 ControlledNumberInput.propTypes = {
-  defaultValue: null,
+  defaultValue: undefined,
   required: true
 };
 

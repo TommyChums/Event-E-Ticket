@@ -238,11 +238,12 @@ ControlledColourPicker.propTypes = {
   control: PropTypes.any.isRequired,
   name: PropTypes.string.isRequired,
   defaultValue: PropTypes.any,
-  rules: PropTypes.object.isRequired
+  rules: PropTypes.object
 };
 
 ControlledColourPicker.defaultProps = {
-  defaultValue: toColor('hex', '#000')
+  defaultValue: toColor('hex', '#000'),
+  rules: {}
 };
 
 export default function EventForm({ event, onSave, isNew }) {

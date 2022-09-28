@@ -155,8 +155,8 @@ ImgUpload.propTypes = {
   disabled: PropTypes.bool,
   name: PropTypes.string.isRequired,
   onUpload: PropTypes.func.isRequired,
-  defaultValue: PropTypes.string.isRequired,
-  value: PropTypes.string.isRequired,
+  defaultValue: PropTypes.string,
+  value: PropTypes.string,
   maxWidth: PropTypes.number.isRequired,
   maxHeight: PropTypes.number.isRequired,
   width: PropTypes.number.isRequired,
@@ -168,7 +168,9 @@ ImgUpload.propTypes = {
 
 ImgUpload.defaultProps = {
   avatar: false,
+  defaultValue: '',
   disabled: false,
   children: null,
-  sizeText: ''
+  sizeText: '',
+  value: undefined,
 };
