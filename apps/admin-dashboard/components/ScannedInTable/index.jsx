@@ -1,7 +1,7 @@
 import { useEffect, useState, memo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
-import QrCodeReader from 'react-qrcode-reader';
+import { QrScanner } from "react-qrcode-scanner";
 import moment from 'moment';
 import escapeRegExp from 'lodash/escapeRegExp';
 import filter from 'lodash/filter';
@@ -18,6 +18,7 @@ import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Modal from '@mui/material/Modal';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 
 import Table from '../Table';
 import supabase from '../../lib/supabase';
@@ -71,16 +72,20 @@ const PaymentsTableToolbar = (props) => {
   const { enqueueSnackbar } = useSnackbar();
 
   const [ open, setOpen ] = useState(false);
-  const [ dataRead, setDataRead ] = useState(false);
+  const dataRead = useRef(false);
 
   const handleClose = () => {
     setOpen(false);
+    setTimeout(() => {
+      dataRead.current = false;
+    }, 500);
   };
 
   const handleRead = async (qrcodeInfo) => {
-    if (!dataRead) {
-      setDataRead(true);
-      const regNumberTicketNumber = qrcodeInfo.data || '';
+    if (!dataRead.current) {
+      dataRead.current = true;
+      console.log(qrcodeInfo, dataRead.current)
+      const regNumberTicketNumber = qrcodeInfo || '';
 
       const [ regNumber, ticketNumber ] = regNumberTicketNumber.split('-');
 
@@ -124,10 +129,9 @@ const PaymentsTableToolbar = (props) => {
         });
       };
 
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      setDataRead(false);
-      setOpen(false);
+      setTimeout(() => {
+        dataRead.current = false;
+      }, 2000);
     };
   };
 
@@ -175,8 +179,32 @@ const PaymentsTableToolbar = (props) => {
         />
       </Stack>
       <Dialog onClose={handleClose} open={open}>
-        <DialogTitle>Scan Ticket</DialogTitle>
-        <QrCodeReader delay={500} height={400} onRead={handleRead} width={400} />
+        <DialogTitle>
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            Scan Ticket
+            <IconButton onClick={handleClose}>
+              <HighlightOffIcon />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+        <QrScanner
+          delay={500}
+          onScan={handleRead}
+          onError={console.log}
+          video={{
+            top: '4.5rem',
+            width: 300,
+            height: 300
+          }}
+          viewFinder={{
+            border: '12px solid rgba(255,255,255,0.3)',
+            position: 'absolute',
+            borderRadius: '5px',
+            width: '250px',
+            height: '250px',
+            top: '4.5rem'
+          }}
+        />
       </Dialog>
     </Toolbar>
   );

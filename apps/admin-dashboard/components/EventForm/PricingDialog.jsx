@@ -66,7 +66,7 @@ ControlledNumberInput.propTypes = {
   required: PropTypes.bool
 };
 
-ControlledNumberInput.propTypes = {
+ControlledNumberInput.defaultProps = {
   defaultValue: undefined,
   required: true
 };
@@ -324,9 +324,13 @@ export default function PricingDialog(props) {
 };
 
 PricingDialog.propTypes = {
-  disabled: PropTypes.bool.isRequired,
+  disabled: PropTypes.bool,
   onClose: PropTypes.func.isRequired,
   open: PropTypes.bool.isRequired,
   value: PropTypes.any.isRequired,
   onChange: PropTypes.func.isRequired
+};
+
+PricingDialog.defaultProps = {
+  disabled: false
 };
