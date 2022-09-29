@@ -745,6 +745,9 @@
                               </tr>
                             </table>
                           </td>
+                        </tr>
+                        <tr>
+                          {{#if isBeforeEarlyBird}}
                           <td
                             class="column column-2"
                             width="33.333333333333336%"
@@ -786,8 +789,10 @@
                                           Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;
                                       "
                                     >
-                                      <p style="margin: 0; text-align: right; mso-line-height-alt: 24px">
-                                        <span style="font-size: 16px">Ticket Price</span>
+                                      <p style="margin: 0; text-align: left; mso-line-height-alt: 24px">
+                                        <span style="font-size: 16px"
+                                          >Ticket Price before {{earlyBirdDate}}</span
+                                        >
                                       </p>
                                     </div>
                                   </div>
@@ -806,7 +811,7 @@
                               <tr>
                                 <td
                                   class="pad"
-                                  style="padding-bottom: 15px; padding-left: 10px; padding-right: 25px"
+                                  style="padding-bottom: 15px; padding-left: 25px; padding-right: 25px"
                                 >
                                   <div style="font-family: sans-serif">
                                     <div
@@ -823,7 +828,103 @@
                                       <p
                                         style="
                                           margin: 0;
-                                          text-align: right;
+                                          text-align: left;
+                                          mso-line-height-alt: 18px;
+                                          letter-spacing: normal;
+                                        "
+                                      >
+                                        <strong
+                                          ><span style="font-size: 16px"
+                                            >{{earlyBirdTicketPrice}}</span
+                                          ></strong
+                                        >
+                                      </p>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                          {{/if}}
+                          <td
+                            class="column column-2"
+                            width="33.333333333333336%"
+                            style="
+                              mso-table-lspace: 0;
+                              mso-table-rspace: 0;
+                              font-weight: 400;
+                              text-align: left;
+                              vertical-align: top;
+                              border-top: 0;
+                              border-right: 0;
+                              border-bottom: 0;
+                              border-left: 0;
+                            "
+                          >
+                            <table
+                              class="text_block block-2"
+                              width="100%"
+                              border="0"
+                              cellpadding="0"
+                              cellspacing="0"
+                              role="presentation"
+                              style="mso-table-lspace: 0; mso-table-rspace: 0; word-break: break-word"
+                            >
+                              <tr>
+                                <td
+                                  class="pad"
+                                  style="padding-left: 25px; padding-right: 25px; padding-top: 15px"
+                                >
+                                  <div style="font-family: sans-serif">
+                                    <div
+                                      class
+                                      style="
+                                        font-size: 12px;
+                                        mso-line-height-alt: 18px;
+                                        color: #fff;
+                                        line-height: 1.5;
+                                        font-family: Montserrat, Trebuchet MS, Lucida Grande,
+                                          Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;
+                                      "
+                                    >
+                                      <p style="margin: 0; text-align: left; mso-line-height-alt: 24px">
+                                        <span style="font-size: 16px">Regular Ticket Price</span>
+                                      </p>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            </table>
+                            <table
+                              class="text_block block-3"
+                              width="100%"
+                              border="0"
+                              cellpadding="0"
+                              cellspacing="0"
+                              role="presentation"
+                              style="mso-table-lspace: 0; mso-table-rspace: 0; word-break: break-word"
+                            >
+                              <tr>
+                                <td
+                                  class="pad"
+                                  style="padding-bottom: 15px; padding-left: 25px; padding-right: 25px"
+                                >
+                                  <div style="font-family: sans-serif">
+                                    <div
+                                      class
+                                      style="
+                                        font-size: 12px;
+                                        mso-line-height-alt: 18px;
+                                        color: #fff;
+                                        line-height: 1.5;
+                                        font-family: Montserrat, Trebuchet MS, Lucida Grande,
+                                          Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;
+                                      "
+                                    >
+                                      <p
+                                        style="
+                                          margin: 0;
+                                          text-align: left;
                                           mso-line-height-alt: 18px;
                                           letter-spacing: normal;
                                         "

@@ -101,6 +101,10 @@ export default async function handler(req, res) {
 
     const paymentConfig = event.payment_config || {};
     const priceByAge = paymentConfig.price_by_age || {};
+    const earlyBirdPriceByAge = paymentConfig.early_bird_price_by_age || {};
+    const earlyBirdDate = paymentConfig.early_bird_date || null;
+
+    const isBeforeEarlyBird = earlyBirdDate && moment(earlyBirdDate).utcOffset(-4).isAfter(moment().utcOffset(-4));
 
     const userAgeMapping = findKey(paymentConfig.age_mapping, (ages) => {
       const { from: ageFrom, to: ageTo } = ages;
@@ -108,6 +112,12 @@ export default async function handler(req, res) {
     });
 
     const userPrice = `$${priceByAge[userAgeMapping] || 0}`;
+    let earlyUserPrice = null;
+
+    if (isBeforeEarlyBird) {
+      earlyUserPrice = `$${earlyBirdPriceByAge[userAgeMapping] || 0}`;
+    }
+
 
     // TODO: Get from event itself
     const primaryColour = event.branding?.primary_colour?.hex || '#020648';
@@ -136,11 +146,14 @@ export default async function handler(req, res) {
       userFirstName: registeredUser.first_name,
       eventStartTime: moment(event.start_date).utcOffset(-4).format('LLLL') + " AST",
       openingTime: moment(event.doors_open_by_date).utcOffset(-4).format('LT') + " AST",
-      ticketPrice: userPrice,
       eventVenueAddress: event.venue.address,
       registrationNumber: registeredUser.registration_number,
       replySubject: `Event Registration: ${event.name}`,
       eventVenueGoogleLink: `https://www.google.com/maps/search/?api=1&query=${event.venue?.address}&query_place_id=${event.venue?.place_id}`,
+      ticketPrice: userPrice,
+      earlyBirdTicketPrice: earlyUserPrice,
+      earlyBirdDate: moment(earlyBirdDate).utcOffset(-4).format('ddd Do MMM, hh:mm A') + " AST",
+      isBeforeEarlyBird,
       eventVenueLocationImg,
       seeYouThereImage,
       logoUrl,
