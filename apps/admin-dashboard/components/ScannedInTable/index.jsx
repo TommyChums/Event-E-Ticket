@@ -191,6 +191,7 @@ const PaymentsTableToolbar = (props) => {
           delay={500}
           onScan={handleRead}
           onError={console.log}
+          flipHorizontally
           video={{
             top: '4.5rem',
             width: 300,

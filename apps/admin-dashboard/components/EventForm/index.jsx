@@ -252,9 +252,9 @@ export default function EventForm({ event, onSave, isNew }) {
   const isSmallScreen = useMediaQuery('(max-width:780px)');
   const confirm = useConfirm();
 
-  const [ bannerImageWidth, setBannerImageWidth ] = useState(BANNER_IMAGE_WIDTH);
+  const [ bannerImageWidth, setBannerImageWidth ] = useState(0);
   const [ bannerImageHeight, setBannerImageHeight ] = useState(BANNER_IMAGE_HEIGHT);
-  const [ ticketImageWidth, setTicketImageWidth ] = useState(TICKET_IMAGE_WIDTH);
+  const [ ticketImageWidth, setTicketImageWidth ] = useState(0);
   const [ ticketImageHeight, setTicketImageHeight ] = useState(TICKET_IMAGE_HEIGHT);
   const [ qrCodeScale, setQrCodeScale ] = useState(QR_CODE_SCALE);
 
@@ -285,10 +285,10 @@ export default function EventForm({ event, onSave, isNew }) {
 
   useEffect(() => {
     if (isSmallScreen) {
-      const newBannerWidth = BANNER_IMAGE_WIDTH / 2;
-      const newBannerHeight = TICKET_IMAGE_HEIGHT / 2;
-      const newTicketWidth = BANNER_IMAGE_WIDTH / 2;
-      const newTicketHeight = TICKET_IMAGE_HEIGHT / 2;
+      const newBannerWidth = BANNER_IMAGE_WIDTH / 2.15;
+      const newBannerHeight = BANNER_IMAGE_HEIGHT / 2.15;
+      const newTicketWidth = TICKET_IMAGE_WIDTH / 2.5;
+      const newTicketHeight = TICKET_IMAGE_HEIGHT / 2.5;
       const newQrCodeScale = MAX_TICKET_WIDTH / newTicketWidth;
 
       setBannerImageWidth(newBannerWidth);
