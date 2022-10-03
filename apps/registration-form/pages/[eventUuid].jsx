@@ -5,7 +5,6 @@ import { v4, parse } from 'uuid';
 import moment from 'moment';
 import isEmpty from 'lodash/isEmpty';
 import map from 'lodash/map';
-import startCase from 'lodash/startCase';
 import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
@@ -22,6 +21,28 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import CheckboxGroup from "../components/CheckboxGroup";
 import supabase from "../lib/supabase";
 import getEventWithImgs from "../lib/getEventWithImgs";
+
+function caseString(value, splitChar = ' ') {
+  const nameParts = value.split(splitChar);
+  
+  const allPartsCased = map(nameParts, (part) => {
+    return map(part, (val, i) => {
+      if (i === 0) {
+        return val.toUpperCase();
+      } else {
+        return val.toLowerCase();
+      }
+    }).join('');
+  });
+
+  const casedString = allPartsCased.join(splitChar);
+
+  if (splitChar === ' ' && allPartsCased.length === 1) {
+    return caseString(casedString, '-');
+  }
+
+  return casedString;
+};
 
 const registrationNumberFromUuid = (uuid) => Buffer.from(parse(uuid)).readUint32BE(0);
 
@@ -171,9 +192,12 @@ export default function RegistrationForm({ event }) {
                   render={({ field }) => (
                     <TextField
                       {...field}
+                      onBlur={() => {
+                        field.onChange(caseString(field.value.trim()));
+                      }}
                       onChange={({ target }) => {
                         const { value } = target;
-                        field.onChange(startCase(value.toLowerCase()));
+                        field.onChange(caseString(value));
                       }}
                       disabled={registrationDisabled}
                       error={!!errors.first_name}
@@ -195,9 +219,12 @@ export default function RegistrationForm({ event }) {
                   render={({ field }) => (
                     <TextField
                       {...field}
+                      onBlur={() => {
+                        field.onChange(caseString(field.value.trim()));
+                      }}
                       onChange={({ target }) => {
                         const { value } = target;
-                        field.onChange(startCase(value.toLowerCase()));
+                        field.onChange(caseString(value));
                       }}
                       disabled={registrationDisabled}
                       error={!!errors.last_name}
