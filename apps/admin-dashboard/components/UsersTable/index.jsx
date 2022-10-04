@@ -71,10 +71,18 @@ const initialColumns = [
   },
   {
     id: 'created_on',
-    type: 'text',
+    type: 'date',
     disablePadding: false,
     label: 'Registration Time',
     render: (time) => moment(time).format('LLL')
+  },
+  {
+    id: 'updated_on',
+    type: 'date',
+    disablePadding: false,
+    label: 'Updated On',
+    render: (time) => moment(time).format('LLL'),
+    hidden: true,
   }
 ];
 
