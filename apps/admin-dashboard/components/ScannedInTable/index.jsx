@@ -1,7 +1,6 @@
 import { useEffect, useState, memo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useSnackbar } from 'notistack';
-import { QrScanner } from "react-qrcode-scanner";
 import moment from 'moment';
 import escapeRegExp from 'lodash/escapeRegExp';
 import filter from 'lodash/filter';
@@ -21,6 +20,7 @@ import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 
 import Table from '../Table';
+import QrCodeScanner from '../QrCodeScanner';
 import supabase from '../../lib/supabase';
 
 function getReadableTicketNumber(num) {
@@ -95,9 +95,11 @@ const PaymentsTableToolbar = (props) => {
         const { data: ticketUser } = await supabase.from('registered-users')
           .select('scanned_in')
           .eq('registration_number', regNumber)
+          .eq('registered_event', props.usersEvent.uuid)
           .single();
 
         if (ticketUser?.scanned_in) {
+          invalid = false;
           enqueueSnackbar('This ticket was already scanned in', {
             variant: 'error'
           });
@@ -119,6 +121,8 @@ const PaymentsTableToolbar = (props) => {
             });
 
             props.updateUser(updatedTicketUser);
+            setOpen(false);
+            dataRead.current = false;
           };
         };
       };
@@ -187,24 +191,8 @@ const PaymentsTableToolbar = (props) => {
             </IconButton>
           </Stack>
         </DialogTitle>
-        <QrScanner
-          delay={500}
+        <QrCodeScanner
           onScan={handleRead}
-          onError={console.log}
-          flipHorizontally
-          video={{
-            top: '4.5rem',
-            width: 300,
-            height: 300
-          }}
-          viewFinder={{
-            border: '12px solid rgba(255,255,255,0.3)',
-            position: 'absolute',
-            borderRadius: '5px',
-            width: '250px',
-            height: '250px',
-            top: '4.5rem'
-          }}
         />
       </Dialog>
     </Toolbar>
@@ -214,10 +202,11 @@ const PaymentsTableToolbar = (props) => {
 PaymentsTableToolbar.propTypes = {
   searchValue: PropTypes.string.isRequired,
   setSearchValue: PropTypes.func.isRequired,
-  updateUser: PropTypes.func.isRequired
+  updateUser: PropTypes.func.isRequired,
+  usersEvent: PropTypes.object.isRequired,
 };
 
-function ScannedInTable({ loading, scannedInUsers, updateUser }) {
+function ScannedInTable({ loading, scannedInUsers, updateUser, usersEvent }) {
   const [ open, setOpen ] = useState(false);
   const [ rows, setRows ] = useState([]);
   const [ searchValue, setSearchValue ] = useState('');
@@ -259,6 +248,7 @@ function ScannedInTable({ loading, scannedInUsers, updateUser }) {
           searchValue={searchValue}
           setSearchValue={setSearchValue}
           updateUser={updateUser}
+          usersEvent={usersEvent}
         />
       }
       loading={loading}
@@ -322,7 +312,8 @@ function ScannedInTable({ loading, scannedInUsers, updateUser }) {
 ScannedInTable.propTypes = {
   loading: PropTypes.bool,
   scannedInUsers: PropTypes.oneOfType([ PropTypes.array, PropTypes.object ]).isRequired,
-  updateUser: PropTypes.func.isRequired
+  updateUser: PropTypes.func.isRequired,
+  usersEvent: PropTypes.object.isRequired,
 };
 
 ScannedInTable.defaultProps = {

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Container from '@mui/material/Container';
-import CircularProgress from '@mui/material/CircularProgress'; ;
+import CircularProgress from '@mui/material/CircularProgress';
 import Backdrop from '@mui/material/Backdrop';
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
@@ -112,6 +112,7 @@ export default function EventManagementPage() {
               loading={isLoading}
               scannedInUsers={scannedInUsers}
               updateUser={(data) => dispatch(updateEventUser({ user: data, eventUuid }))}
+              usersEvent={event}
             />
           </TabPanel>
         </Box>
