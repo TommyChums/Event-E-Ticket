@@ -50,6 +50,14 @@ const initialColumns = [
     label: 'Email'
   },
   {
+    id: 'phone_number',
+    type: 'text',
+    disablePadding: false,
+    label: 'Phone Number',
+    hidden: true,
+    render: (num) => num ? num.replace(/^(\+\d{1,2}\s)?\(?(\d{3})\)?[\s.-]?(\d{3})[\s.-]?(\d{4})$/g, '$1 ($2) $3-$4') : '',
+  },
+  {
     id: 'age',
     type: 'number',
     disablePadding: false,
