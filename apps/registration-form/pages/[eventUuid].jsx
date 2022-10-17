@@ -3,12 +3,17 @@ import Head from 'next/head'
 import { Controller, useForm } from 'react-hook-form';
 import { v4, parse } from 'uuid';
 import moment from 'moment';
+import momentTimeZone from 'moment-timezone';
 import isEmpty from 'lodash/isEmpty';
 import map from 'lodash/map';
 import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -18,9 +23,10 @@ import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
-import CheckboxGroup from "../components/CheckboxGroup";
-import supabase from "../lib/supabase";
-import getEventWithImgs from "../lib/getEventWithImgs";
+import CheckboxGroup from '../components/CheckboxGroup';
+import supabase from '../lib/supabase';
+import getEventWithImgs from '../lib/getEventWithImgs';
+import timeZoneToCountry from '../lib/timeZoneToCountry.json';
 
 function caseString(value, splitChar = ' ') {
   const nameParts = value.split(splitChar);
@@ -344,6 +350,37 @@ export default function RegistrationForm({ event }) {
                           validate: {
                             requiredSelected: (val = []) => val.length >= (options_required || 0) ? null : 'Required',
                           },
+                        }}
+                      />
+                    );
+                  } else if (field_type === 'select' && !isEmpty(options)) {
+                    const userTimeZone = momentTimeZone.tz.guess();
+
+                    const defaultValue = options.find((opt) => opt === timeZoneToCountry[userTimeZone]) || options[0];
+
+                    return (
+                      <Controller
+                        key={field_name}
+                        control={control}
+                        defaultValue={defaultValue}
+                        name={`additional_information.${field_name}`}
+                        render={({ field }) => (
+                          <FormControl fullWidth>
+                            <InputLabel id={`select-label-${field_name}`}>{field_label}</InputLabel>
+                            <Select
+                              {...field}
+                              labelId={`select-label-${field_name}`}
+                              disabled={registrationDisabled}
+                              label={field_label}
+                            >
+                              {map(options, (option) => (
+                                <MenuItem key={option} value={option}>{option}</MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        )}
+                        rules={{
+                          required: required ? 'Required' : false,
                         }}
                       />
                     );

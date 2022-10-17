@@ -19,6 +19,7 @@
     "lodash": "^4.17.21",
     "material-ui-confirm": "^3.0.5",
     "moment": "^2.29.4",
+    "moment-timezone": "^0.5.38",
     "next": "12.2.5",
     "nodemailer": "^6.7.8",
     "notistack": "^2.0.5",
