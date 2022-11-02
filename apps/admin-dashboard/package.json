@@ -31,6 +31,7 @@
     "react-google-autocomplete": "^2.7.0",
     "react-hook-form": "^7.35.0",
     "react-resizable": "^3.0.4",
+    "react-wheel-of-prizes": "^1.0.9",
     "sharp": "^0.31.0",
     "ui": "*",
     "uuid": "^9.0.0"

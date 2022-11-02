@@ -4,7 +4,10 @@ import { useSnackbar } from 'notistack';
 import moment from 'moment';
 import escapeRegExp from 'lodash/escapeRegExp';
 import filter from 'lodash/filter';
+import find from 'lodash/find';
 import isEqual from 'lodash/isEqual';
+import map from 'lodash/map';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
@@ -21,6 +24,7 @@ import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 
 import Table from '../Table';
 import QrCodeScanner from '../QrCodeScanner';
+import RandomWheel from '../RandomWheel';
 import supabase from '../../lib/supabase';
 
 function getReadableTicketNumber(num) {
@@ -207,7 +211,10 @@ PaymentsTableToolbar.propTypes = {
 };
 
 function ScannedInTable({ loading, scannedInUsers, updateUser, usersEvent }) {
+  const isSmallScreen = useMediaQuery('(max-width:780px)');
+
   const [ open, setOpen ] = useState(false);
+  const [ winnerOpen, setWinnerOpen ] = useState(false);
   const [ rows, setRows ] = useState([]);
   const [ searchValue, setSearchValue ] = useState('');
 
@@ -232,10 +239,6 @@ function ScannedInTable({ loading, scannedInUsers, updateUser, usersEvent }) {
   }, [ scannedInUsers, searchValue ]);
 
   const onRandomClick = () => {
-    const randomIndex = Math.floor(Math.random() * scannedInUsers.length);
-
-    randomUser.current = scannedInUsers[randomIndex];
-
     setOpen(true);
   };
 
@@ -276,33 +279,72 @@ function ScannedInTable({ loading, scannedInUsers, updateUser, usersEvent }) {
           onClose={() => setOpen(false)}
           open={open}
         >
-          <Box
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: 200,
-              bgcolor: 'background.paper',
-              boxShadow: 24,
-              p: 4
-            }}
-          >
-            <Typography component="h2" id="modal-modal-title" variant="h6">
-              {
-                randomUser.current
-                  ? `${randomUser.current.first_name} ${randomUser.current.last_name}`
-                  : 'No one'
-              }
-            </Typography>
-            <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-              {
-                randomUser.current
-                  ? `Ticket Number: ${getReadableTicketNumber(randomUser.current.scanned_in)}`
-                  : ''
-              }
-            </Typography>
-          </Box>
+          <>
+            <div
+              style={{
+                position: 'absolute',
+                top: '20%',
+                left: isSmallScreen ? '-23%' : '35%',
+              }}
+            >
+              <IconButton onClick={() => setOpen(false)}>
+                <HighlightOffIcon />
+              </IconButton>
+              <RandomWheel
+                onFinished={(winningTicket) => {
+                  randomUser.current = find(scannedInUsers, [ 'scanned_in', +winningTicket ]);
+                  setWinnerOpen(true);
+                }}
+                segments={map(scannedInUsers, (user) => getReadableTicketNumber(user.scanned_in))}
+              />
+            </div>
+            <Modal
+              aria-describedby="modal-modal-description"
+              aria-labelledby="modal-modal-title"
+              onClose={() => setWinnerOpen(false)}
+              open={winnerOpen}
+            >
+              <>
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: isSmallScreen ? 200 : 600,
+                    bgcolor: 'background.paper',
+                    boxShadow: 24,
+                    p: 4
+                  }}
+                >
+                  <IconButton
+                    onClick={() => setWinnerOpen(false)}
+                    style={{
+                      position: 'absolute',
+                      right: 0,
+                      top: 0
+                    }}
+                  >
+                    <HighlightOffIcon />
+                  </IconButton>
+                  <Typography component="h2" id="modal-modal-title" variant={isSmallScreen ? 'h5' : 'h3'} sx={{ textAlign: 'center' }}>
+                    {
+                      randomUser.current
+                        ? `${randomUser.current.first_name} ${randomUser.current.last_name}`
+                        : 'No one'
+                    }
+                  </Typography>
+                  <Typography id="modal-modal-description" sx={{ mt: 2, fontSize: isSmallScreen ? '20px' : '40px', textAlign: 'center' }}>
+                    {
+                      randomUser.current
+                        ? `Ticket Number: ${getReadableTicketNumber(randomUser.current.scanned_in)}`
+                        : ''
+                    }
+                  </Typography>
+                </Box>
+              </>
+            </Modal>
+          </>
         </Modal>
       </Toolbar>
     </Table>
