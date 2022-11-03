@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import map from 'lodash/map';
 import WheelComponent from 'react-wheel-of-prizes';
@@ -11,10 +11,6 @@ function RandomWheel(props) {
     props.onFinished(winner);
   };
 
-  useEffect(() => {
-
-  }, [ isSmallScreen ]);
-
   return (
     <WheelComponent
       segments={props.segments}
@@ -26,8 +22,8 @@ function RandomWheel(props) {
       buttonText='Spin'
       isOnlyOnce={false}
       size={isSmallScreen ? 138 : 290}
-      upDuration={100}
-      downDuration={300}
+      upDuration={10}
+      downDuration={150}
       // fontFamily='Arial'
     />
   );

@@ -220,6 +220,21 @@ function ScannedInTable({ loading, scannedInUsers, updateUser, usersEvent }) {
 
   const randomUser = useRef(null);
 
+  const segs = map(scannedInUsers, (user) => getReadableTicketNumber(user.scanned_in));
+  const segsToUse = [];
+
+  let chunk = 3;
+  let start = 0;
+  let end = chunk;
+  do {
+    segsToUse.push(
+      segs.slice(start, end).join(',')
+    );
+
+    start += chunk;
+    end += chunk;
+  } while (start < segs.length);
+
   useEffect(() => {
     const searchedUsers = filter(scannedInUsers, ({
       first_name, last_name, registration_number, scanned_in
@@ -292,10 +307,15 @@ function ScannedInTable({ loading, scannedInUsers, updateUser, usersEvent }) {
               </IconButton>
               <RandomWheel
                 onFinished={(winningTicket) => {
-                  randomUser.current = find(scannedInUsers, [ 'scanned_in', +winningTicket ]);
+                  const winningTicketNumbers = winningTicket.split(',');
+                  const randomIndex = Math.floor(Math.random() * winningTicketNumbers.length);
+
+                  const ticketNum = winningTicketNumbers[randomIndex];
+
+                  randomUser.current = find(scannedInUsers, [ 'scanned_in', +ticketNum ]);
                   setWinnerOpen(true);
                 }}
-                segments={map(scannedInUsers, (user) => getReadableTicketNumber(user.scanned_in))}
+                segments={segsToUse}
               />
             </div>
             <Modal
