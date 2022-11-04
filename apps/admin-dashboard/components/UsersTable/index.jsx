@@ -58,6 +58,14 @@ const initialColumns = [
     render: (num) => num ? num.replace(/^(\+\d{1,2}\s)?\(?(\d{3})\)?[\s.-]?(\d{3})[\s.-]?(\d{4})$/g, '$1 ($2) $3-$4') : '',
   },
   {
+    id: 'date_of_birth',
+    type: 'date',
+    disablePadding: false,
+    label: 'Date of Birth',
+    hidden: true,
+    render: (dob) => moment(dob, true).isValid() ? moment(dob).format('LL') : 'Unkown',
+  },
+  {
     id: 'age',
     type: 'number',
     disablePadding: false,
@@ -182,7 +190,7 @@ function UsersTable({ loading, users, usersEvent, updatePayment, updateUser }) {
 
   useEffect(() => {
     const searchedUsers = filter(users, ({
-      first_name, last_name, ticket_issued, email, registration_number
+      first_name, last_name, ticket_issued, email, registration_number, date_of_birth
     }) => {
       const searchRegex = new RegExp(escapeRegExp(searchValue), 'i');
 
@@ -193,12 +201,13 @@ function UsersTable({ loading, users, usersEvent, updatePayment, updateUser }) {
         searchRegex.test(last_name) ||
         searchRegex.test(`${first_name} ${last_name}`) ||
         searchRegex.test(email) ||
-        searchRegex.test(registration_number)
+        searchRegex.test(registration_number) ||
+        columns.find((col) => col.id === 'date_of_birth').hidden ? false : searchRegex.test(moment(date_of_birth, true).format('LL'))
       );
     });
 
     setRows(searchedUsers);
-  }, [ users, searchValue, paidInFullOnly, indeterminate ]);
+  }, [ users, searchValue, paidInFullOnly, indeterminate, columns ]);
 
   const handlePaidInFullClick = ({ target: { checked } }) => {
     if (checked && !paidInFullOnly && !indeterminate) {
