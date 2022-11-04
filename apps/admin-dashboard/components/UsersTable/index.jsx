@@ -196,14 +196,16 @@ function UsersTable({ loading, users, usersEvent, updatePayment, updateUser }) {
 
       const ticketIssuedCheck = paidInFullOnly ? ticket_issued : indeterminate ? !ticket_issued : true;
 
-      return ticketIssuedCheck && (
+      const searchCheck = ticketIssuedCheck && (
         searchRegex.test(first_name) ||
         searchRegex.test(last_name) ||
         searchRegex.test(`${first_name} ${last_name}`) ||
         searchRegex.test(email) ||
         searchRegex.test(registration_number) ||
-        columns.find((col) => col.id === 'date_of_birth').hidden ? false : searchRegex.test(moment(date_of_birth, true).format('LL'))
+        searchRegex.test(moment(date_of_birth, true).format('LL'))
       );
+
+      return searchCheck;
     });
 
     setRows(searchedUsers);
