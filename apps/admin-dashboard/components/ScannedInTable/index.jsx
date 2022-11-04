@@ -223,7 +223,7 @@ function ScannedInTable({ loading, scannedInUsers, updateUser, usersEvent }) {
   const segs = map(scannedInUsers, (user) => getReadableTicketNumber(user.scanned_in));
   const segsToUse = [];
 
-  let chunk = 3;
+  let chunk = 5;
   let start = 0;
   let end = chunk;
   do {
