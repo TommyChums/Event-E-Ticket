@@ -75,6 +75,43 @@ const defaultEvent = {
     }
   },
   additional_user_information: {},
+  registration_form_fields: {
+    email: {
+      field_name: 'email',
+      field_label: 'Email',
+      field_type: 'email',
+      order: 1,
+      required: true
+    },
+    first_name: {
+      field_name: 'first_name',
+      field_label: 'First Name',
+      field_type: 'text',
+      order: 2,
+      required: true
+    },
+    last_name: {
+      field_name: 'last_name',
+      field_label: 'Last Name',
+      field_type: 'text',
+      order: 3,
+      required: true
+    },
+    phone_number: {
+      field_name: 'phone_number',
+      field_label: 'Phone Number',
+      field_type: 'phone_number',
+      order: 4,
+      required: true
+    },
+    date_of_birth: {
+      field_name: 'date_of_birth',
+      field_label: 'Date of Birth',
+      field_type: 'date',
+      order: 5,
+      required: true
+    },
+  },
   banner: ''
 };
 

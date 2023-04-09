@@ -31,6 +31,7 @@ import ImgUpload from '../ImgUpload';
 import ResizableQrCode from '../ResizableImage';
 import ResizableNumber from '../ResizableImage';
 import supabase from '../../lib/supabase';
+import RegistrationFormFieldsDialog from './RegistrationFormFieldsDialog';
 
 const MAX_TICKET_WIDTH = 1650;
 const MAX_TICKET_HEIGHT = 650;
@@ -259,6 +260,7 @@ export default function EventForm({ event, onSave, isNew }) {
   const [ qrCodeScale, setQrCodeScale ] = useState(QR_CODE_SCALE);
 
   const [ pricingDialogOpen, setPricingDialogOpen ] = useState(false);
+  const [ registrationFormFieldsDialogOpen, setRegistrationFormFieldsDialogOpen ] = useState(false);
   const [ saving, setSaving ] = useState(false);
   const [ eventPublished, setEventPublished ] = useState(event.is_published);
 
@@ -776,7 +778,7 @@ export default function EventForm({ event, onSave, isNew }) {
             type="button"
             variant="contained"
           >
-            Configure Pricing
+            Click to Configure Pricing
           </Button>
           {
             map(getValues('payment_config.age_mapping'), (_, ageLabel) =>
@@ -906,6 +908,28 @@ export default function EventForm({ event, onSave, isNew }) {
           <Typography variant="h6">
             Registration / Email Information
           </Typography>
+          <Controller
+            control={control}
+            defaultValue={{}}
+            name="registration_form_fields"
+            render={({ field }) =>
+              <RegistrationFormFieldsDialog
+                {...field}
+                disabled={eventPublished}
+                onClose={() => setRegistrationFormFieldsDialogOpen(false)}
+                open={registrationFormFieldsDialogOpen}
+                unregister={unregister}
+              />
+            }
+          />
+          <Button
+            fullWidth
+            onClick={() => setRegistrationFormFieldsDialogOpen(true)}
+            type="button"
+            variant="contained"
+          >
+            Click to configure the Registration Form
+          </Button>
           <Stack alignItems="center" justifyContent="center">
             <Typography
               component='label'

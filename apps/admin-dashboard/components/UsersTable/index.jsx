@@ -91,7 +91,8 @@ const initialColumns = [
     type: 'number',
     disablePadding: false,
     label: 'Ticket Number',
-    render: getReadableTicketNumber
+    render: getReadableTicketNumber,
+    hidden: true,
   },
   {
     id: 'created_on',
