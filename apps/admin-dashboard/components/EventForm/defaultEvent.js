@@ -74,7 +74,6 @@ const defaultEvent = {
       rgb: { b: 2, g: 6, r: 72 }
     }
   },
-  additional_user_information: {},
   registration_form_fields: {
     email: {
       field_name: 'email',

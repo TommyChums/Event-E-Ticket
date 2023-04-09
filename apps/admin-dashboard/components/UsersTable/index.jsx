@@ -174,10 +174,10 @@ function UsersTable({ loading, users, usersEvent, updatePayment, updateUser }) {
   const [ indeterminate, setIndeterminate ] = useState(false);
 
   const columns = useMemo(() => {
-    const additionalUserInfo = get(usersEvent, 'additional_user_information', {});
+    const additionalUserInfo = filter(get(usersEvent, 'registration_form_fields', {}), (field) => field.can_delete)
 
     const additionalColumns = map(additionalUserInfo, (additionalField) => {
-      const { field_name, field_type } = additionalField;
+      const { field_label, field_name, field_type } = additionalField;
 
       const columnId = `additional_information.${field_name}`;
 
@@ -185,7 +185,7 @@ function UsersTable({ loading, users, usersEvent, updatePayment, updateUser }) {
         id: columnId,
         type: field_type,
         disablePadding: false,
-        label: startCase(field_name),
+        label: field_label,
         render: getValueRenderer(field_type),
         hidden: true
       };
