@@ -11,8 +11,12 @@ import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import FormControl from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormLabel from '@mui/material/FormLabel';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
@@ -27,6 +31,7 @@ import CheckboxGroup from '../components/CheckboxGroup';
 import supabase from '../lib/supabase';
 import getEventWithImgs from '../lib/getEventWithImgs';
 import timeZoneToCountry from '../lib/timeZoneToCountry.json';
+import countries from '../lib/countries.json';
 
 function caseString(value, splitChar = ' ') {
   const nameParts = value.split(splitChar);
@@ -59,6 +64,17 @@ export default function RegistrationForm({ event }) {
   const [ info, setInfo ] = useState(null);
 
   const registrationDisabled = moment().isSameOrAfter(moment(event.register_by_date));
+
+  const registrationFormFields = event.registration_form_fields;
+
+  const {
+    email: emailField,
+    first_name: firstNameField,
+    last_name: lastNameField,
+    phone_number: phoneNumberField,
+    date_of_birth: dateOfBirthField,
+    ...additionalFormFields
+  } = registrationFormFields;
   
   const defaultValues = useMemo(() => ({
     email: '',
@@ -145,7 +161,7 @@ export default function RegistrationForm({ event }) {
             <Typography variant="h5" fontWeight="bold">
               {event.name}
             </Typography>
-            <Typography variant="h6">
+            <Typography variant="h6" style={{ margin: '5px 15px 0' }}>
               {event.description || `${event.host} presents ${event.name}`}
             </Typography>
           </Stack>
@@ -182,13 +198,13 @@ export default function RegistrationForm({ event }) {
                     error={!!errors.email}
                     helperText={errors.email?.message}
                     id="outlined-email"
-                    label="Email *"
+                    label={'Email' + (emailField.required ? ' *' : '')}
                     variant="outlined"
                     type="email"
                   />
                 )}
                 rules={{
-                  required: 'Required',
+                  required: emailField.required ? 'Required' : false,
                 }}
               />
               <Stack sx={{ justifyContent: 'space-between' }} direction="row" spacing={2}>
@@ -209,14 +225,14 @@ export default function RegistrationForm({ event }) {
                       error={!!errors.first_name}
                       helperText={errors.first_name?.message}
                       id="outlined-first-name"
-                      label="First Name *"
+                      label={'First Name' + (firstNameField.required ? ' *' : '')}
                       variant="outlined"
                       type="text"
                       fullWidth
                     />
                   )}
                   rules={{
-                    required: 'Required',
+                    required: firstNameField.required ? 'Required' : false,
                   }}
                 />
                 <Controller
@@ -236,14 +252,14 @@ export default function RegistrationForm({ event }) {
                       error={!!errors.last_name}
                       helperText={errors.last_name?.message}
                       id="outlined-last-name"
-                      label="Last Name *"
+                      label={'Last Name' + (lastNameField.required ? ' *' : '')}
                       variant="outlined"
                       type="text"
                       fullWidth
                     />
                   )}
                   rules={{
-                    required: 'Required',
+                    required: lastNameField.required ? 'Required' : false,
                   }}
                 />
               </Stack>
@@ -258,35 +274,36 @@ export default function RegistrationForm({ event }) {
                     error={!!errors.phone_number}
                     helperText={errors.phone_number?.message}
                     id="outlined-last-name"
-                    label="Phone Number"
+                    label={'Phone Number' + (phoneNumberField.required ? ' *' : '')}
                     variant="outlined"
                     type="text"
                   />
                 )}
-                rules={{
+                rules={phoneNumberField.required ? {
                   pattern: {
                     value: /^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/,
                     message: '(868) 123-4567'
-                  }
-                }}
+                  },
+                  required: 'Required'
+                } : {}}
               />
               <Controller
                 control={control}
                 name="date_of_birth"
-                label="Date of Birth *"
-                rules={{
+                label={'Date of Birth' + (dateOfBirthField.required ? ' *' : '')}
+                rules={dateOfBirthField.required ? {
                   validate: {
                     required: (val) => val ? null : 'Required',
                     isValidDate: (val) => moment(val, true).isValid() ? null : 'Invalid Date',
                   },
-                }}
+                } : {}}
                 render={({ field }) => (
                   <LocalizationProvider dateAdapter={AdapterMoment}>
                     <DatePicker
                       {...field}
                       disableFuture
                       inputFormat="YYYY-MM-DD"
-                      label="Date of Birth *"
+                      label={'Date of Birth' + (dateOfBirthField.required ? ' *' : '')}
                       disabled={registrationDisabled}
                       InputLabelProps={{ shrink: true }}
                       openTo="year"
@@ -303,10 +320,14 @@ export default function RegistrationForm({ event }) {
                 )}
               />
               {
-                map(event.additional_user_information, (additionalInfoInput) => {
-                  const { field_name, field_label, field_type, required, options, options_required } = additionalInfoInput;
+                map(additionalFormFields, (additionalInfoInput) => {
+                  const { field_name, field_label: defaultLabel, field_type, required, options, options_required } = additionalInfoInput;
 
-                  if (field_type === 'text') {
+                  let field_label = defaultLabel;
+
+                  if (required && !field_label.includes('*')) field_label += " *";
+
+                  if ([ 'text', 'email' ].includes(field_type)) {
                     return (
                       <Controller
                         key={field_name}
@@ -322,12 +343,44 @@ export default function RegistrationForm({ event }) {
                             id={`outlined-${field_name}`}
                             label={field_label}
                             variant="outlined"
-                            type="text"
+                            type={field_type}
                           />
                         )}
                         rules={{
                           required: required ? 'Required' : false,
                         }}
+                      />
+                    );
+                  } else if (field_type === 'date') {
+                    return (
+                      <Controller
+                        control={control}
+                        name={`additional_information.${field_name}`}
+                        label={field_label}
+                        rules={required ? {
+                          required: 'Required',
+                          isValidDate: (val) => moment(val, true).isValid() ? null : 'Invalid Date',
+                        }: {}}
+                        render={({ field }) => (
+                          <LocalizationProvider dateAdapter={AdapterMoment}>
+                            <DatePicker
+                              {...field}
+                              inputFormat="YYYY-MM-DD"
+                              label={field_label}
+                              disabled={registrationDisabled}
+                              InputLabelProps={{ shrink: true }}
+                              openTo="year"
+                              views={[ 'year', 'month', 'day' ]}
+                              renderInput={(params) => (
+                                <TextField
+                                  {...params}
+                                  helperText={errors.date_of_birth?.message || 'yyyy-mm-dd'}
+                                  error={!!errors.date_of_birth}
+                                />
+                              )}
+                            />
+                          </LocalizationProvider>
+                        )}
                       />
                     );
                   } else if (field_type === 'checkbox') {
@@ -353,10 +406,58 @@ export default function RegistrationForm({ event }) {
                         }}
                       />
                     );
+                  } else if (field_type === 'radio') {
+                    return (
+                      <Controller
+                        key={field_name}
+                        control={control}
+                        defaultValue={additionalInfoInput?.default_value || options[0]?.value || options[0] || ''}
+                        name={`additional_information.${field_name}`}
+                        render={({ field }) => (
+                          <Container
+                            style={{
+                              paddingLeft: '2px'
+                            }}
+                            sx={{
+                              justifyContent: 'left',
+                              alignItems: 'left',
+                              textAlign: 'left',
+                              margin: '0'
+                            }}
+                          >
+                            <FormControl>
+                              <FormLabel id={`radio-label-${field_name}`}>{field_label}</FormLabel>
+                              <RadioGroup
+                                {...field}
+                                row
+                              >
+                                {
+                                  map(options, (option) => {
+                                    // if false assumed option is of type { label: '', value: '' }
+                                    const optionString = typeof option === 'string';
+                                    const optionLabel = optionString ? option : option.label;
+                                    const optionValue = optionString ? option : option.value;
+
+                                    return (
+                                      <FormControlLabel value={optionValue} control={<Radio />} label={optionLabel} />
+                                    );
+                                  })
+                                }
+                              </RadioGroup>
+                            </FormControl>
+                          </Container>
+                        )}
+                        rules={{
+                          validate: {
+                            requiredSelected: (val = []) => val.length >= (options_required || 0) ? null : 'Required',
+                          },
+                        }}
+                      />
+                    );
                   } else if (field_type === 'select' && !isEmpty(options)) {
                     const userTimeZone = momentTimeZone.tz.guess();
 
-                    const defaultValue = options.find((opt) => opt === timeZoneToCountry[userTimeZone]) || options[0];
+                    const defaultValue = options[0];
 
                     return (
                       <Controller
@@ -374,6 +475,37 @@ export default function RegistrationForm({ event }) {
                               label={field_label}
                             >
                               {map(options, (option) => (
+                                <MenuItem key={option} value={option}>{option}</MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        )}
+                        rules={{
+                          required: required ? 'Required' : false,
+                        }}
+                      />
+                    );
+                  } else if (field_type === 'country') {
+                    const userTimeZone = momentTimeZone.tz.guess();
+
+                    const defaultValue = countries.find((opt) => opt === timeZoneToCountry[userTimeZone]) || countries[0];
+
+                    return (
+                      <Controller
+                        key={field_name}
+                        control={control}
+                        defaultValue={defaultValue}
+                        name={`additional_information.${field_name}`}
+                        render={({ field }) => (
+                          <FormControl fullWidth>
+                            <InputLabel id={`select-label-${field_name}`}>{field_label}</InputLabel>
+                            <Select
+                              {...field}
+                              labelId={`select-label-${field_name}`}
+                              disabled={registrationDisabled}
+                              label={field_label}
+                            >
+                              {map(countries, (option) => (
                                 <MenuItem key={option} value={option}>{option}</MenuItem>
                               ))}
                             </Select>
