@@ -210,6 +210,7 @@ export default async function handler(req, res) {
     }
 
     const { data: updatedUser, error: updateError } = await supabase.from('registered-users').update({
+      ticket_number: ticketNumber,
       ticket_issued: true,
       updated_on: issued_at
     }).eq('uuid', user_uuid).single();

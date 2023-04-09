@@ -17,6 +17,7 @@ import Stack from '@mui/material/Stack';
 
 import Table from '../Table';
 import UserDialog from '../UserDialog';
+import getReadableTicketNumber from '../../lib/helpers/getReadableTicketNumber';
 
 function getValueRenderer(fieldType) {
   if (fieldType === 'text') {
@@ -84,6 +85,13 @@ const initialColumns = [
     disableSorting: true,
     label: 'Ticket Issued',
     render: (issued) => issued ? 'Yes' : 'No'
+  },
+  {
+    id: 'ticket_number',
+    type: 'number',
+    disablePadding: false,
+    label: 'Ticket Number',
+    render: getReadableTicketNumber
   },
   {
     id: 'created_on',

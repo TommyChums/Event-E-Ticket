@@ -26,16 +26,7 @@ import Table from '../Table';
 import QrCodeScanner from '../QrCodeScanner';
 import RandomWheel from '../RandomWheel';
 import supabase from '../../lib/supabase';
-
-function getReadableTicketNumber(num) {
-  let ticketNumber = num.toString();
-
-  while (ticketNumber.length < 4) {
-    ticketNumber = `0${ticketNumber}`;
-  };
-
-  return ticketNumber;
-};
+import getReadableTicketNumber from '../../lib/helpers/getReadableTicketNumber';
 
 const columns = [
   {
@@ -57,7 +48,7 @@ const columns = [
     label: 'Registration Number'
   },
   {
-    id: 'scanned_in',
+    id: 'ticket_number',
     type: 'number',
     disablePadding: false,
     label: 'Ticket Number',
@@ -111,7 +102,7 @@ const PaymentsTableToolbar = (props) => {
           invalid = false;
 
           const { data: updatedTicketUser, error } = await supabase.from('registered-users').update({
-            scanned_in: +ticketNumber,
+            scanned_in: true,
             updated_on: moment().toISOString()
           }).eq('registration_number', regNumber).single();
 
@@ -220,7 +211,7 @@ function ScannedInTable({ loading, scannedInUsers, updateUser, usersEvent }) {
 
   const randomUser = useRef(null);
 
-  const segs = map(scannedInUsers, (user) => getReadableTicketNumber(user.scanned_in));
+  const segs = map(scannedInUsers, (user) => getReadableTicketNumber(user.ticket_number));
   const segsToUse = [];
 
   let chunk = 5;
@@ -237,7 +228,7 @@ function ScannedInTable({ loading, scannedInUsers, updateUser, usersEvent }) {
 
   useEffect(() => {
     const searchedUsers = filter(scannedInUsers, ({
-      first_name, last_name, registration_number, scanned_in
+      first_name, last_name, registration_number, ticket_number
     }) => {
       const searchRegex = new RegExp(escapeRegExp(searchValue), 'i');
 
@@ -246,7 +237,7 @@ function ScannedInTable({ loading, scannedInUsers, updateUser, usersEvent }) {
         searchRegex.test(last_name) ||
         searchRegex.test(`${first_name} ${last_name}`) ||
         searchRegex.test(registration_number) ||
-        searchRegex.test(scanned_in)
+        searchRegex.test(ticket_number)
       );
     });
 
@@ -312,7 +303,7 @@ function ScannedInTable({ loading, scannedInUsers, updateUser, usersEvent }) {
 
                   const ticketNum = winningTicketNumbers[randomIndex];
 
-                  randomUser.current = find(scannedInUsers, [ 'scanned_in', +ticketNum ]);
+                  randomUser.current = find(scannedInUsers, [ 'ticket_number', +ticketNum ]);
                   setWinnerOpen(true);
                 }}
                 segments={segsToUse}
@@ -357,7 +348,7 @@ function ScannedInTable({ loading, scannedInUsers, updateUser, usersEvent }) {
                   <Typography id="modal-modal-description" sx={{ mt: 2, fontSize: isSmallScreen ? '20px' : '40px', textAlign: 'center' }}>
                     {
                       randomUser.current
-                        ? `Ticket Number: ${getReadableTicketNumber(randomUser.current.scanned_in)}`
+                        ? `Ticket Number: ${getReadableTicketNumber(randomUser.current.ticket_number)}`
                         : ''
                     }
                   </Typography>

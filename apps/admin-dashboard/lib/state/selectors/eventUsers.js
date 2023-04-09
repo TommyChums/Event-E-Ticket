@@ -14,7 +14,7 @@ export function useScannedInUsers(eventUuid) {
   const allEventUsers = get(eventUsers.users, eventUuid, {});
 
   return {
-    scannedInUsers: filter(allEventUsers, ({ scanned_in }) => typeof scanned_in === 'number'),
+    scannedInUsers: filter(allEventUsers, ({ scanned_in }) => scanned_in),
     loading: eventUsers.loading
   };
 };
