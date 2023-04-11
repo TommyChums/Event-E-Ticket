@@ -287,6 +287,7 @@ export default function EventForm({ event, onSave, isNew }) {
     }
 
     setEventPublished(event.is_published);
+    setETickets(!isEmpty(event.ticket_template))
   }, [ event, getValues, reset, setEventPublished ]);
 
   useEffect(() => {
