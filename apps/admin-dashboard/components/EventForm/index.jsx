@@ -11,6 +11,8 @@ import moment from 'moment';
 import isEqual from 'lodash/isEqual';
 import map from 'lodash/map';
 import startCase from 'lodash/startCase';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
@@ -253,6 +255,7 @@ export default function EventForm({ event, onSave, isNew }) {
   const isSmallScreen = useMediaQuery('(max-width:780px)');
   const confirm = useConfirm();
 
+  const [ eTickets, setETickets ] = useState(true);
   const [ bannerImageWidth, setBannerImageWidth ] = useState(0);
   const [ bannerImageHeight, setBannerImageHeight ] = useState(BANNER_IMAGE_HEIGHT);
   const [ ticketImageWidth, setTicketImageWidth ] = useState(0);
@@ -447,6 +450,8 @@ export default function EventForm({ event, onSave, isNew }) {
       delete data.banner;
     }
 
+    data.ticket_template = eTickets ? data.ticket_template : {};
+
     const ticketTemplateKeys = Object.keys(data.ticket_template || {});
 
     for (let i = 0; i < ticketTemplateKeys.length; i = i + 1) {
@@ -497,17 +502,21 @@ export default function EventForm({ event, onSave, isNew }) {
     };
 
     await Promise.all(map(data.original_ticket_template, (originalTemplateInfo, ageLabel) => {
-      if (typeof data.ticket_template[ageLabel] === 'string') {
-        data.ticket_template[ageLabel] = originalTemplateInfo;
-      }
-
-      if (!data.payment_config?.age_mapping[ageLabel]) {
-        delete data.ticket_template[ageLabel];
-
+      if (eTickets) {
+        if (typeof data.ticket_template[ageLabel] === 'string') {
+          data.ticket_template[ageLabel] = originalTemplateInfo;
+        }
+  
+        if (!data.payment_config?.age_mapping[ageLabel]) {
+          delete data.ticket_template[ageLabel];
+  
+          return supabase.storage.from(originalTemplateInfo.bucket).remove(originalTemplateInfo.key);
+        }
+        
+        return Promise.resolve();
+      } else {
         return supabase.storage.from(originalTemplateInfo.bucket).remove(originalTemplateInfo.key);
       }
-
-      return Promise.resolve();
     }));
 
 
@@ -518,6 +527,7 @@ export default function EventForm({ event, onSave, isNew }) {
       variant: 'info'
     });
 
+    console.log(data)
     const { data: newEvent, error } = await supabase.from('events')
       [isNew ? 'insert' : 'update']({
         ...data,
@@ -780,130 +790,140 @@ export default function EventForm({ event, onSave, isNew }) {
           >
             Click to Configure Pricing
           </Button>
+          <FormControlLabel
+            control={<Switch />}
+            label="E-Tickets"
+            labelPlacement="start"
+            onChange={({ target }) => setETickets(target.checked)}
+            sx={{ alignSelf: "center" }}
+            checked={eTickets}
+          />
           {
-            map(getValues('payment_config.age_mapping'), (_, ageLabel) =>
-              <Accordion key={ageLabel}>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography>Ticket for: {startCase(ageLabel)}</Typography>
-                </AccordionSummary>
-                <AccordionDetails draggable="false">
-                  <Stack justifyContent="center" position="relative" width="100%">
-                    <Typography
-                      component='label'
-                      htmlFor="ticket_template"
-                      variant="subtitle1"
-                    >
-                      Event Ticket:
-                    </Typography>
-                    <Controller
-                      control={control}
-                      name={`ticket_template.${ageLabel}`}
-                      render={({ field }) =>
-                        <ImgUpload
-                          {...field}
-                          altText={`${startCase(ageLabel)} Ticket`}
-                          disabled={eventPublished}
-                          height={ticketImageHeight}
-                          maxHeight={MAX_TICKET_HEIGHT}
-                          maxWidth={MAX_TICKET_WIDTH}
-                          onUpload={field.onChange}
-                          width={ticketImageWidth}
-                        >
+            eTickets ? (
+              map(getValues('payment_config.age_mapping'), (_, ageLabel) =>
+                <Accordion key={ageLabel}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography>Ticket for: {startCase(ageLabel)}</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails draggable="false">
+                    <Stack justifyContent="center" position="relative" width="100%">
+                      <Typography
+                        component='label'
+                        htmlFor="ticket_template"
+                        variant="subtitle1"
+                      >
+                        Event Ticket:
+                      </Typography>
+                      <Controller
+                        control={control}
+                        name={`ticket_template.${ageLabel}`}
+                        render={({ field }) =>
+                          <ImgUpload
+                            {...field}
+                            altText={`${startCase(ageLabel)} Ticket`}
+                            disabled={eventPublished}
+                            height={ticketImageHeight}
+                            maxHeight={MAX_TICKET_HEIGHT}
+                            maxWidth={MAX_TICKET_WIDTH}
+                            onUpload={field.onChange}
+                            width={ticketImageWidth}
+                          >
+                            <>
+                              <Controller
+                                control={control}
+                                name={`ticket_config.${ageLabel}.position.qrcode`}
+                                render={({ field: qrcodeField }) =>
+                                  <div
+                                    style={{
+                                      width: ticketImageWidth,
+                                      height: ticketImageHeight,
+                                      position: 'absolute',
+                                      top: 0,
+                                      alignSelf: 'center'
+                                    }}
+                                  >
+                                    <ResizableQrCode
+                                      {...qrcodeField}
+                                      config={qrcodeField.value}
+                                      darkColour={darkColourValue(ageLabel)}
+                                      disabled={eventPublished}
+                                      lightColour={lightColourValue(ageLabel)}
+                                      maxHeight={ticketImageHeight}
+                                      scale={qrCodeScale}
+                                    />
+                                  </div>
+                                }
+                              />
+                              <Controller
+                                control={control}
+                                name={`ticket_config.${ageLabel}.position.number`}
+                                render={({ field: numberField }) =>
+                                  <div
+                                    style={{
+                                      width: ticketImageWidth,
+                                      height: ticketImageHeight,
+                                      position: 'absolute',
+                                      top: 0,
+                                      alignSelf: 'center',
+                                      pointerEvents: 'none'
+                                    }}
+                                  >
+                                    <ResizableNumber
+                                      {...numberField}
+                                      config={numberField.value}
+                                      darkColour={darkColourValue(ageLabel)}
+                                      disabled={eventPublished}
+                                      lightColour={lightColourValue(ageLabel)}
+                                      maxHeight={ticketImageHeight}
+                                      maxWidth={ticketImageWidth}
+                                      scale={qrCodeScale}
+                                      type="number"
+                                    />
+                                  </div>
+                                }
+                              />
+                            </>
+                          </ImgUpload>
+                        }
+                        rules={requiredRules}
+                      />
+                      {
+                        !eventPublished &&
                           <>
-                            <Controller
-                              control={control}
-                              name={`ticket_config.${ageLabel}.position.qrcode`}
-                              render={({ field: qrcodeField }) =>
-                                <div
-                                  style={{
-                                    width: ticketImageWidth,
-                                    height: ticketImageHeight,
-                                    position: 'absolute',
-                                    top: 0,
-                                    alignSelf: 'center'
-                                  }}
-                                >
-                                  <ResizableQrCode
-                                    {...qrcodeField}
-                                    config={qrcodeField.value}
-                                    darkColour={darkColourValue(ageLabel)}
-                                    disabled={eventPublished}
-                                    lightColour={lightColourValue(ageLabel)}
-                                    maxHeight={ticketImageHeight}
-                                    scale={qrCodeScale}
-                                  />
-                                </div>
-                              }
-                            />
-                            <Controller
-                              control={control}
-                              name={`ticket_config.${ageLabel}.position.number`}
-                              render={({ field: numberField }) =>
-                                <div
-                                  style={{
-                                    width: ticketImageWidth,
-                                    height: ticketImageHeight,
-                                    position: 'absolute',
-                                    top: 0,
-                                    alignSelf: 'center',
-                                    pointerEvents: 'none'
-                                  }}
-                                >
-                                  <ResizableNumber
-                                    {...numberField}
-                                    config={numberField.value}
-                                    darkColour={darkColourValue(ageLabel)}
-                                    disabled={eventPublished}
-                                    lightColour={lightColourValue(ageLabel)}
-                                    maxHeight={ticketImageHeight}
-                                    maxWidth={ticketImageWidth}
-                                    scale={qrCodeScale}
-                                    type="number"
-                                  />
-                                </div>
-                              }
-                            />
+                            <Typography
+                              component='label'
+                              htmlFor={`qrcode-colour-${ageLabel}`}
+                              variant="subtitle1"
+                            >
+                              QRCode Colour:
+                            </Typography>
+                            <Stack
+                              direction="row"
+                              id={`qrcode-colour-${ageLabel}`}
+                              justifyContent="center"
+                              spacing={1}
+                            >
+                              <ControlledColourPicker
+                                control={control}
+                                height={ticketImageHeight}
+                                name={`ticket_config.${ageLabel}.colour.light`}
+                                width={ticketImageWidth / 2 - 5}
+                              />
+                              <ControlledColourPicker
+                                control={control}
+                                height={ticketImageHeight}
+                                name={`ticket_config.${ageLabel}.colour.dark`}
+                                width={ticketImageWidth / 2 - 5}
+                              />
+                            </Stack>
                           </>
-                        </ImgUpload>
+  
                       }
-                      rules={requiredRules}
-                    />
-                    {
-                      !eventPublished &&
-                        <>
-                          <Typography
-                            component='label'
-                            htmlFor={`qrcode-colour-${ageLabel}`}
-                            variant="subtitle1"
-                          >
-                            QRCode Colour:
-                          </Typography>
-                          <Stack
-                            direction="row"
-                            id={`qrcode-colour-${ageLabel}`}
-                            justifyContent="center"
-                            spacing={1}
-                          >
-                            <ControlledColourPicker
-                              control={control}
-                              height={ticketImageHeight}
-                              name={`ticket_config.${ageLabel}.colour.light`}
-                              width={ticketImageWidth / 2 - 5}
-                            />
-                            <ControlledColourPicker
-                              control={control}
-                              height={ticketImageHeight}
-                              name={`ticket_config.${ageLabel}.colour.dark`}
-                              width={ticketImageWidth / 2 - 5}
-                            />
-                          </Stack>
-                        </>
-
-                    }
-                  </Stack>
-                </AccordionDetails>
-              </Accordion>
-            )
+                    </Stack>
+                  </AccordionDetails>
+                </Accordion>
+              )
+            ) : null
           }
           <Typography variant="h6">
             Registration / Email Information
@@ -947,7 +967,7 @@ export default function EventForm({ event, onSave, isNew }) {
           </Stack>
           <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
             <Button
-              disabled={submitDisabled}
+              // disabled={submitDisabled}
               fullWidth
               type="submit"
               variant="contained"

@@ -342,9 +342,11 @@
                                           >Thanks for registering - your registration number is
                                           {{registrationNumber}}.</span
                                         ><br /><br />
+                                        {{#if ticketRequired}}
                                         <span style="font-size: 16px"
                                           ><em>Please note this email cannot be used for entry.</em></span
                                         >
+                                        {{/if}}
                                       </p>
                                     </div>
                                   </div>
@@ -359,6 +361,7 @@
                 </tr>
               </tbody>
             </table>
+            {{#if ticketRequired}}
             <table
               class="row row-2"
               align="center"
@@ -540,10 +543,13 @@
                                       "
                                     >
                                       <p style="margin: 0; mso-line-height-alt: 24px">
+                                        {{#if eTickets}}
                                         <span style="font-size: 16px"
                                           >Your ticket will be emailed to you upon completion of
                                           <strong>full payment.</strong></span
-                                        ><br /><br /><em
+                                        ><br /><br />
+                                        {{/if}}
+                                        <em
                                           ><span style="font-size: 16px"
                                             >Payment can be made at the Church office.</span
                                           ></em
@@ -1031,6 +1037,7 @@
                 </tr>
               </tbody>
             </table>
+            {{/if}}
             <table
               class="row row-7"
               align="center"

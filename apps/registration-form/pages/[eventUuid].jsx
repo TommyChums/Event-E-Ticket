@@ -519,7 +519,7 @@ export default function RegistrationForm({ event }) {
                     const base_field_name = `additional_information.${field_name}`;
                     return (
                       <Stack key={field_name} spacing={2} textAlign="left">
-                        <InputLabel style={{ paddingLeft: '1px' }} id={`select-label-${field_name}`}>{field_label}</InputLabel>
+                        <InputLabel style={{ paddingLeft: '1px', textAlign: 'center' }} id={`select-label-${field_name}`}>{field_label}</InputLabel>
                         <Controller
                           control={control}
                           name={`${base_field_name}.address_1`}

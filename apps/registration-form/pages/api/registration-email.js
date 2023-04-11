@@ -10,6 +10,7 @@ import moment from 'moment';
 import fs from 'fs';
 
 import supabase from "../../lib/supabase";
+import { isEmpty } from 'lodash';
 
 const auththenticatedSupabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -99,7 +100,11 @@ export default async function handler(req, res) {
 
     const event = registeredUser.event;
 
+    const ticketTemplate = event.ticket_template || {};
+    const eTickets = !isEmpty(ticketTemplate);
+    
     const paymentConfig = event.payment_config || {};
+    const ticketRequired = !isEmpty(paymentConfig);
     const priceByAge = paymentConfig.price_by_age || {};
     const earlyBirdPriceByAge = paymentConfig.early_bird_price_by_age || {};
     const earlyBirdDate = paymentConfig.early_bird_date || null;
@@ -141,7 +146,7 @@ export default async function handler(req, res) {
     // const compileRegistration = pug.compileFile(registrationPugPath);
     const compileRegistration = Handlebars.compile(registrationPugPath);
 
-    const ticketHtml = compileRegistration({
+    const registrationHtml = compileRegistration({
       eventTitle: event.name?.toUpperCase(),
       userFirstName: registeredUser.first_name,
       eventStartTime: moment(event.start_date).utcOffset(-4).format('LLLL') + " AST",
@@ -153,6 +158,8 @@ export default async function handler(req, res) {
       ticketPrice: userPrice,
       earlyBirdTicketPrice: earlyUserPrice,
       earlyBirdDate: moment(earlyBirdDate).utcOffset(-4).format('ddd Do MMM, hh:mm A') + " AST",
+      eTickets,
+      ticketRequired,
       isBeforeEarlyBird,
       eventVenueLocationImg,
       seeYouThereImage,
@@ -177,12 +184,12 @@ export default async function handler(req, res) {
       from: '"Reformation Life Centre" <techteam@reformationlifecentre.org>', // sender address
       to: registeredUser.email, // list of receivers
       subject: 'Thank You for Registering', // Subject line
-      html: ticketHtml, // html body
+      html: registrationHtml, // html body
     }).then(info => {
       console.log(JSON.stringify({ info }));
     }).catch(console.error);
 
-    return res.status(200).json({ message: `Successfully send email to ${registeredUser.email}` });
+    return res.status(200).json({ message: `Successfully sent email to ${registeredUser.email}` });
   } else {
     return res.status(405).json({ message: 'Method not allowed' });
   }
