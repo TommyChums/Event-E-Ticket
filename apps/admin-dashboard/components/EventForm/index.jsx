@@ -967,7 +967,7 @@ export default function EventForm({ event, onSave, isNew }) {
           </Stack>
           <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
             <Button
-              // disabled={submitDisabled}
+              disabled={submitDisabled}
               fullWidth
               type="submit"
               variant="contained"
