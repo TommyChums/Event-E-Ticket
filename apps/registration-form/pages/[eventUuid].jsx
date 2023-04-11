@@ -4,6 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { v4, parse } from 'uuid';
 import moment from 'moment';
 import momentTimeZone from 'moment-timezone';
+import find from 'lodash/find';
 import isEmpty from 'lodash/isEmpty';
 import map from 'lodash/map';
 import Alert from '@mui/material/Alert';
@@ -411,7 +412,7 @@ export default function RegistrationForm({ event }) {
                       <Controller
                         key={field_name}
                         control={control}
-                        defaultValue={additionalInfoInput?.default_value || options[0]?.value || options[0] || ''}
+                        defaultValue={additionalInfoInput?.default_value}
                         name={`additional_information.${field_name}`}
                         render={({ field }) => (
                           <Container
@@ -448,22 +449,16 @@ export default function RegistrationForm({ event }) {
                           </Container>
                         )}
                         rules={{
-                          validate: {
-                            requiredSelected: (val = []) => val.length >= (options_required || 0) ? null : 'Required',
-                          },
+                          required: required ? 'Required' : false,
                         }}
                       />
                     );
                   } else if (field_type === 'select' && !isEmpty(options)) {
-                    const userTimeZone = momentTimeZone.tz.guess();
-
-                    const defaultValue = options[0];
-
                     return (
                       <Controller
                         key={field_name}
                         control={control}
-                        defaultValue={defaultValue}
+                        defaultValue={additionalInfoInput?.default_value}
                         name={`additional_information.${field_name}`}
                         render={({ field }) => (
                           <FormControl fullWidth>
@@ -515,6 +510,99 @@ export default function RegistrationForm({ event }) {
                           required: required ? 'Required' : false,
                         }}
                       />
+                    );
+                  } else if (field_type === 'address') {
+                    const userTimeZone = momentTimeZone.tz.guess();
+
+                    const defaultCountryValue = countries.find((opt) => opt === timeZoneToCountry[userTimeZone]) || countries[0];
+                    
+                    const base_field_name = `additional_information.${field_name}`;
+                    return (
+                      <Stack key={field_name} spacing={2} textAlign="left">
+                        <InputLabel style={{ paddingLeft: '1px' }} id={`select-label-${field_name}`}>{field_label}</InputLabel>
+                        <Controller
+                          control={control}
+                          name={`${base_field_name}.address_1`}
+                          render={({ field }) => (
+                            <TextField
+                              {...field}
+                              disabled={registrationDisabled}
+                              error={!!errors[`${base_field_name}.address_1`]}
+                              helperText={errors[`${base_field_name}.address_1`]?.message}
+                              id={`outlined-${`${base_field_name}.address_1`}`}
+                              label={"Address 1" + (required ? " *" : "")}
+                              variant="outlined"
+                              type="text"
+                            />
+                          )}
+                          rules={{
+                            required: required ? 'Required' : false,
+                          }}
+                        />
+                        <Controller
+                          control={control}
+                          name={`${base_field_name}.address_2`}
+                          render={({ field }) => (
+                            <TextField
+                              {...field}
+                              disabled={registrationDisabled}
+                              error={!!errors[`${base_field_name}.address_2`]}
+                              helperText={errors[`${base_field_name}.address_2`]?.message}
+                              id={`outlined-${`${base_field_name}.address_2`}`}
+                              label="Address 2"
+                              variant="outlined"
+                              type="text"
+                            />
+                          )}
+                        />
+                        <Stack direction={isSmallScreen ? "column" : "row"} spacing={2}>
+                          <Controller
+                            control={control}
+                            name={`${base_field_name}.city`}
+                            render={({ field }) => (
+                              <TextField
+                                {...field}
+                                disabled={registrationDisabled}
+                                error={!!errors[`${base_field_name}.city`]}
+                                helperText={errors[`${base_field_name}.city`]?.message}
+                                id={`outlined-${`${base_field_name}.city`}`}
+                                label={"City" + (required ? " *" : "")}
+                                variant="outlined"
+                                type="text"
+                                fullWidth
+                              />
+                            )}
+                            rules={{
+                              required: required ? 'Required' : false,
+                            }}
+                          />
+                          {!find(additionalFormFields, [ 'field_type', 'country' ]) ? (
+                            <Controller
+                              control={control}
+                              defaultValue={defaultCountryValue}
+                              name={`${base_field_name}.country`}
+                              render={({ field }) => (
+                                <FormControl fullWidth>
+                                  <InputLabel id={`select-label-${field_name}`}>{"Country" + (required ? " *" : "")}</InputLabel>
+                                  <Select
+                                    {...field}
+                                    labelId={`select-label-${base_field_name}-country`}
+                                    disabled={registrationDisabled}
+                                    label={"Country" + (required ? " *" : "")}
+                                  >
+                                    {map(countries, (option) => (
+                                      <MenuItem key={option} value={option}>{option}</MenuItem>
+                                    ))}
+                                  </Select>
+                                </FormControl>
+                              )}
+                              rules={{
+                                required: required ? 'Required' : false,
+                              }}
+                            />
+                          ) : null}
+                        </Stack>
+                      </Stack>
                     );
                   }
                 })

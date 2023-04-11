@@ -26,6 +26,8 @@ function getValueRenderer(fieldType) {
     return (value = []) => value.join(', ');
   } else if (fieldType === 'date') {
     return (value) => value ? moment(value).format('LLL') : '';
+  } else if (fieldType === 'address') {
+    return (value) => value && typeof value === 'object' ? Object.keys(value).sort().map((key) => value[key]).join(' ') : value || '';
   }
 
   return (value) => value;

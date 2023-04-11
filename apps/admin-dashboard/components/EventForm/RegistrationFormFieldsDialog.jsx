@@ -372,6 +372,10 @@ export default function RegistrationFormFieldsDialog(props) {
                             value: 'text',
                           },
                           {
+                            label: 'Address',
+                            value: 'address',
+                          },
+                          {
                             label: 'Checkbox',
                             value: 'checkbox',
                           },
