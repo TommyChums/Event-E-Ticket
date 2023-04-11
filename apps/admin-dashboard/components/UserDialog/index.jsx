@@ -14,6 +14,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import InputAdornment from '@mui/material/InputAdornment';
 import InputLabel from '@mui/material/InputLabel';
 import OutlinedInput from '@mui/material/OutlinedInput';
+// import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
@@ -35,6 +36,7 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
   const [ updating, setUpdating ] = useState(false);
   const [ issuingTicket, setIssuingTicket ] = useState(false);
 
+  const eTicketsEnabled = !isEmpty(event.ticket_template)
   const canBeDeleted = isEmpty(user.payments) && !user.ticket_issued;
 
   useEffect(() => {
@@ -104,34 +106,102 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
   const handleIssueTicket = async () => {
     setIssuingTicket(true);
     let issuingId = null;
+    try {
+      let userTicketNum = '';
 
-    enqueueSnackbar(`Issuing ticket to ${user.email}`, {
-      variant: 'info',
-      persist: true,
-      action: (id) => {
-        issuingId = id;
+      // if (!eTicketsEnabled) {
+      //   await confirm({
+      //     title: 'Enter Ticket Number',
+      //     content: (
+      //       <TextField
+      //         fullWidth
+      //         helperText="Please enter a number only"
+      //         onChange={({ target }) => {
+      //           const { value } = target;
+      //           userTicketNum = +value
+      //         }}
+      //         inputProps={{
+      //           inputMode: 'numeric',
+      //           pattern: '[0-9]*'
+      //         }}
+      //       />
+      //     ),
+      //     confirmationText: 'Update',
+      //     cancellationText: 'Cancel',
+      //     allowClose: false,
+      //     confirmationButtonProps: {
+      //       variant: 'contained',
+      //     },
+      //     cancellationButtonProps: {
+      //       variant: 'outlined'
+      //     }
+      //   });
+
+      //   if (userTicketNum !== '' && !isFinite(userTicketNum)) {
+      //     enqueueSnackbar('Invalid ticket number. Leave Empty to Auto Generate', {
+      //       variant: 'error',
+      //       persist: true,
+      //       action: (id) => {
+      //         issuingId = id;
+      //       }
+      //     });
+
+      //     throw new Error('Invalid Ticket Number');
+      //   }
+      // }
+
+      if (eTicketsEnabled) {
+        enqueueSnackbar(`Issuing ticket to ${user.email}`, {
+          variant: 'info',
+          persist: true,
+          action: (id) => {
+            issuingId = id;
+          }
+        });
+      } else {
+        enqueueSnackbar(`Updating ${user.email}`, {
+          variant: 'info',
+          persist: true,
+          action: (id) => {
+            issuingId = id;
+          }
+        });
       }
-    });
 
-    const {
-      data: {
-        user: issuedUser
-      },
-      error: issueError
-    } = await makeAuthenticatedPostRequest('/api/issue-ticket', { user_uuid: user.uuid });
+      const {
+        data: {
+          user: issuedUser
+        },
+        error: issueError
+      } = await makeAuthenticatedPostRequest('/api/issue-ticket', { user_uuid: user.uuid, ticket_num: userTicketNum });
 
-    closeSnackbar(issuingId);
+      closeSnackbar(issuingId);
 
-    if (issueError) {
-      enqueueSnackbar(`Error isuing ticket to ${user.email}: ${issueError}`, {
-        variant: 'error'
-      });
-    } else {
-      enqueueSnackbar(`Ticket successfully issued to ${user.email}!`, {
-        variant: 'success'
-      });
+      if (issueError) {
+        if (eTicketsEnabled) {
+          enqueueSnackbar(`Error isuing ticket to ${user.email}: ${issueError}`, {
+            variant: 'error'
+          });
+        } else {
+          enqueueSnackbar(`Error updating ${user.email}: ${issueError}`, {
+            variant: 'error'
+          });
+        }
+      } else {
+        if (eTicketsEnabled) {
+          enqueueSnackbar(`Ticket successfully issued to ${user.email}!`, {
+            variant: 'success'
+          });
+        } else {
+          enqueueSnackbar(`${user.email} has been updated!`, {
+            variant: 'success'
+          });
+        }
 
-      updateUser(issuedUser);
+        updateUser(issuedUser);
+      }
+    } catch (e) {
+      console.log('Issuing ticket cancelled');
     }
 
     setIssuingTicket(false);
@@ -187,7 +257,7 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
 
   return (
     <Dialog {...props} onClose={onClose} open={open}>
-      { user.ticket_issued && <Alert severity="success">Ticket Successfully Issued</Alert> }
+      { user.ticket_issued && <Alert severity="success">{eTicketsEnabled ? "Ticket Successfully Issued" : "User Successfully Updated"}</Alert> }
       <DialogTitle style={{ padding: '16px 12px 0px' }}>{user.first_name} {user.last_name}</DialogTitle>
       <DialogContent style={{ padding: '20px 12px' }}>
         <Stack direction="column" spacing={2} width="100%">
@@ -236,7 +306,7 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
             sx={{ width: '100%' }}
             variant="contained"
           >
-            {issuingTicket ? 'Issuing Ticket' : 'Issue Ticket'}
+            {issuingTicket ? (eTicketsEnabled ? 'Issuing Ticket' : 'Updating User') : (eTicketsEnabled ? 'Issue Ticket' : 'Ticket Issued')}
           </Button>
           {
             canBeDeleted &&

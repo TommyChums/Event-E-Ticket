@@ -63,22 +63,7 @@ export default async function handler(req, res) {
 
     const event = registeredUser.event;
 
-    const paymentConfig = event.payment_config || {};
-
-    const userAgeMapping = findKey(paymentConfig.age_mapping, (ages) => {
-      const { from: ageFrom, to: ageTo } = ages;
-      return registeredUser.age >= ageFrom && registeredUser.age <= ageTo;
-    });
-
-    const { bucket, key, config } = event.ticket_template[userAgeMapping] || {};
-
-    const { data: ticketTemplate, error: downloadError } = await supabase.storage.from(bucket).download(key);
-
-    if (downloadError) {
-      return res.status(500).json({ error: downloadError.message });
-    }
-
-    const ticketTemplateBuffer = Buffer.from( await ticketTemplate.arrayBuffer() );
+    const eTicket = !isEmpty(event.ticket_template);
 
     const { count } = await supabase.from('registered-users')
       .select(undefined, { count: 'exact', head: true })
@@ -91,122 +76,141 @@ export default async function handler(req, res) {
       ticketNumber = `0${ticketNumber}`;
     }
 
-    await sharp({
-      text: {
-        // eslint-disable-next-line max-len
-        text: `<span size="42pt" weight="bold" foreground="${config.colour?.dark?.hex}">${ticketNumber}</span>`,
-        width: config.position?.number?.w,
-        height: config.position?.number?.h,
-        rgba: true
-      }
-    }).toFile('/tmp/number.png');
-
-    const qrCodeInfo = `${registeredUser.registration_number}-${ticketNumber}`;
-
-    const qrCodeOptions = {};
-
-    if (config.position) {
-      qrCodeOptions.width = config.position?.qrcode?.w;
-    }
-
-    if (config.colour) {
-      qrCodeOptions.color = {
-        light: config.colour?.light?.hex,
-        dark: config.colour?.dark?.hex
-      };
-    }
-
-    await QRCode.toFile('/tmp/qrcode.png', qrCodeInfo, qrCodeOptions);
-
-    const qrCodeImg = await sharp(ticketTemplateBuffer).composite([
-      {
-        input: '/tmp/qrcode.png',
-        top: Math.ceil(config.position?.qrcode?.y || 0),
-        left: Math.ceil(config.position?.qrcode?.x || 0)
-      },
-      {
-        input: '/tmp/number.png',
-        top: Math.ceil(config.position?.number?.y || 0),
-        left: Math.ceil(config.position?.number?.x || 0)
-      }
-    ]).toBuffer().then((buffer) => buffer.toString('base64'));
-
-    const primaryColour = event.branding?.primary_colour?.hex || '#020648';
-
-    const { publicURL: logoUrl } = supabase.storage.from(event.logo?.bucket).getPublicUrl(event.logo?.key);
-
-    const { publicURL: rlcLogo } = supabase.storage.from('church-assets').getPublicUrl('logo.png');
-
-    const { publicURL: seeYouThereImage } = supabase.storage.from('church-assets')
-      .getPublicUrl('email-images/see-you-there.png');
-
-    const [
-      calendarIcon,
-      locationIcon,
-      facebookIcon,
-      youtubeIcon
-    ] = [
-      getImgUrl('calendar', primaryColour),
-      getImgUrl('location', primaryColour),
-      getImgUrl('facebook', primaryColour),
-      getImgUrl('youtube', primaryColour)
-    ];
-
-    const eventTicketHtmlPath = fs.readFileSync(
-      path.join(process.cwd(), 'assets/email-templates/event-ticket.html')
-    ).toString();
-
-    const compileEventTicket = Handlebars.compile(eventTicketHtmlPath);
-
-    const ticketHtml = compileEventTicket({
-      eventTitle: event.name?.toUpperCase(),
-      userFirstName: registeredUser.first_name,
-      registrationNumber: registeredUser.registration_number,
-      replySubject: `Event Ticket: ${event.name}`,
-      seeYouThereImage,
-      logoUrl,
-      rlcLogo,
-      primaryColour,
-      calendarIcon,
-      locationIcon,
-      facebookIcon,
-      youtubeIcon
-    });
-
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: 'techteam@reformationlifecentre.org',
-        pass: process.env.EMAIL_PASS
-      }
-    });
-
-    try {
-      await transporter.sendMail({
-        // sender address
-        from: '"Reformation Life Centre" <techteam@reformationlifecentre.org>',
-        // list of receivers
-        to: registeredUser.email,
-        // Subject line
-        subject: `Ticket for: ${event.name}`,
-        // html body
-        html: ticketHtml,
-        attachments: [
-          {
-            filename: 'Ticket.png',
-            content: qrCodeImg,
-            encoding: 'base64'
-          }
-        ]
-      }).then((info) => {
-        console.log(JSON.stringify({ info }));
-      }).catch((e) => {
-        throw e;
+    if (eTicket) {
+      const paymentConfig = event.payment_config || {};
+  
+      const userAgeMapping = findKey(paymentConfig.age_mapping, (ages) => {
+        const { from: ageFrom, to: ageTo } = ages;
+        return registeredUser.age >= ageFrom && registeredUser.age <= ageTo;
       });
-    } catch (e) {
-      console.error(e);
-
-      return res.status(500).json({ error: e.message });
+  
+      const { bucket, key, config } = event.ticket_template[userAgeMapping] || {};
+  
+      const { data: ticketTemplate, error: downloadError } = await supabase.storage.from(bucket).download(key);
+  
+      if (downloadError) {
+        return res.status(500).json({ error: downloadError.message });
+      }
+  
+      const ticketTemplateBuffer = Buffer.from( await ticketTemplate.arrayBuffer() );
+  
+      await sharp({
+        text: {
+          // eslint-disable-next-line max-len
+          text: `<span size="42pt" weight="bold" foreground="${config.colour?.dark?.hex}">${ticketNumber}</span>`,
+          width: config.position?.number?.w,
+          height: config.position?.number?.h,
+          rgba: true
+        }
+      }).toFile('/tmp/number.png');
+  
+      const qrCodeInfo = `${registeredUser.registration_number}-${ticketNumber}`;
+  
+      const qrCodeOptions = {};
+  
+      if (config.position) {
+        qrCodeOptions.width = config.position?.qrcode?.w;
+      }
+  
+      if (config.colour) {
+        qrCodeOptions.color = {
+          light: config.colour?.light?.hex,
+          dark: config.colour?.dark?.hex
+        };
+      }
+  
+      await QRCode.toFile('/tmp/qrcode.png', qrCodeInfo, qrCodeOptions);
+  
+      const qrCodeImg = await sharp(ticketTemplateBuffer).composite([
+        {
+          input: '/tmp/qrcode.png',
+          top: Math.ceil(config.position?.qrcode?.y || 0),
+          left: Math.ceil(config.position?.qrcode?.x || 0)
+        },
+        {
+          input: '/tmp/number.png',
+          top: Math.ceil(config.position?.number?.y || 0),
+          left: Math.ceil(config.position?.number?.x || 0)
+        }
+      ]).toBuffer().then((buffer) => buffer.toString('base64'));
+  
+      const primaryColour = event.branding?.primary_colour?.hex || '#020648';
+  
+      const { publicURL: logoUrl } = supabase.storage.from(event.logo?.bucket).getPublicUrl(event.logo?.key);
+  
+      const { publicURL: rlcLogo } = supabase.storage.from('church-assets').getPublicUrl('logo.png');
+  
+      const { publicURL: seeYouThereImage } = supabase.storage.from('church-assets')
+        .getPublicUrl('email-images/see-you-there.png');
+  
+      const [
+        calendarIcon,
+        locationIcon,
+        facebookIcon,
+        youtubeIcon
+      ] = [
+        getImgUrl('calendar', primaryColour),
+        getImgUrl('location', primaryColour),
+        getImgUrl('facebook', primaryColour),
+        getImgUrl('youtube', primaryColour)
+      ];
+  
+      const eventTicketHtmlPath = fs.readFileSync(
+        path.join(process.cwd(), 'assets/email-templates/event-ticket.html')
+      ).toString();
+  
+      const compileEventTicket = Handlebars.compile(eventTicketHtmlPath);
+  
+      const ticketHtml = compileEventTicket({
+        eventTitle: event.name?.toUpperCase(),
+        userFirstName: registeredUser.first_name,
+        registrationNumber: registeredUser.registration_number,
+        replySubject: `Event Ticket: ${event.name}`,
+        seeYouThereImage,
+        logoUrl,
+        rlcLogo,
+        primaryColour,
+        calendarIcon,
+        locationIcon,
+        facebookIcon,
+        youtubeIcon
+      });
+  
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: 'techteam@reformationlifecentre.org',
+          pass: process.env.EMAIL_PASS
+        }
+      });
+  
+      try {
+        await transporter.sendMail({
+          // sender address
+          from: '"Reformation Life Centre" <techteam@reformationlifecentre.org>',
+          // list of receivers
+          to: registeredUser.email,
+          // Subject line
+          subject: `Ticket for: ${event.name}`,
+          // html body
+          html: ticketHtml,
+          attachments: [
+            {
+              filename: 'Ticket.png',
+              content: qrCodeImg,
+              encoding: 'base64'
+            }
+          ]
+        }).then((info) => {
+          console.log(JSON.stringify({ info }));
+        }).catch((e) => {
+          throw e;
+        });
+      } catch (e) {
+        console.error(e);
+  
+        return res.status(500).json({ error: e.message });
+      }
     }
 
     const { data: updatedUser, error: updateError } = await supabase.from('registered-users').update({

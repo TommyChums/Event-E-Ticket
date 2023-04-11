@@ -8,6 +8,7 @@ import { ColorPicker, toColor } from 'react-color-palette';
 import { usePlacesWidget } from 'react-google-autocomplete';
 import { v4 } from 'uuid';
 import moment from 'moment';
+import isEmpty from 'lodash/isEmpty';
 import isEqual from 'lodash/isEqual';
 import map from 'lodash/map';
 import startCase from 'lodash/startCase';
@@ -255,7 +256,7 @@ export default function EventForm({ event, onSave, isNew }) {
   const isSmallScreen = useMediaQuery('(max-width:780px)');
   const confirm = useConfirm();
 
-  const [ eTickets, setETickets ] = useState(true);
+  const [ eTickets, setETickets ] = useState(!isEmpty(event.ticket_template));
   const [ bannerImageWidth, setBannerImageWidth ] = useState(0);
   const [ bannerImageHeight, setBannerImageHeight ] = useState(BANNER_IMAGE_HEIGHT);
   const [ ticketImageWidth, setTicketImageWidth ] = useState(0);
@@ -527,7 +528,6 @@ export default function EventForm({ event, onSave, isNew }) {
       variant: 'info'
     });
 
-    console.log(data)
     const { data: newEvent, error } = await supabase.from('events')
       [isNew ? 'insert' : 'update']({
         ...data,
@@ -542,7 +542,7 @@ export default function EventForm({ event, onSave, isNew }) {
       enqueueSnackbar(`Event ${isNew ? 'Created' : 'Updated'}`, {
         variant: 'success'
       });
-      console.log('newEvent', { ...newEvent });
+
       onSave(newEvent);
     }
     setSaving(false);
