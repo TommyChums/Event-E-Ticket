@@ -7,6 +7,7 @@ import momentTimeZone from 'moment-timezone';
 import find from 'lodash/find';
 import isEmpty from 'lodash/isEmpty';
 import map from 'lodash/map';
+import reduce from 'lodash/reduce';
 import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
@@ -81,8 +82,10 @@ export default function RegistrationForm({ event }) {
     email: '',
     first_name: '',
     last_name: '',
+    phone_number: '',
     date_of_birth: null,
-  }), []);
+    additional_information: reduce(additionalFormFields, (next, { field_name, default_value = null }) => { next[field_name] = default_value; return next; }, {}),
+  }), [ additionalFormFields ]);
 
   const {
     control,
@@ -120,7 +123,7 @@ export default function RegistrationForm({ event }) {
         age,
         registered_event: event.uuid,
         registration_number: registrationNumberFromUuid(userUuid),
-      }]).single();
+      }]).select().single();
 
     if (error) {
       setInfo({ type: 'error', message: `Error while registering: ${error.message}` });
@@ -401,6 +404,7 @@ export default function RegistrationForm({ event }) {
                           />
                         )}
                         rules={{
+                          required: required ? 'Required' : false,
                           validate: {
                             requiredSelected: (val = []) => val.length >= (options_required || 0) ? null : 'Required',
                           },

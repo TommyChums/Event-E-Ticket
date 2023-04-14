@@ -223,9 +223,7 @@ export default function RegistrationFormFieldsDialog(props) {
       errors,
       isValid
     },
-    setValue,
     watch,
-    trigger,
   } = useForm({
     mode: 'onBlur',
     reValidateMode: 'onChange',
@@ -246,13 +244,12 @@ export default function RegistrationFormFieldsDialog(props) {
   const onSubmit = (data) => {
     const newData = { ...data };
 
-    forEach(formFieldsToDelete, (_, ageLabel) => {
-      delete newData?.age_mapping[ageLabel];
-      delete newData?.price_by_age[ageLabel];
+    forEach(formFieldsToDelete, (_, fieldName) => {
+      delete newData[fieldName];
     });
 
     setFormFieldsToDelete({});
-    onChange(data);
+    onChange(newData);
     onClose();
   };
 
@@ -269,6 +266,8 @@ export default function RegistrationFormFieldsDialog(props) {
     }
 
     const newCasedFormField = snakeCase(newFormField);
+
+    if (formFields[newCasedFormField]) return;
 
     setFormFields({
       [newCasedFormField]: {
@@ -356,8 +355,9 @@ export default function RegistrationFormFieldsDialog(props) {
                       <ControlledTextInput
                         control={control}
                         defaultValue={!!fieldConfig.can_delete}
-                        name={`${fieldName}.order`}
+                        name={`${fieldName}.can_delete`}
                         style={{ display: 'none' }}
+                        required={false}
                       />
                       <ControlledSelect
                         control={control}

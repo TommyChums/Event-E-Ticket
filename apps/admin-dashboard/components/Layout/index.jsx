@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
+import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import Backdrop from '@mui/material/Backdrop';
@@ -14,13 +15,15 @@ import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import supabase from '../../lib/supabase';
 import isAdminUser from '../../lib/helpers/isAdminUser';
 
 export default function Layout({ children }) {
+  const supabase = useSupabaseClient();
+  const user = useUser();
+
   const router = useRouter();
 
-  const isAdmin = isAdminUser();
+  const isAdmin = isAdminUser(user);
 
   const pages = useMemo(() => {
     const arr = [ { label: 'Existing Events', path: '/events' } ];

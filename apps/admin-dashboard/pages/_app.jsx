@@ -1,17 +1,17 @@
 import '../assets/css/global.css';
 import 'react-resizable/css/styles.css';
 import 'react-color-palette/lib/css/styles.css';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useRouter } from 'next/router';
 import { SnackbarProvider } from 'notistack';
 import { ConfirmProvider } from 'material-ui-confirm';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { createBrowserSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { SessionContextProvider, useUser, useSupabaseClient } from '@supabase/auth-helpers-react';
 
 import Layout from '../components/Layout';
-import updateSupabaseCookie from '../lib/helpers/updateSupabaseCookie';
 import EventsProvider from '../lib/state/context/AppContext';
-import supabase from '../lib/supabase';
 import useEventsContext from '../lib/hooks/useEventsContext';
 import { eventsErrorAction, eventsLoadingAction, receivedEventsAction } from '../lib/state/actions/events';
 
@@ -29,10 +29,10 @@ const theme = createTheme({
 });
 
 function ContextualisedApp({ children, notFound }) {
+  const supabase = useSupabaseClient();
+  const authenticatedUser = useUser();
   const pollRef = useRef(null);
   const { dispatch } = useEventsContext();
-
-  const authenticatedUser = supabase.auth.user();
 
   useEffect(() => {
     if (!authenticatedUser) {
@@ -62,7 +62,7 @@ function ContextualisedApp({ children, notFound }) {
     return () => {
       clearInterval(pollRef.current);
     };
-  }, [ authenticatedUser, dispatch ]);
+  }, [ authenticatedUser, dispatch, supabase ]);
 
 
   if (notFound) {
@@ -90,22 +90,7 @@ ContextualisedApp.defaultProps = {
 export default function App({ Component, pageProps }) {
   const router = useRouter();
 
-  useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      await updateSupabaseCookie(event, session);
-      const needsPasswordUpdate = session && session.user?.user_metadata?.temp_password;
-
-      if (!session && router.pathname !== '/login' || needsPasswordUpdate) {
-        router.push('/login');
-      } else if (session && router.pathname === '/login') {
-        router.push('/events');
-      }
-    });
-
-    return () => {
-      authListener?.unsubscribe();
-    };
-  }, [ router ]);
+  const [ supabaseClient ] = useState(() => createBrowserSupabaseClient());
 
   useEffect(() => {
     if (pageProps?.notFound) {
@@ -114,17 +99,22 @@ export default function App({ Component, pageProps }) {
   }, [ pageProps, router ]);
 
   return (
-    <EventsProvider>
-      <ThemeProvider theme={theme}>
-        <ConfirmProvider>
-          <SnackbarProvider maxSnack={3}>
-            <ContextualisedApp notFound={pageProps?.notFound}>
-              <Component {...pageProps} />
-            </ContextualisedApp>
-          </SnackbarProvider>
-        </ConfirmProvider>
-      </ThemeProvider>
-    </EventsProvider>
+    <SessionContextProvider
+      supabaseClient={supabaseClient}
+      initialSession={pageProps.initialSession}
+    >
+      <EventsProvider>
+        <ThemeProvider theme={theme}>
+          <ConfirmProvider>
+            <SnackbarProvider maxSnack={3}>
+              <ContextualisedApp notFound={pageProps?.notFound}>
+                <Component {...pageProps} />
+              </ContextualisedApp>
+            </SnackbarProvider>
+          </ConfirmProvider>
+        </ThemeProvider>
+      </EventsProvider>
+    </SessionContextProvider>
   );
 };
 

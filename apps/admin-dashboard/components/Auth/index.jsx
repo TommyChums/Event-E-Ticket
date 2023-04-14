@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useRouter } from 'next/router';
+import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import { Alert } from '@mui/material';
 
-import supabase from '../../lib/supabase';
-
 export default function Auth({ redirectTo, updatePassword }) {
+  const supabase = useSupabaseClient();
+  const user = useUser();
+
   const [ loading, setLoading ] = useState(false);
   const [ email, setEmail ] = useState('');
   const [ password, setPassword ] = useState('');
@@ -20,8 +22,6 @@ export default function Auth({ redirectTo, updatePassword }) {
   const redirectTimeoutRef = useRef(null);
 
   const router = useRouter();
-
-  const user = supabase.auth.user();
 
   const buttonText = useMemo(() => {
     let returnText = 'Login';
@@ -53,14 +53,7 @@ export default function Auth({ redirectTo, updatePassword }) {
   useEffect(() => {
     clearTimeout(redirectTimeoutRef.current);
 
-    const session = supabase.auth.session();
-
-    if (session && !updatePassword) {
-      // For some reason the server isn't seeing
-      // the session, so let's clear it and sign
-      // back in
-      supabase.auth.signOut();
-    } else if (updatePassword) {
+    if (updatePassword) {
       setPassword('');
       setConfirmedPassword('');
     }
@@ -86,7 +79,7 @@ export default function Auth({ redirectTo, updatePassword }) {
         redirect();
       }
     } else {
-      const { error: signInError } = await supabase.auth.signIn({ email, password });
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) {
         setError(signInError.message);
         setLoading(false);

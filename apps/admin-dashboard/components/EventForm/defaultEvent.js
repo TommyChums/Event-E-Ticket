@@ -6,8 +6,8 @@ const defaultEvent = {
   name: 'My Event',
   is_online: false,
   payment_config: {
-    age_mapping: { public: { to: 999, from: 0 } },
-    price_by_age: { public: 0 },
+    age_mapping: { general: { to: 999, from: 0 } },
+    price_by_age: { general: 0 },
     early_bird_date: null,
     early_bird_price_by_age: {}
   },
@@ -35,7 +35,7 @@ const defaultEvent = {
     }
   },
   original_ticket_template: {
-    public: {
+    general: {
       key: '',
       bucket: 'event-ticket-templates',
       config: {

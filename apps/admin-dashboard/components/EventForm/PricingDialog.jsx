@@ -131,7 +131,7 @@ export default function PricingDialog(props) {
     });
 
     setAgeRangesToDelete({});
-    onChange(data);
+    onChange(newData);
     onClose();
   };
 

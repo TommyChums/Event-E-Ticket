@@ -55,8 +55,8 @@ export default function NewEvent() {
   );
 };
 
-export const getServerSideProps = protectedRoute((_, authenticatedSupabase) => {
-  const isAdmin = isAdminUser(authenticatedSupabase);
+export const getServerSideProps = protectedRoute((_, { user }) => {
+  const isAdmin = isAdminUser(user);
 
   if (isAdmin) {
     return { props: {} };

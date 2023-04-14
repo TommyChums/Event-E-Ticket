@@ -1,5 +1,6 @@
 import { useEffect, useState, memo, useRef } from 'react';
 import PropTypes from 'prop-types';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { useSnackbar } from 'notistack';
 import moment from 'moment';
 import escapeRegExp from 'lodash/escapeRegExp';
@@ -25,7 +26,6 @@ import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import Table from '../Table';
 import QrCodeScanner from '../QrCodeScanner';
 import RandomWheel from '../RandomWheel';
-import supabase from '../../lib/supabase';
 import getReadableTicketNumber from '../../lib/helpers/getReadableTicketNumber';
 
 const columns = [
@@ -64,6 +64,8 @@ const columns = [
 ];
 
 const PaymentsTableToolbar = (props) => {
+  const supabase = useSupabaseClient();
+
   const { enqueueSnackbar } = useSnackbar();
 
   const [ open, setOpen ] = useState(false);
@@ -104,7 +106,7 @@ const PaymentsTableToolbar = (props) => {
           const { data: updatedTicketUser, error } = await supabase.from('registered-users').update({
             scanned_in: true,
             updated_on: moment().toISOString()
-          }).eq('registration_number', regNumber).single();
+          }).eq('registration_number', regNumber).select().single();
 
           if (error || !updatedTicketUser) {
             enqueueSnackbar('Error confirming this ticket. Please try again', {

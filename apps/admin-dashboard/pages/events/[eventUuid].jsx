@@ -125,8 +125,8 @@ export default function EventManagementPage() {
   );
 };
 
-export const getServerSideProps = protectedRoute(async ({ query }, authenticatedSupabase) => {
-  const { count } = await authenticatedSupabase.from('events')
+export const getServerSideProps = protectedRoute(async ({ query }, { supabase }) => {
+  const { count } = await supabase.from('events')
     .select(undefined, { count: 'exact', head: true })
     .eq('uuid', query.eventUuid);
 

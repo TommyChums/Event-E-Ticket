@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { useSnackbar } from 'notistack';
 import { useConfirm } from 'material-ui-confirm';
 import { Controller, useController, useForm } from 'react-hook-form';
@@ -33,7 +34,6 @@ import PricingDialog from './PricingDialog';
 import ImgUpload from '../ImgUpload';
 import ResizableQrCode from '../ResizableImage';
 import ResizableNumber from '../ResizableImage';
-import supabase from '../../lib/supabase';
 import RegistrationFormFieldsDialog from './RegistrationFormFieldsDialog';
 
 const MAX_TICKET_WIDTH = 1650;
@@ -54,35 +54,6 @@ function preventEnterSubmit(e) {
   if (e.code.toLowerCase() === 'enter') {
     e.preventDefault();
   }
-};
-
-async function replaceStorageImg(b64ImgData, bucket, eventUuid, oldPath, pathBeforeUuid = '') {
-  const contentType = b64ImgData.split(';')[0].replace('data:', '');
-  const extension = contentType.split('/')[1];
-  const imgArrayBuffer = decode(b64ImgData.split(',')[1]);
-
-  const { data, error } = await supabase.storage.from(bucket)
-    .upload(
-      `${eventUuid}/${pathBeforeUuid}${v4()}.${extension}`,
-      imgArrayBuffer,
-      { contentType, upsert: true }
-    );
-
-  if (!error) {
-    // Remove old img
-    if (oldPath) {
-      const oldFileName = oldPath.split(`${bucket}/`).pop();
-
-      if (oldFileName) {
-        await supabase.storage.from(bucket).remove(oldFileName);
-      }
-    }
-  }
-
-  return {
-    imgKey: data?.Key,
-    error
-  };
 };
 
 function ControlledLocation({ control, name, defaultValue, rules, ...props }) {
@@ -251,6 +222,8 @@ ControlledColourPicker.defaultProps = {
 };
 
 export default function EventForm({ event, onSave, isNew }) {
+  const supabase = useSupabaseClient();
+
   const { enqueueSnackbar } = useSnackbar();
 
   const isSmallScreen = useMediaQuery('(max-width:780px)');
@@ -328,6 +301,35 @@ export default function EventForm({ event, onSave, isNew }) {
     required: 'Required'
   };
 
+  async function replaceStorageImg(b64ImgData, bucket, eventUuid, oldPath, pathBeforeUuid = '') {
+    const contentType = b64ImgData.split(';')[0].replace('data:', '');
+    const extension = contentType.split('/')[1];
+    const imgArrayBuffer = decode(b64ImgData.split(',')[1]);
+  
+    const { data, error } = await supabase.storage.from(bucket)
+      .upload(
+        `${eventUuid}/${pathBeforeUuid}${v4()}.${extension}`,
+        imgArrayBuffer,
+        { contentType, upsert: true }
+      );
+  
+    if (!error) {
+      // Remove old img
+      if (oldPath) {
+        const oldFileName = oldPath.split(`${bucket}/`).pop();
+  
+        if (oldFileName) {
+          await supabase.storage.from(bucket).remove(oldFileName);
+        }
+      }
+    }
+  
+    return {
+      imgKey: data?.path,
+      error
+    };
+  };
+
   const handleOnPublish = async () => {
     setSaving(true);
 
@@ -355,7 +357,7 @@ export default function EventForm({ event, onSave, isNew }) {
         .update({
           is_published: true,
           updated_on: moment().toISOString()
-        }).eq('uuid', event.uuid).single();
+        }).eq('uuid', event.uuid).select().single();
 
       if (error) {
         enqueueSnackbar(`Failed to publish event: ${error.message}`, {
@@ -533,7 +535,7 @@ export default function EventForm({ event, onSave, isNew }) {
       [isNew ? 'insert' : 'update']({
         ...data,
         updated_on: moment().toISOString()
-      }).eq('uuid', event.uuid).single();
+      }).eq('uuid', event.uuid).select().single();
 
     if (error) {
       enqueueSnackbar(error.message, {

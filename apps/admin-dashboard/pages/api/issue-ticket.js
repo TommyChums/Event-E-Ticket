@@ -1,3 +1,4 @@
+import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs'
 import QRCode from 'qrcode';
 import nodemailer from 'nodemailer';
 import Handlebars from 'handlebars';
@@ -8,37 +9,27 @@ import moment from 'moment';
 import sharp from 'sharp';
 import fs from 'fs';
 
-import supabase from '../../lib/supabase';
-
-function svgImgUrl(svgName, primaryColour) {
-  const { publicURL } = supabase.storage.from('church-assets')
-    .getPublicUrl(`email-images/${primaryColour}/${svgName}.png`);
-
-  return publicURL;
-};
-
-function getImgUrl(svgName, primaryColour) {
-  const colourFolder = primaryColour.replace('#', '');
-  return svgImgUrl(svgName, colourFolder);
-}
-
 export default async function handler(req, res) {
+  const supabase = createServerSupabaseClient({ req, res });
+
+  function svgImgUrl(svgName, primaryColour) {
+    const { data: { publicUrl } } = supabase.storage.from('church-assets')
+      .getPublicUrl(`email-images/${primaryColour}/${svgName}.png`);
+  
+    return publicUrl;
+  };
+  
+  function getImgUrl(svgName, primaryColour) {
+    const colourFolder = primaryColour.replace('#', '');
+    return svgImgUrl(svgName, colourFolder);
+  }
+
   if (req.method === 'POST') {
-    const authHeader = req.headers.authorization || '';
+    const { data: { session } } = await supabase.auth.getSession();
 
-    const bearerToken = `${authHeader.replace('Bearer ', '')}`;
-
-    const { user, error: authError } = await supabase.auth.api.getUser(bearerToken);
-
-    if (authError) {
+    if (!session || !session.user) {
       return res.status(401).json({ error: authError.message });
     }
-
-    supabase.auth.session = () => ({
-      access_token: bearerToken,
-      token_type: '',
-      user
-    });
 
     const body = req.body;
 
@@ -136,11 +127,11 @@ export default async function handler(req, res) {
   
       const primaryColour = event.branding?.primary_colour?.hex || '#020648';
   
-      const { publicURL: logoUrl } = supabase.storage.from(event.logo?.bucket).getPublicUrl(event.logo?.key);
+      const { data: { publicUrl: logoUrl } } = supabase.storage.from(event.logo?.bucket).getPublicUrl(event.logo?.key);
   
-      const { publicURL: rlcLogo } = supabase.storage.from('church-assets').getPublicUrl('logo.png');
+      const { data: { publicUrl: rlcLogo } } = supabase.storage.from('church-assets').getPublicUrl('logo.png');
   
-      const { publicURL: seeYouThereImage } = supabase.storage.from('church-assets')
+      const { data: { publicUrl: seeYouThereImage } } = supabase.storage.from('church-assets')
         .getPublicUrl('email-images/see-you-there.png');
   
       const [
@@ -217,7 +208,7 @@ export default async function handler(req, res) {
       ticket_number: ticketNumber,
       ticket_issued: true,
       updated_on: issued_at
-    }).eq('uuid', user_uuid).single();
+    }).eq('uuid', user_uuid).select().single();
 
     if (updateError) {
       return res.status(500).json({ error: updateError.message });

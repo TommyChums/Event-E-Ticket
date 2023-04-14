@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react';
+import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react';
 import filter from 'lodash/filter';
 import forEach from 'lodash/forEach';
 import get from 'lodash/get';
 import map from 'lodash/map';
 
 import useEventsContext from '../../hooks/useEventsContext';
-import supabase from '../../supabase';
 import { eventUsersError, eventUsersLoading, receivedEventUsers } from '../actions/eventUsers';
 
 export function useScannedInUsers(eventUuid) {
@@ -44,9 +44,10 @@ export function useEventPayments(eventUuid) {
 };
 
 export function useEventUsers(eventUuid) {
+  const supabase = useSupabaseClient();
   const pollRef = useRef(null);
 
-  const authenticatedUser = supabase.auth.user();
+  const authenticatedUser = useUser();
 
   const { eventUsers = {}, dispatch } = useEventsContext();
 

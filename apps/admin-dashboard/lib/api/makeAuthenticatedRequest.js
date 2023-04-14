@@ -1,19 +1,10 @@
-import supabase from '../supabase';
-
 export default async function makeAuthenticatedRequest(url, method = 'GET', body = null) {
-  const accessToken = supabase.auth.session().access_token;
-
-  if (!accessToken) {
-    return { error: 'No Access Token found', data: null };
-  }
-
   const upperMethod = method.toUpperCase();
 
   const fetchConfig = {
     method: upperMethod,
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`
     },
     credentials: 'same-origin'
   };

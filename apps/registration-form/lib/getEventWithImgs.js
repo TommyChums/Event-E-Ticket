@@ -13,11 +13,11 @@ function getPublicURLForEventImgs(configObj, supabaseInstance) {
     error: null,
   };
 
-  const { publicURL, error } = thisSupabase.storage.from(configObj.bucket).getPublicUrl(configObj.key);
+  const { data: { publicUrl }, error } = thisSupabase.storage.from(configObj.bucket).getPublicUrl(configObj.key);
 
   if (error) returnObj.error = error.message;
 
-  returnObj.publicURL = publicURL;
+  returnObj.publicURL = publicUrl;
 
   return returnObj;
 };

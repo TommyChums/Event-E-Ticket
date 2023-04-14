@@ -1,8 +1,8 @@
 import PropTypes from 'prop-types';
+import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
 
 import Auth from '../components/Auth';
 import LoginLayout from '../components/Layout/LoginLayout';
-import supabase from '../lib/supabase';
 
 export default function LoginPage({ updatePassword }) {
   return (
@@ -16,9 +16,17 @@ export default function LoginPage({ updatePassword }) {
 };
 
 export async function getServerSideProps(context) {
-  const { req } = context;
+  const supabase = createServerSupabaseClient(context);
 
-  const { user } = await supabase.auth.api.getUserByCookie(req);
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  if (!session) {
+    return { props: {} };
+  }
+
+  const { user } = session;
 
   const needsPasswordUpdate = user?.user_metadata?.temp_password;
 
@@ -29,8 +37,6 @@ export async function getServerSideProps(context) {
   } else if (user) {
     return { props: {}, redirect: { destination: '/events', permanent: false } };
   }
-
-  return { props: {} };
 };
 
 LoginPage.propTypes = {

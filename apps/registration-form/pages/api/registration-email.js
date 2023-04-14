@@ -18,9 +18,9 @@ const auththenticatedSupabase = createClient(
 );
 
 function locationImgUrl(placeId) {
-  const { publicURL } = supabase.storage.from('church-assets').getPublicUrl(`location-images/${placeId}/location.png`);
+  const { data: { publicUrl } } = supabase.storage.from('church-assets').getPublicUrl(`location-images/${placeId}/location.png`);
 
-  return publicURL;
+  return publicUrl;
 };
 
 async function getVenueImgUrl(placeId, geocode) {
@@ -47,9 +47,9 @@ async function getVenueImgUrl(placeId, geocode) {
 }
 
 function svgImgUrl(svgName, primaryColour) {
-  const { publicURL } = supabase.storage.from('church-assets').getPublicUrl(`email-images/${primaryColour}/${svgName}.png`);
+  const { data: { publicUrl } } = supabase.storage.from('church-assets').getPublicUrl(`email-images/${primaryColour}/${svgName}.png`);
 
-  return publicURL;
+  return publicUrl;
 };
 
 async function getImgUrl(svgName, primaryColour) {
@@ -127,11 +127,11 @@ export default async function handler(req, res) {
     // TODO: Get from event itself
     const primaryColour = event.branding?.primary_colour?.hex || '#020648';
 
-    const { publicURL: logoUrl } = supabase.storage.from(event.logo?.bucket).getPublicUrl(event.logo?.key);
+    const { data: { publicUrl: logoUrl } } = supabase.storage.from(event.logo?.bucket).getPublicUrl(event.logo?.key);
     
-    const { publicURL: rlcLogo } = supabase.storage.from('church-assets').getPublicUrl('logo.png');
+    const { data: { publicUrl: rlcLogo } } = supabase.storage.from('church-assets').getPublicUrl('logo.png');
 
-    const { publicURL: seeYouThereImage } = supabase.storage.from('church-assets').getPublicUrl('email-images/see-you-there.png');
+    const { data: { publicUrl: seeYouThereImage } } = supabase.storage.from('church-assets').getPublicUrl('email-images/see-you-there.png');
 
     const [ calendarIcon, locationIcon, facebookIcon, youtubeIcon, eventVenueLocationImg ] = await Promise.all([
       getImgUrl('calendar', primaryColour),

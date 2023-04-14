@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { useSnackbar } from 'notistack';
 import { useConfirm } from 'material-ui-confirm';
 import moment from 'moment';
@@ -19,13 +20,14 @@ import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
 
-import supabase from '../../lib/supabase';
 import { makeAuthenticatedPostRequest } from '../../lib/api/makeAuthenticatedRequest';
 import getUserAmtPaidAndRequired from '../../lib/helpers/getUserAmtPaidAndRequired';
 import useDispatch from '../../lib/hooks/useDispatch';
 import { deleteEventUser } from '../../lib/state/actions/eventUsers';
 
 export default function UserDialog({ event, open, onClose, user, updatePayment, updateUser, ...props }) {
+  const supabase = useSupabaseClient();
+
   const { closeSnackbar, enqueueSnackbar } = useSnackbar();
   const confirm = useConfirm();
   const dispatch = useDispatch();
@@ -223,7 +225,7 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
         user_uuid: user.uuid,
         amount: currentPayment,
         timestamp: paymentTime
-      }).single();
+      }).select().single();
 
       enqueueSnackbar('Updating User', {
         variant: 'info'
@@ -231,7 +233,7 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
 
       const { data: updatedUser, error: updateError } = await supabase.from('registered-users').update({
         updated_on: paymentTime
-      }).eq('uuid', user.uuid).single();
+      }).eq('uuid', user.uuid).select().single();
 
       success = !updateError && !insertError;
 

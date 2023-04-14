@@ -1,21 +1,20 @@
-import supabase from '../supabase';
+import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
 
 const protectedRoute = (inner) => async (context) => {
-  const { req } = context;
-  const { user, token } = await supabase.auth.api.getUserByCookie(req);
+  const supabase = createServerSupabaseClient(context);
 
-  if (!user) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  const { user } = session
+
+  if (!session) {
     return { props: {}, redirect: { destination: '/login', permanent: false } };
   }
 
   if (inner) {
-    supabase.auth.session = () => ({
-      access_token: token,
-      token_type: '',
-      user
-    });
-
-    return inner(context, supabase);
+    return inner(context, { supabase, user });
   }
 
   return { props: {} };
