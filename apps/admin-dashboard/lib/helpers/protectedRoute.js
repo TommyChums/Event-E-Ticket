@@ -7,11 +7,11 @@ const protectedRoute = (inner) => async (context) => {
     data: { session },
   } = await supabase.auth.getSession()
 
-  const { user } = session
-
   if (!session) {
     return { props: {}, redirect: { destination: '/login', permanent: false } };
   }
+
+  const { user } = session
 
   if (inner) {
     return inner(context, { supabase, user });
