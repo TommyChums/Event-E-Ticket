@@ -64,6 +64,9 @@ export default function Layout({ children }) {
     setIsRouting(true);
     setSigningOut(true);
     await supabase.auth.signOut();
+    router.push('/login').then(() => {
+      setIsRouting(false);
+    });
   };
 
   // Login page
@@ -169,6 +172,11 @@ export default function Layout({ children }) {
                   key={page.path}
                   onClick={() => handlePageItemClick(page.path)}
                   sx={{ my: 2, color: 'white', display: 'block' }}
+                  style={{
+                    border: '2px white solid',
+                    borderRadius: '12px',
+                    margin: '2px 8px',
+                  }}
                 >
                   {page.label}
                 </Button>
@@ -192,11 +200,33 @@ export default function Layout({ children }) {
             >
               EVENTS DASHBOARD
             </Typography>
+            {
+              isAdmin ? (
+                <Button
+                  onClick={() => handlePageItemClick('/dashboard-users')}
+                  sx={{ my: 2, color: 'white', display: 'block' }}
+                  style={{
+                    border: '2px white solid',
+                    borderRadius: '12px',
+                    margin: '2px 8px',
+                  }}
+                >
+                  Dashboard Users
+                </Button>
+              ) : null
+            }
             <Box sx={{ flexGrow: 0 }}>
               <Button
                 disabled={signingOut}
                 onClick={handleLogout}
                 sx={{ my: 2, color: 'white', display: 'block', fontWeight: 'bold' }}
+                style={{
+                  border: '2px #673ab7 solid',
+                  borderRadius: '12px',
+                  margin: '2px',
+                  backgroundColor: 'white',
+                  color: '#673ab7'
+                }}
               >
                 {signingOut ? 'Logging Out' : 'Logout'}
               </Button>

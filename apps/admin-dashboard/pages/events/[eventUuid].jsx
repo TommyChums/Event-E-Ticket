@@ -33,17 +33,7 @@ export default function EventManagementPage() {
   const { payments } = useEventPayments(eventUuid);
   const { scannedInUsers } = useScannedInUsers(eventUuid);
 
-  const [ value, setValue ] = useState(0);
-
-  const [ isLoading, setIsLoading ] = useState(usersLoading || eventLoading);
-
-  useEffect(() => {
-    if (eventLoading || usersLoading) {
-      setIsLoading(true);
-    } else {
-      setIsLoading(false);
-    }
-  }, [ eventLoading, usersLoading ]);
+  const [ value, setValue ] = useState(event.is_published ? 1 : 0);
 
   const handleChange = (_, newValue) => {
     setValue(newValue);
@@ -93,7 +83,7 @@ export default function EventManagementPage() {
           </TabPanel>
           <TabPanel index={1} value={value}>
             <UsersTable
-              loading={isLoading}
+              loading={usersLoading}
               updatePayment={(data) => dispatch(paymentUpdate({ payment: data, eventUuid }))}
               updateUser={(data) => dispatch(updateEventUser({ user: data, eventUuid }))}
               users={users}
@@ -102,14 +92,14 @@ export default function EventManagementPage() {
           </TabPanel>
           <TabPanel index={2} value={value}>
             <PaymentsTable
-              loading={isLoading}
+              loading={usersLoading}
               payments={payments}
               usersEvent={event}
             />
           </TabPanel>
           <TabPanel index={3} value={value}>
             <ScannedInTable
-              loading={isLoading}
+              loading={usersLoading}
               scannedInUsers={scannedInUsers}
               updateUser={(data) => dispatch(updateEventUser({ user: data, eventUuid }))}
               usersEvent={event}

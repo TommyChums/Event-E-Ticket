@@ -4,11 +4,11 @@ import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
 import Auth from '../components/Auth';
 import LoginLayout from '../components/Layout/LoginLayout';
 
-export default function LoginPage({ updatePassword }) {
+export default function LoginPage({ redirectTo, updatePassword }) {
   return (
     <LoginLayout title={updatePassword ? 'Update Password' : 'Login'}>
       <Auth
-        redirectTo="/events"
+        redirectTo={redirectTo}
         updatePassword={updatePassword}
       />
     </LoginLayout>
@@ -23,7 +23,7 @@ export async function getServerSideProps(context) {
   } = await supabase.auth.getSession()
 
   if (!session) {
-    return { props: {} };
+    return { props: { redirectTo: '/login' } };
   }
 
   const { user } = session;
@@ -32,10 +32,10 @@ export async function getServerSideProps(context) {
 
   if (needsPasswordUpdate) {
     return {
-      props: { updatePassword: true }
+      props: { redirectTo: '/events', updatePassword: true }
     };
   } else if (user) {
-    return { props: {}, redirect: { destination: '/events', permanent: false } };
+    return { props: { redirectTo: '/events' }, redirect: { destination: '/events', permanent: false } };
   }
 };
 

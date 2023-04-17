@@ -175,6 +175,12 @@ function UsersTable({ loading, users, usersEvent, updatePayment, updateUser }) {
   const [ paidInFullOnly, setPaidInFullOnly ] = useState(false);
   const [ indeterminate, setIndeterminate ] = useState(false);
 
+  const [ isLoading, setIsLoading ] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(loading);
+  }, [ loading ]);
+
   const columns = useMemo(() => {
     const additionalUserInfo = filter(get(usersEvent, 'registration_form_fields', {}), (field) => field.can_delete)
 
@@ -253,7 +259,7 @@ function UsersTable({ loading, users, usersEvent, updatePayment, updateUser }) {
             setSearchValue={setSearchValue}
           />
         }
-        loading={loading}
+        loading={isLoading}
         onRow={onRowClick}
       />
       {

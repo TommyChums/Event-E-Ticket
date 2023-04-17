@@ -28,7 +28,7 @@ const eventsReducer = (state, action) => {
       loading: false
     };
   }
-  case C.EVENTS_RECEIVED_EVENTS: {
+  case C.EVENTS_RECEIVED_EVENT: {
     const { data: eventWithImgs, error } = getEventWithImgs(payload);
 
     return {

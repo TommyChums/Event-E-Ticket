@@ -123,6 +123,12 @@ export default function EnhancedTable({ columns, onRow, loading, data, headerToo
   const [ page, setPage ] = useState(0);
   const [ rowsPerPage, setRowsPerPage ] = useState(10);
 
+  const [ isLoading, setIsLoading ] = useState(true);
+
+  useEffect(() => {
+    setIsLoading(loading);
+  }, [ loading ]);
+
   const [ anchorEl, setAnchorEl ] = useState(null);
   const open = Boolean(anchorEl);
 
@@ -192,7 +198,7 @@ export default function EnhancedTable({ columns, onRow, loading, data, headerToo
               />
               <TableBody>
                 {
-                  loading ?
+                  isLoading ?
                     <TableRow key="empty-row">
                       <TableCell colSpan={5}>
                         <Skeleton height={53} sx={{ bgcolor: 'grey' }} variant="rectangular"/>

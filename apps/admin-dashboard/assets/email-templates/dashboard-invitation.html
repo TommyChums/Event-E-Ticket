@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:v="urn:schemas-microsoft-com:vml">
+  <head>
+    <title></title>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <!--[if mso
+      ]><xml
+        ><o:OfficeDocumentSettings
+          ><o:PixelsPerInch>96</o:PixelsPerInch><o:AllowPNG /></o:OfficeDocumentSettings></xml
+    ><![endif]-->
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      :root {
+        font-family: 'Work Sans', sans-serif;
+      }
+      body {
+        margin: 50px;
+      }
+      .main {
+        width: 100%;
+        margin: 10px;
+      }
+      .footer {
+        width: 100%;
+        margin: 10px;
+        color: #959595;
+        font-size: 16px;
+      }
+      a {
+        text-decoration: none;
+      }
+      p {
+        line-height: 25px;
+      }
+      .logo {
+        margin-bottom: 20px;
+      }
+      .link-button {
+        padding: 20px;
+        background-color: #673ab7;
+        border-radius: 0;
+      }
+      @media (max-width: 620px) {
+        body {
+          margin: 25px;
+          margin-left: -5px;
+        }
+      }
+      @media (max-width: 420px) {
+        body {
+          margin: 10px;
+          margin-left: -15px;
+        }
+      }
+    </style>
+  </head>
+  <body style="background-color: #000; color: #fff; font-weight: bold">
+    <div align="center">
+      <table class="main">
+        <tbody>
+          <tr>
+            <td>
+              <div align="center" style="font-size: 18px">
+                <img
+                  class="logo"
+                  width="120"
+                  src="{{rlcLogo}}"
+                  alt="Reformation Life Centre"
+                  title="Reformation Life Centre"
+                />
+
+                <h1>Hey {{firstName}}</h2>
+                <h3>Event Dashboard Invitation</h2>
+                <p>You have been invited to create an account at Reformation Life Centre's Events Dashboard</p>
+                <p>
+                  Please click
+                  <a style="color: #673ab7" href="https://admin.events.reformationlifecentre.org/login"
+                    >here</a
+                  > to login, using your temporary password: <code>{{tempPassword}}</code>
+                </p>
+                <p>You will be prompted to change your password after logging in</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div align="center">
+      <table class="footer">
+        <tbody>
+          <tr>
+            <td style="padding: 0 2px 0 2px">
+              <a href="https://www.facebook.com/ReformationLifeCentre" target="_blank">
+                <img src="{{facebookIcon}}" alt="" class="svg-icon" />
+              </a>
+            </td>
+            <td style="padding: 0 2px 0 2px">
+              <a href="https://www.youtube.com/ReformationLifeCentreRLC" target="_blank">
+                <img src="{{youtubeIcon}}" alt="" class="svg-icon" />
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div
+                align="center"
+                style="
+                  width: 101.83%;
+                  opacity: 0.6;
+                  font-size: 12px;
+                  mso-line-height-alt: 14.399999999999999px;
+                  color: #fff;
+                  line-height: 1.2;
+                  font-family: Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans,
+                    Tahoma, sans-serif;
+                "
+              >
+                <p style="margin: 0; font-size: 14px; text-align: center; mso-line-height-alt: 16.8px">
+                  <span style="font-size: 14px">For more info:</span>
+                </p>
+                <p style="margin: 0; font-size: 14px; text-align: center; mso-line-height-alt: 16.8px">
+                  <span style="font-size: 14px">Call us at 1 (868) 225-7963<br /></span>
+                </p>
+                <p style="margin: 0; font-size: 14px; text-align: center; mso-line-height-alt: 16.8px">
+                  <span style="font-size: 14px">WhatsApp us at 1 (868) 326-7369</span>
+                </p>
+                <p style="margin: 0; font-size: 14px; text-align: center; mso-line-height-alt: 16.8px">
+                  <span style="font-size: 14px"
+                    ><a
+                      href="mailto:admin@reformationlifecentre.org?subject={{replySubject}}"
+                      target="_blank"
+                      title="Event Registration - {{eventTitle}}"
+                      style="text-decoration: none; color: #673ab7"
+                      rel="noopener"
+                      >Email the office</a
+                    >
+                    or reply to
+                    <a
+                      href="mailto:techteam@reformationlifecentre.org?subject={{replySubject}}"
+                      target="_blank"
+                      title="Event Registration - {{eventTitle}}"
+                      style="text-decoration: none; color: #673ab7"
+                      rel="noopener"
+                      >this email</a
+                    ></span
+                  >
+                </p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

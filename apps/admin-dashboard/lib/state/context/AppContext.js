@@ -1,17 +1,20 @@
 import { createContext, useReducer } from 'react';
 import PropTypes from 'prop-types';
 
+import adminUsersReducer, { initialState as initialAdminUsersState } from '../reducers/adminUsers';
 import eventsReducer, { initialState as initialEventsState } from '../reducers/events';
 import eventUsersReducer, { initialState as initialEventUsersState } from '../reducers/eventUsers';
 
 const initialState = {
+  adminUsers: initialAdminUsersState,
   events: initialEventsState,
   eventUsers: initialEventUsersState
 };
 
 const reducer = (state, action) => ({
+  adminUsers: adminUsersReducer(state.adminUsers, action),
   events: eventsReducer(state.events, action),
-  eventUsers: eventUsersReducer(state.eventUsers, action)
+  eventUsers: eventUsersReducer(state.eventUsers, action),
 });
 
 export const AppContext = createContext(initialState);

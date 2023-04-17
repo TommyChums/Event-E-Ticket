@@ -40,7 +40,11 @@ export default function Auth({ redirectTo, updatePassword }) {
   const redirect = () => {
     redirectTimeoutRef.current = setTimeout(() => {
       if (isMounted) {
-        router.push(redirectTo);
+        if (redirectTo === router.pathname) {
+          router.reload();
+        } else {
+          router.push(redirectTo);
+        }
       }
     }, 3000);
   };
@@ -66,7 +70,7 @@ export default function Auth({ redirectTo, updatePassword }) {
     setLoading(true);
 
     if (updatePassword) {
-      const { error: updateError } = await supabase.auth.update({
+      const { error: updateError } = await supabase.auth.updateUser({
         password,
         data: {
           temp_password: false
