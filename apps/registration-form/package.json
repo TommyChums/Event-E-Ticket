@@ -13,7 +13,7 @@
     "@emotion/react": "^11.10.4",
     "@emotion/styled": "^11.10.4",
     "@mui/icons-material": "^5.10.3",
-    "@mui/material": "^5.10.4",
+    "@mui/material": "^5.12.1",
     "@mui/x-date-pickers": "^5.0.1",
     "@supabase/supabase-js": "^2.20.0",
     "base64-arraybuffer": "^1.0.2",

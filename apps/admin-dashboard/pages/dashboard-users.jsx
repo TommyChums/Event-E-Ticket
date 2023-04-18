@@ -30,6 +30,7 @@ import {
 } from '../lib/state/actions/adminUsers';
 import Table from '../components/Table';
 import AdminUserDialog from '../components/AdminUserDialog';
+import moment from 'moment';
 
 const columns = [
   {
@@ -63,6 +64,13 @@ const columns = [
     disablePadding: false,
     label: 'Allowed Events',
     render: (value = []) => (value || []).join(', '),
+  },
+  {
+    id: 'last_sign_in_at',
+    type: 'text',
+    disablePadding: false,
+    label: 'Last Login',
+    render: (value) => value ? moment(value).format('LLLL') : 'Never',
   },
 ];
 
