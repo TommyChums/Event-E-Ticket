@@ -61,7 +61,7 @@ const useCan = () => {
   const isAllowed = (action, subject) => {
     let can = false;
 
-    const rules = DEFINED_RULES[userRole];
+    const rules = DEFINED_RULES[userRole] || {};
     const allSubject = rules[SUBJECTS.ALL];
     const currentSubject = rules[subject];
 
