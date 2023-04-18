@@ -8,11 +8,17 @@ import TextField from '@mui/material/TextField';
 import { Alert } from '@mui/material';
 
 export default function Auth({ redirectTo, updatePassword }) {
+  let username;
+  try {
+    const url = new URL(window?.location?.href);
+    username = url.searchParams.get('username');
+  } catch {}
+
   const supabase = useSupabaseClient();
   const user = useUser();
 
   const [ loading, setLoading ] = useState(false);
-  const [ email, setEmail ] = useState('');
+  const [ email, setEmail ] = useState(username || '');
   const [ password, setPassword ] = useState('');
   const [ confirmedPassword, setConfirmedPassword ] = useState('');
   const [ confirmedPasswordError, setConfirmedPasswordError ] = useState(null);

@@ -56,6 +56,8 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Error creating the user' });
     }
 
+    const invitationUrl = `https://admin.events.reformationlifecentre.org/login?username=${user.email}`;
+
     const { data: { publicUrl: rlcLogo } } = supabase.storage.from('church-assets').getPublicUrl('logo.png');
 
     const [
@@ -80,6 +82,7 @@ export default async function handler(req, res) {
       replySubject: `Event Dashboard Invitation`,
       tempPassword: 'P@ssword1',
       firstName: attributes.user_metadata.first_name,
+      invitationUrl,
       rlcLogo,
       calendarIcon,
       locationIcon,
