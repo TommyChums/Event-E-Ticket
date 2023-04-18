@@ -19,7 +19,32 @@ const CONSTANTS = {
   EVENTS_RECEIVED_EVENT: 'EVENTS_RECEIVED_EVENT',
   EVENTS_UPDATE_EVENT: 'EVENTS_UPDATE_EVENT',
   EVENTS_INSERT_EVENT: 'EVENTS_INSERT_EVENT',
-  EVENTS_DELETE_EVENT: 'EVENTS_DELETE_EVENT'
+  EVENTS_DELETE_EVENT: 'EVENTS_DELETE_EVENT',
+  RBAC: {
+    ACTIONS: {
+      VIEW: 'view',
+      CREATE: 'create',
+      EDIT: 'edit',
+      MANAGE: 'manage',
+      ISSUE: 'issue',
+      SCAN: 'scan',
+      PUBLISH: 'publish',
+    },
+    SUBJECTS: {
+      USERS: 'users',
+      PAYMENTS: 'payments',
+      TICKETS: 'tickets',
+      EVENTS: 'events',
+      DASHBOARD_USERS: 'dashboard_users',
+      ALL: 'all',
+    },
+  },
+  ROLES: {
+    ADMIN: 'admin',
+    EVENT_MANAGER: 'event_manager',
+    USER_MANAGER: 'user_manager',
+    SCANNER: 'scanner',
+  }
 };
 
 export default CONSTANTS;

@@ -6,7 +6,7 @@ import { useConfirm } from 'material-ui-confirm';
 import find from 'lodash/find';
 import isEmpty from 'lodash/isEmpty';
 import map from 'lodash/map';
-import uniq from 'lodash/uniq';
+import startCase from 'lodash/startCase';
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import Dialog from '@mui/material/Dialog';
@@ -24,6 +24,7 @@ import TextField from '@mui/material/TextField';
 import { makeAuthenticatedPostRequest } from '../../lib/api/makeAuthenticatedRequest';
 import useDispatch from '../../lib/hooks/useDispatch';
 import { deleteAdminUser } from '../../lib/state/actions/adminUsers';
+import CONSTANTS from '../../lib/state/constants';
 
 function CheckedSelect({ defaultValue, onChange, options, value, ...props }) {
   const [ selectedOptions, setSelectedOptions ] = useState([]);
@@ -292,10 +293,13 @@ export default function AdminUserDialog({ eventsById, open, onClose, user, updat
               onChange={({ target: { value } }) => setRole(value)}
               value={role}
             >
-              <MenuItem value="admin">Admin</MenuItem>
-              <MenuItem value="event_manager">Event Manager</MenuItem>
-              <MenuItem value="user_manager">User Manager</MenuItem>
-              <MenuItem value="scanner">Scanner</MenuItem>
+              {
+                map(CONSTANTS.ROLES, (role) => (
+                  <MenuItem key={role} value={role}>
+                    {startCase(role)}
+                  </MenuItem>
+                ))
+              }
             </Select>
           </FormControl>
           <div style={{ width: '100%' }}>

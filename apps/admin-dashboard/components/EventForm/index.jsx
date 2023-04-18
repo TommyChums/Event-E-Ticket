@@ -35,6 +35,15 @@ import ImgUpload from '../ImgUpload';
 import ResizableQrCode from '../ResizableImage';
 import ResizableNumber from '../ResizableImage';
 import RegistrationFormFieldsDialog from './RegistrationFormFieldsDialog';
+import CONSTANTS from '../../lib/state/constants';
+import useCan from '../../lib/hooks/useCan';
+
+const {
+  RBAC: {
+    ACTIONS,
+    SUBJECTS,
+  },
+} = CONSTANTS;
 
 const MAX_TICKET_WIDTH = 1650;
 const MAX_TICKET_HEIGHT = 650;
@@ -222,6 +231,7 @@ ControlledColourPicker.defaultProps = {
 };
 
 export default function EventForm({ event, onSave, isNew }) {
+  const { cannot } = useCan();
   const supabase = useSupabaseClient();
 
   const { enqueueSnackbar } = useSnackbar();
@@ -295,7 +305,7 @@ export default function EventForm({ event, onSave, isNew }) {
 
   const { isValid, isDirty, isSubmitting } = formState;
 
-  const submitDisabled = eventPublished || saving || !isValid || !isDirty || isSubmitting;
+  const submitDisabled = cannot(ACTIONS.EDIT, SUBJECTS.EVENTS) || eventPublished || saving || !isValid || !isDirty || isSubmitting;
 
   const requiredRules = {
     required: 'Required'
@@ -983,7 +993,7 @@ export default function EventForm({ event, onSave, isNew }) {
             !isNew &&
               <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
                 <Button
-                  disabled={eventPublished || saving || !isValid}
+                  disabled={cannot(ACTIONS.PUBLISH, SUBJECTS.EVENTS) || eventPublished || saving || !isValid}
                   fullWidth
                   onClick={handleOnPublish}
                   sx={{ mr: 1 }}
@@ -995,7 +1005,7 @@ export default function EventForm({ event, onSave, isNew }) {
                 <Button
                   // TODO: Setup the ability to delete an event
                   color="error"
-                  // disabled={eventPublished || saving}
+                  // disabled={cannot(ACTIONS.MANAGE, SUBJECTS.EVENTS) || (eventPublished || saving)}
                   disabled
                   fullWidth
                   onClick={handleOnDelete}

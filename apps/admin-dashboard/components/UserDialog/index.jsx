@@ -20,12 +20,23 @@ import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import Alert from '@mui/material/Alert';
 
+import Can from '../Can';
 import { makeAuthenticatedPostRequest } from '../../lib/api/makeAuthenticatedRequest';
 import getUserAmtPaidAndRequired from '../../lib/helpers/getUserAmtPaidAndRequired';
 import useDispatch from '../../lib/hooks/useDispatch';
 import { deleteEventUser } from '../../lib/state/actions/eventUsers';
+import CONSTANTS from '../../lib/state/constants';
+import useCan from '../../lib/hooks/useCan';
+
+const {
+  RBAC: {
+    ACTIONS,
+    SUBJECTS,
+  },
+} = CONSTANTS;
 
 export default function UserDialog({ event, open, onClose, user, updatePayment, updateUser, ...props }) {
+  const { can, cannot } = useCan();
   const supabase = useSupabaseClient();
 
   const { closeSnackbar, enqueueSnackbar } = useSnackbar();
@@ -39,7 +50,7 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
   const [ issuingTicket, setIssuingTicket ] = useState(false);
 
   const eTicketsEnabled = !isEmpty(event.ticket_template)
-  const canBeDeleted = isEmpty(user.payments) && !user.ticket_issued;
+  const canBeDeleted = can(ACTIONS.MANAGE, SUBJECTS.USERS) && isEmpty(user.payments) && !user.ticket_issued;
 
   useEffect(() => {
     if (isEmpty(user) || isEmpty(event)) {
@@ -269,47 +280,53 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
           <Typography>
             Amount Paid: ${amountPaid}
           </Typography>
-          <div style={{ width: '100%' }}>
-            <InputLabel htmlFor="outlined-adornment-amount">Current payment</InputLabel>
-            <OutlinedInput
-              fullWidth
-              id="outlined-adornment-amount"
-              label="Amount"
-              onChange={updateCurrentPayment}
-              startAdornment={<InputAdornment position="start">$</InputAdornment>}
-              value={currentPayment}
-            />
-          </div>
+          <Can I={ACTIONS.CREATE} A={SUBJECTS.PAYMENTS}>
+            <div style={{ width: '100%' }}>
+              <InputLabel htmlFor="outlined-adornment-amount">Current payment</InputLabel>
+              <OutlinedInput
+                fullWidth
+                id="outlined-adornment-amount"
+                label="Amount"
+                onChange={updateCurrentPayment}
+                startAdornment={<InputAdornment position="start">$</InputAdornment>}
+                value={currentPayment}
+              />
+            </div>
+          </Can>
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: '12px' }}>
         <Stack spacing={1} width="100%">
           <Stack direction="row" justifyContent="space-between" spacing={1}>
+            <Can I={ACTIONS.CREATE} A={SUBJECTS.PAYMENTS}>
+              <Button
+                disabled={
+                  user.ticket_issued ||
+                  updating ||
+                  issuingTicket ||
+                  currentPayment <= 0 &&
+                  amountRequriedToPay > 0 ||
+                  amountRequriedToPay <= 0
+                }
+                onClick={handlePaymentUpdate}
+                sx={{ width: '9rem' }}
+                variant="contained"
+              >
+                {updating ? 'Adding ' : 'Add Payment'}
+              </Button>
+            </Can>
+            <Button onClick={onClose} variant="outlined" fullWidth={cannot(ACTIONS.CREATE, SUBJECTS.PAYMENTS)}>Cancel</Button>
+          </Stack>
+          <Can I={ACTIONS.ISSUE} A={SUBJECTS.TICKETS}>
             <Button
-              disabled={
-                user.ticket_issued ||
-                updating ||
-                issuingTicket ||
-                currentPayment <= 0 &&
-                amountRequriedToPay > 0 ||
-                amountRequriedToPay <= 0
-              }
-              onClick={handlePaymentUpdate}
-              sx={{ width: '9rem' }}
+              disabled={user.ticket_issued || updating || issuingTicket}
+              onClick={handleIssueTicket}
+              sx={{ width: '100%' }}
               variant="contained"
             >
-              {updating ? 'Adding ' : 'Add Payment'}
+              {issuingTicket ? (eTicketsEnabled ? 'Issuing Ticket' : 'Updating User') : (eTicketsEnabled ? 'Issue Ticket' : 'Ticket Issued')}
             </Button>
-            <Button onClick={onClose} variant="outlined">Cancel</Button>
-          </Stack>
-          <Button
-            disabled={user.ticket_issued || updating || issuingTicket}
-            onClick={handleIssueTicket}
-            sx={{ width: '100%' }}
-            variant="contained"
-          >
-            {issuingTicket ? (eTicketsEnabled ? 'Issuing Ticket' : 'Updating User') : (eTicketsEnabled ? 'Issue Ticket' : 'Ticket Issued')}
-          </Button>
+          </Can>
           {
             canBeDeleted &&
               <Button
