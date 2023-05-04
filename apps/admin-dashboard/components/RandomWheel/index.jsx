@@ -29,7 +29,7 @@ function RandomWheel(props) {
       contrastColor='white'
       buttonText='Spin'
       isOnlyOnce={false}
-      size={isSmallScreen ? 138 : 290}
+      size={isSmallScreen ? 138 : 250}
       upDuration={50}
       downDuration={500}
       // fontFamily='Arial'

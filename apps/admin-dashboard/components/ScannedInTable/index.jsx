@@ -439,13 +439,18 @@ function ScannedInTable({ loading, scannedInUsers, updateUser, users, usersEvent
                         : 'No one'
                     }
                   </Typography>
-                  <Typography id="modal-modal-description" sx={{ mt: 2, fontSize: isSmallScreen ? '20px' : '40px', textAlign: 'center' }}>
+                  <Typography id="modal-modal-description" sx={{ mt: 2, fontSize: isSmallScreen ? '20px' : '30px', textAlign: 'center' }}>
+                    {
+                      randomUser.current?.ticket_number
+                        ? ''
+                        : randomUser.current ? `Email: ${getReadableTicketNumber(randomUser.current.email.toLowerCase())}` : ''
+                    }
+                  </Typography>
+                  <Typography id="modal-modal-description" sx={{ mt: 2, fontSize: isSmallScreen ? '20px' : '30px', textAlign: 'center' }}>
                     {
                       randomUser.current?.ticket_number
                         ? `Ticket Number: ${getReadableTicketNumber(randomUser.current.ticket_number)}`
-                        : randomUser.current?.registration_number
-                          ?`Email: ${getReadableTicketNumber(randomUser.current.email)}\nRegistration Number: ${randomUser.current.registration_number}`
-                          : ''
+                        : randomUser.current ? `Registration Number: ${randomUser.current.registration_number}` : ''
                     }
                   </Typography>
                 </Box>
