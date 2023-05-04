@@ -1,14 +1,17 @@
-import { useEffect, useState, memo, useRef } from 'react';
+import { useEffect, useState, useMemo, memo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { useSnackbar } from 'notistack';
 import moment from 'moment';
 import escapeRegExp from 'lodash/escapeRegExp';
+import every from 'lodash/every';
 import filter from 'lodash/filter';
 import find from 'lodash/find';
+import isEmpty from 'lodash/isEmpty';
 import isEqual from 'lodash/isEqual';
 import map from 'lodash/map';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import Autocomplete from '@mui/material/Autocomplete';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
@@ -20,6 +23,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Modal from '@mui/material/Modal';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 
@@ -68,11 +72,32 @@ const PaymentsTableToolbar = (props) => {
 
   const { enqueueSnackbar } = useSnackbar();
 
+  const [ userToEnter, setUserToEnter ] = useState(null);
+  const [ shouldScan, setShouldScan ] = useState();
+  const [ usersList, setUsersList ] = useState([]);
+
+  useEffect(() => {
+    setShouldScan(!isEmpty(props.usersEvent.ticket_template))
+  }, [ props.usersEvent ]);
+
+  useEffect(() => {
+    setUsersList(
+      map(props.users, ({ first_name, last_name, email, registration_number, scanned_in }) => (
+        {
+          label: `${first_name} ${last_name} - ${email} | ${registration_number}`,
+          id: registration_number,
+          scanned_in
+        }
+      ))
+    );
+  }, [ props.users ]);
+
   const [ open, setOpen ] = useState(false);
   const dataRead = useRef(false);
 
   const handleClose = () => {
     setOpen(false);
+    setUserToEnter(null);
     setTimeout(() => {
       dataRead.current = false;
     }, 500);
@@ -84,11 +109,11 @@ const PaymentsTableToolbar = (props) => {
       console.log(qrcodeInfo, dataRead.current)
       const regNumberTicketNumber = qrcodeInfo || '';
 
-      const [ regNumber, ticketNumber ] = regNumberTicketNumber.split('-');
+      const [ regNumber ] = regNumberTicketNumber.split('-');
 
       let invalid = true;
 
-      if (regNumber && ticketNumber) {
+      if (regNumber) {
         const { data: ticketUser } = await supabase.from('registered-users')
           .select('scanned_in')
           .eq('registration_number', regNumber)
@@ -97,7 +122,10 @@ const PaymentsTableToolbar = (props) => {
 
         if (ticketUser?.scanned_in) {
           invalid = false;
-          enqueueSnackbar('This ticket was already scanned in', {
+          enqueueSnackbar(
+            shouldScan ? 'This ticket was already scanned in'
+            : 'This person has already been entered'
+            , {
             variant: 'error'
           });
         } else if (ticketUser) {
@@ -109,23 +137,33 @@ const PaymentsTableToolbar = (props) => {
           }).eq('registration_number', regNumber).select().single();
 
           if (error || !updatedTicketUser) {
-            enqueueSnackbar('Error confirming this ticket. Please try again', {
+            enqueueSnackbar(
+              shouldScan ? 'Error confirming this ticket. Please try again'
+              : 'Error entering this person. Please try again'
+              , {
               variant: 'error'
             });
           } else {
-            enqueueSnackbar('Valid Ticket', {
+            enqueueSnackbar(
+              shouldScan? 'Valid Ticket'
+              : 'Person Entered'
+              , {
               variant: 'success'
             });
 
             props.updateUser(updatedTicketUser);
-            setOpen(false);
+            if (shouldScan)
+              setOpen(false);
             dataRead.current = false;
           };
         };
       };
 
       if (invalid) {
-        enqueueSnackbar('Invalid Ticket', {
+        enqueueSnackbar(
+          shouldScan ? 'Invalid Ticket'
+          : 'An error occured'
+          , {
           variant: 'error'
         });
       };
@@ -170,10 +208,10 @@ const PaymentsTableToolbar = (props) => {
         <FormControlLabel
           control={
             <IconButton>
-              <QrCodeScannerIcon />
+              {shouldScan ? <QrCodeScannerIcon /> : <PersonAddIcon />}
             </IconButton>
           }
-          label="Scan Ticket"
+          label={shouldScan ? "Scan Ticket" : "Enter Person"}
           labelPlacement="start"
           onClick={() => setOpen(true)}
           sx={{ width: '175px', marginRight: '1rem' }}
@@ -182,15 +220,43 @@ const PaymentsTableToolbar = (props) => {
       <Dialog onClose={handleClose} open={open}>
         <DialogTitle>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
-            Scan Ticket
+            {shouldScan ? "Scan Ticket" : "Enter Person"}
             <IconButton onClick={handleClose}>
               <HighlightOffIcon />
             </IconButton>
           </Stack>
         </DialogTitle>
-        <QrCodeScanner
-          onScan={handleRead}
-        />
+        {
+          shouldScan ? (
+            <QrCodeScanner
+              onScan={handleRead}
+            />
+          ) : (
+            <>
+              <Autocomplete
+                options={usersList}
+                sx={{ padding: 1, width: 280 }}
+                autoHighlight
+                getOptionDisabled={(option) =>
+                  option.scanned_in
+                }
+                onChange={(_, newValue) => {
+                  setUserToEnter(newValue);
+                }}
+                renderInput={(params) => (
+                  <TextField {...params} label="Person" variant="standard" />
+                )}
+              />
+              <Button
+                onClick={() => handleRead(userToEnter?.id?.toString())}
+                sx={{ width: 280, marginTop: '10px', padding: 1, alignSelf: 'center' }}
+                variant="contained"
+              >
+                Enter
+              </Button>
+            </>
+          )
+        }
       </Dialog>
     </Toolbar>
   );
@@ -203,7 +269,7 @@ PaymentsTableToolbar.propTypes = {
   usersEvent: PropTypes.object.isRequired,
 };
 
-function ScannedInTable({ loading, scannedInUsers, updateUser, usersEvent }) {
+function ScannedInTable({ loading, scannedInUsers, updateUser, users, usersEvent }) {
   const isSmallScreen = useMediaQuery('(max-width:780px)');
 
   const [ open, setOpen ] = useState(false);
@@ -211,22 +277,40 @@ function ScannedInTable({ loading, scannedInUsers, updateUser, usersEvent }) {
   const [ rows, setRows ] = useState([]);
   const [ searchValue, setSearchValue ] = useState('');
 
+  const [ segsToUse, setSegsToUse ] = useState([]);
+
   const randomUser = useRef(null);
 
-  const segs = map(scannedInUsers, (user) => getReadableTicketNumber(user.ticket_number));
-  const segsToUse = [];
+  const ticketNumbers = useMemo(() => (
+    every(scannedInUsers, ({ ticket_number }) => !!ticket_number)
+  ), [ scannedInUsers ]);
 
-  let chunk = 5;
-  let start = 0;
-  let end = chunk;
-  do {
-    segsToUse.push(
-      segs.slice(start, end).join(',')
-    );
+  
+  useEffect(() => {
+    if (isEmpty(scannedInUsers))
+      return;
 
-    start += chunk;
-    end += chunk;
-  } while (start < segs.length);
+    const arr = [];
+    const segs = ticketNumbers
+      ? map(scannedInUsers, (user) => getReadableTicketNumber(user.ticket_number))
+      : map(scannedInUsers, (user) => user.registration_number);
+  
+    const totalSegs = 20;
+    let totalSegsIndex = 0;
+    let currentSegsIndex = 0;
+    do {
+      arr[totalSegsIndex] = arr[totalSegsIndex]
+        ? arr[totalSegsIndex] + `,${segs[currentSegsIndex]}`
+        : segs[currentSegsIndex].toString();
+  
+      currentSegsIndex += 1;
+      totalSegsIndex += 1;
+
+      if (totalSegsIndex >= totalSegs) totalSegsIndex = 0;
+    } while (currentSegsIndex < segs.length);
+
+    setSegsToUse(arr);
+  }, [ scannedInUsers, ticketNumbers ]);
 
   useEffect(() => {
     const searchedUsers = filter(scannedInUsers, ({
@@ -259,6 +343,7 @@ function ScannedInTable({ loading, scannedInUsers, updateUser, usersEvent }) {
           searchValue={searchValue}
           setSearchValue={setSearchValue}
           updateUser={updateUser}
+          users={users}
           usersEvent={usersEvent}
         />
       }
@@ -300,12 +385,19 @@ function ScannedInTable({ loading, scannedInUsers, updateUser, usersEvent }) {
               </IconButton>
               <RandomWheel
                 onFinished={(winningTicket) => {
-                  const winningTicketNumbers = winningTicket.split(',');
-                  const randomIndex = Math.floor(Math.random() * winningTicketNumbers.length);
+                  if (winningTicket) {
+                    const winningTicketNumbers = winningTicket.split(',');
+                    const randomIndex = Math.floor(Math.random() * winningTicketNumbers.length);
+  
+                    const winningNum = winningTicketNumbers[randomIndex];
+  
+                    if (ticketNumbers) {
+                      randomUser.current = find(scannedInUsers, [ 'ticket_number', +winningNum ]);
+                    } else {
+                      randomUser.current = find(scannedInUsers, [ 'registration_number', +winningNum ]);
+                    }
+                  }
 
-                  const ticketNum = winningTicketNumbers[randomIndex];
-
-                  randomUser.current = find(scannedInUsers, [ 'ticket_number', +ticketNum ]);
                   setWinnerOpen(true);
                 }}
                 segments={segsToUse}
@@ -349,9 +441,11 @@ function ScannedInTable({ loading, scannedInUsers, updateUser, usersEvent }) {
                   </Typography>
                   <Typography id="modal-modal-description" sx={{ mt: 2, fontSize: isSmallScreen ? '20px' : '40px', textAlign: 'center' }}>
                     {
-                      randomUser.current
+                      randomUser.current?.ticket_number
                         ? `Ticket Number: ${getReadableTicketNumber(randomUser.current.ticket_number)}`
-                        : ''
+                        : randomUser.current?.registration_number
+                          ?`Email: ${getReadableTicketNumber(randomUser.current.email)}\nRegistration Number: ${randomUser.current.registration_number}`
+                          : ''
                     }
                   </Typography>
                 </Box>
@@ -368,6 +462,7 @@ ScannedInTable.propTypes = {
   loading: PropTypes.bool,
   scannedInUsers: PropTypes.oneOfType([ PropTypes.array, PropTypes.object ]).isRequired,
   updateUser: PropTypes.func.isRequired,
+  users: PropTypes.oneOfType([ PropTypes.array, PropTypes.object ]).isRequired,
   usersEvent: PropTypes.object.isRequired,
 };
 

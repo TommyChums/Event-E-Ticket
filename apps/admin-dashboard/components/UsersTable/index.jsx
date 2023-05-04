@@ -126,7 +126,7 @@ const UsersTableToolbar = (props) =>
       sx={{ flex: '1 1 100%', maxWidth: '200px' }}
       variant="h6"
     >
-        Registered Users
+        Registrations
     </Typography>
     <Stack
       direction="row"

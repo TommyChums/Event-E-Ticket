@@ -8,6 +8,7 @@ import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import PlaceIcon from '@mui/icons-material/Place';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 import Can from '../../components/Can';
 import UsersTable from '../../components/UsersTable';
@@ -42,7 +43,7 @@ const TABS = [
   {
     action: ACTIONS.VIEW,
     subject: SUBJECTS.USERS, 
-    label: 'Users',
+    label: 'Registrations',
     value: 'users',
   },
   {
@@ -66,6 +67,7 @@ export default function EventManagementPage() {
   const { can } = useCan();
   const router = useRouter();
   const dispatch = useDispatch();
+  const isSmallScreen = useMediaQuery('(max-width:900px)');
 
   const { eventUuid } = router.query;
 
@@ -82,10 +84,13 @@ export default function EventManagementPage() {
 
   const getTabs = () => {
     const tabsArr = [];
-    TABS.forEach(({ action, subject, ...tab}) => {
+    TABS.forEach(({ action, subject, sx, ...tab}) => {
       if (can(action, subject)) {
         tabsArr.push(
-          <Tab {...tab}/>
+          <Tab sx={{
+            fontSize: isSmallScreen ? '11px' : '15px',
+            ...sx
+          }} {...tab}/>
         )
       }
     });
@@ -154,6 +159,7 @@ export default function EventManagementPage() {
                 loading={usersLoading}
                 scannedInUsers={scannedInUsers}
                 updateUser={(data) => dispatch(updateEventUser({ user: data, eventUuid }))}
+                users={users}
                 usersEvent={event}
               />
             </TabPanel>
