@@ -55,7 +55,7 @@ const TABS = [
   {
     action: ACTIONS.SCAN,
     subject: SUBJECTS.TICKETS, 
-    label: 'At Event',
+    label: 'Check Ins',
     value: 'at_event',
     icon: <PlaceIcon fontSize="small" />,
     iconPosition: "start",

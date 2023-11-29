@@ -19,10 +19,13 @@ import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Modal from '@mui/material/Modal';
+import AddIcon from '@mui/icons-material/Add';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
@@ -31,6 +34,7 @@ import Table from '../Table';
 import QrCodeScanner from '../QrCodeScanner';
 import RandomWheel from '../RandomWheel';
 import getReadableTicketNumber from '../../lib/helpers/getReadableTicketNumber';
+import { forEach } from 'lodash';
 
 const columns = [
   {
@@ -62,7 +66,7 @@ const columns = [
     id: 'updated_on',
     type: 'text',
     disablePadding: false,
-    label: 'Entered At',
+    label: 'Checked In At',
     render: (time) => moment(time).format('LLL')
   }
 ];
@@ -72,19 +76,21 @@ const PaymentsTableToolbar = (props) => {
 
   const { enqueueSnackbar } = useSnackbar();
 
-  const [ userToEnter, setUserToEnter ] = useState(null);
+  const [ canScan, setCanScan ] = useState();
+
+  const [ usersToEnter, setUsersToEnter ] = useState([]);
   const [ shouldScan, setShouldScan ] = useState();
   const [ usersList, setUsersList ] = useState([]);
 
   useEffect(() => {
-    setShouldScan(!isEmpty(props.usersEvent.ticket_template))
+    setCanScan(!isEmpty(props.usersEvent.ticket_template))
   }, [ props.usersEvent ]);
 
   useEffect(() => {
     setUsersList(
-      map(props.users, ({ first_name, last_name, email, registration_number, scanned_in }) => (
+      map(props.users, ({ first_name, last_name, email, registration_number, scanned_in, ticket_number }) => (
         {
-          label: `${first_name} ${last_name} - ${email} | ${registration_number}`,
+          label: `${first_name} ${last_name} - ${email} ${ticket_number ? `| Ticket #${ticket_number.toString().padStart(2, '0')} ` : ''}| ${registration_number}`,
           id: registration_number,
           scanned_in
         }
@@ -97,81 +103,109 @@ const PaymentsTableToolbar = (props) => {
 
   const handleClose = () => {
     setOpen(false);
-    setUserToEnter(null);
+    setUsersToEnter([]);
     setTimeout(() => {
       dataRead.current = false;
     }, 500);
   };
 
-  const handleRead = async (qrcodeInfo) => {
+  const handleRead = async (qrcodeInfo, multiple = false) => {
     if (!dataRead.current) {
       dataRead.current = true;
       console.log(qrcodeInfo, dataRead.current)
-      const regNumberTicketNumber = qrcodeInfo || '';
 
-      const [ regNumber ] = regNumberTicketNumber.split('-');
+      const infos = multiple ? qrcodeInfo : [ qrcodeInfo ];
 
-      let invalid = true;
-
-      if (regNumber) {
-        const { data: ticketUser } = await supabase.from('registered-users')
-          .select('scanned_in')
-          .eq('registration_number', regNumber)
-          .eq('registered_event', props.usersEvent.uuid)
-          .single();
-
-        if (ticketUser?.scanned_in) {
-          invalid = false;
-          enqueueSnackbar(
-            shouldScan ? 'This ticket was already scanned in'
-            : 'This person has already been entered'
-            , {
-            variant: 'error'
-          });
-        } else if (ticketUser) {
-          invalid = false;
-
-          const { data: updatedTicketUser, error } = await supabase.from('registered-users').update({
-            scanned_in: true,
-            updated_on: moment().toISOString()
-          }).eq('registration_number', regNumber).select().single();
-
-          if (error || !updatedTicketUser) {
+      forEach(infos, async (info) => {
+        const regNumberTicketNumber = info || '';
+  
+        const [ regNumber ] = regNumberTicketNumber.split('-');
+  
+        let invalid = true;
+  
+        if (regNumber) {
+          const { data: ticketUser } = await supabase.from('registered-users')
+            .select('scanned_in')
+            .eq('registration_number', regNumber)
+            .eq('registered_event', props.usersEvent.uuid)
+            .single();
+  
+          if (ticketUser?.scanned_in) {
+            invalid = false;
             enqueueSnackbar(
-              shouldScan ? 'Error confirming this ticket. Please try again'
-              : 'Error entering this person. Please try again'
+              shouldScan ? 'This ticket was already scanned in'
+              : 'This person has already been entered'
               , {
               variant: 'error'
             });
-          } else {
-            enqueueSnackbar(
-              shouldScan? 'Valid Ticket'
-              : 'Person Entered'
-              , {
-              variant: 'success'
-            });
-
-            props.updateUser(updatedTicketUser);
-            if (shouldScan)
-              setOpen(false);
-            dataRead.current = false;
+          } else if (ticketUser) {
+            invalid = false;
+  
+            const { data: updatedTicketUser, error } = await supabase.from('registered-users').update({
+              scanned_in: true,
+              updated_on: moment().toISOString()
+            }).eq('registration_number', regNumber).select().single();
+  
+            if (error || !updatedTicketUser) {
+              enqueueSnackbar(
+                shouldScan ? 'Error confirming this ticket. Please try again'
+                : 'Error entering this person. Please try again'
+                , {
+                variant: 'error'
+              });
+            } else {
+              enqueueSnackbar(
+                shouldScan ? `${updatedTicketUser.first_name} ${updatedTicketUser.last_name} Valid Ticket`
+                : `${updatedTicketUser.first_name} ${updatedTicketUser.last_name} Entered`
+                , {
+                variant: 'success'
+              });
+  
+              props.updateUser(updatedTicketUser);
+              if (shouldScan)
+                setOpen(false);
+              dataRead.current = false;
+            };
           };
         };
-      };
-
-      if (invalid) {
-        enqueueSnackbar(
-          shouldScan ? 'Invalid Ticket'
-          : 'An error occured'
-          , {
-          variant: 'error'
-        });
-      };
+  
+        if (invalid) {
+          enqueueSnackbar(
+            shouldScan ? 'Invalid Ticket'
+            : 'An error occured'
+            , {
+            variant: 'error'
+          });
+        };
+      })
 
       setTimeout(() => {
         dataRead.current = false;
       }, 2000);
     };
+  };
+
+  const registerSelectedUsers = () => {
+    handleRead(map(usersToEnter, (user) => user?.id?.toString()), true);
+    setUsersToEnter([])
+  }
+
+  // Menu
+  const [ anchorEl, setAnchorEl ] = useState(null);
+  const menuOpen = Boolean(anchorEl);
+
+  const handleMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleScanType = (useScanner) => {
+    setShouldScan(useScanner);
+    setOpen(true);
+    handleMenuClose();
   };
 
   return (
@@ -187,7 +221,7 @@ const PaymentsTableToolbar = (props) => {
         sx={{ flex: '1 1 100%', maxWidth: '200px' }}
         variant="h6"
       >
-        At Event
+        Checked In
       </Typography>
       <Stack
         direction="row"
@@ -205,17 +239,66 @@ const PaymentsTableToolbar = (props) => {
           size="small"
           value={props.searchValue}
         />
-        <FormControlLabel
-          control={
-            <IconButton>
-              {shouldScan ? <QrCodeScannerIcon /> : <PersonAddIcon />}
-            </IconButton>
-          }
-          label={shouldScan ? "Scan Ticket" : "Enter Person"}
-          labelPlacement="start"
-          onClick={() => setOpen(true)}
-          sx={{ width: '175px', marginRight: '1rem' }}
-        />
+        {
+          canScan ? (
+            <>
+              <FormControlLabel
+                control={
+                  <IconButton>
+                    <AddIcon />
+                  </IconButton>
+                }
+                label="Check In"
+                labelPlacement="end"
+                onClick={handleMenuClick}
+                sx={{ width: '175px', marginLeft: '1rem' }}
+              />
+              <Menu
+                anchorEl={anchorEl}
+                open={menuOpen}
+                onClose={handleMenuClose}
+                MenuListProps={{
+                  'aria-labelledby': 'basic-button',
+                }}
+              >
+                <MenuItem key='person' onClick={() => handleScanType(false)}>
+                  <FormControlLabel
+                    control={
+                      <IconButton>
+                        <PersonAddIcon />
+                      </IconButton>
+                    }
+                    label="Enter Person"
+                    labelPlacement="end"
+                  />
+                </MenuItem>
+                <MenuItem key='scan' onClick={() => handleScanType(true)}>
+                  <FormControlLabel
+                    control={
+                      <IconButton>
+                        <QrCodeScannerIcon />
+                      </IconButton>
+                    }
+                    label="Scan Ticket"
+                    labelPlacement="end"
+                  />
+                </MenuItem>
+              </Menu>
+            </>
+          ) : (
+            <FormControlLabel
+              control={
+                <IconButton>
+                  <PersonAddIcon />
+                </IconButton>
+              }
+              label="Enter Person"
+              labelPlacement="start"
+              onClick={() => setOpen(true)}
+              sx={{ width: '175px', marginRight: '1rem' }}
+            />
+          )
+        }
       </Stack>
       <Dialog onClose={handleClose} open={open}>
         <DialogTitle>
@@ -227,34 +310,38 @@ const PaymentsTableToolbar = (props) => {
           </Stack>
         </DialogTitle>
         {
-          shouldScan ? (
+          shouldScan && canScan ? (
             <QrCodeScanner
               onScan={handleRead}
             />
           ) : (
-            <>
+            <Stack direction="column" justifyContent="space-between" sx={{ padding: '1rem', minHeight: '200px' }}>
               <Autocomplete
                 options={usersList}
-                sx={{ padding: 1, width: 280 }}
+                sx={{ width: '100%' }}
                 autoHighlight
                 getOptionDisabled={(option) =>
                   option.scanned_in
                 }
+                limitTags={2}
+                multiple
                 onChange={(_, newValue) => {
-                  setUserToEnter(newValue);
+                  setUsersToEnter(newValue);
                 }}
                 renderInput={(params) => (
                   <TextField {...params} label="Person" variant="standard" />
                 )}
+                value={usersToEnter}
               />
               <Button
-                onClick={() => handleRead(userToEnter?.id?.toString())}
-                sx={{ width: 280, marginTop: '10px', padding: 1, alignSelf: 'center' }}
+                disabled={!usersToEnter.length}
+                onClick={registerSelectedUsers}
+                sx={{ width: 280, marginTop: '50px', padding: 1, alignSelf: 'center' }}
                 variant="contained"
               >
                 Enter
               </Button>
-            </>
+            </Stack>
           )
         }
       </Dialog>
