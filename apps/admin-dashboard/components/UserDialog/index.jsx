@@ -270,7 +270,29 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
 
   return (
     <Dialog {...props} onClose={onClose} open={open}>
-      { user.ticket_issued && <Alert severity="success">{eTicketsEnabled ? "Ticket Successfully Issued" : "User Successfully Updated"}</Alert> }
+      {
+        user.ticket_issued && (
+          <Alert severity="success" sx={{ display: 'flex', flexDirection: 'row', placeItems: 'center', gap: '5px' }}>
+            <p style={{ margin: '0', padding: '0' }}>
+              {eTicketsEnabled ? "Ticket Successfully Issued" : "User Successfully Updated"}
+            </p>
+            {
+              eTicketsEnabled ?
+                <a
+                  href={`/api/ticket/${user.registered_event}/${user.ticket_number.toString().padStart(4, '0')}`}
+                  rel="noreferrer"
+                  style={{
+                    color: '#651fff'
+                  }}
+                  target='_blank'
+                >
+                  View Ticket
+                </a>
+              : null
+            }
+          </Alert>
+        )
+      }
       <DialogTitle style={{ padding: '16px 12px 0px' }}>{user.first_name} {user.last_name}</DialogTitle>
       <DialogContent style={{ padding: '20px 12px' }}>
         <Stack direction="column" spacing={2} width="100%">
