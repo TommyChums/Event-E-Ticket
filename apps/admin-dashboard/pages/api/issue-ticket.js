@@ -23,7 +23,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session }, error: authError } = await supabase.auth.getSession();
 
     if (!session || !session.user) {
       return res.status(401).json({ error: authError.message });
