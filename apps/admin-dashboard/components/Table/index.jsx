@@ -115,7 +115,7 @@ EnhancedTableHead.propTypes = {
   orderBy: PropTypes.string.isRequired
 };
 
-export default function EnhancedTable({ columns, onRow, loading, data, headerToolbar, children }) {
+export default function EnhancedTable({ columns, onRow, loading, data, headerToolbar, style, children }) {
   const [ tableColumns, setTableColumns ] = useState(columns);
   const [ rows, setRows ] = useState([]);
   const [ order, setOrder ] = useState('asc');
@@ -178,7 +178,7 @@ export default function EnhancedTable({ columns, onRow, loading, data, headerToo
 
   return (
     <>
-      <Box sx={{ width: '100%' }}>
+      <Box sx={{ width: '100%' }} style={style}>
         <Paper sx={{ width: '100%', mb: 2 }}>
           {
             headerToolbar

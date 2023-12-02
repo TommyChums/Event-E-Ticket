@@ -1,6 +1,7 @@
 import { useEffect, useState, memo, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
+import { useSnackbar } from 'notistack';
 import escapeRegExp from 'lodash/escapeRegExp';
 import filter from 'lodash/filter';
 import find from 'lodash/find';
@@ -14,10 +15,25 @@ import TextField from '@mui/material/TextField';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Stack from '@mui/material/Stack';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import IconButton from '@mui/material/IconButton';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+
+import ListItemText from '@mui/material/ListItemText';
+import Select from '@mui/material/Select';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 
 import Table from '../Table';
 import UserDialog from '../UserDialog';
 import getReadableTicketNumber from '../../lib/helpers/getReadableTicketNumber';
+import { makeAuthenticatedPostRequest } from '../../lib/api/makeAuthenticatedRequest';
 
 function getValueRenderer(fieldType) {
   if (fieldType === 'text') {
@@ -113,47 +129,174 @@ const initialColumns = [
   }
 ];
 
-const UsersTableToolbar = (props) =>
-  <Toolbar
-    sx={{
-      pl: { sm: 2 },
-      pr: { xs: 1, sm: 1 }
-    }}
-  >
-    <Typography
-      component="div"
-      id="users-table-title"
-      sx={{ flex: '1 1 100%', maxWidth: '200px' }}
-      variant="h6"
-    >
-        Registrations
-    </Typography>
-    <Stack
-      direction="row"
-      sx={{ width: '100%' }}
-    >
-      <TextField
-        fullWidth
-        id="outlined-search"
-        label="Search"
-        onChange={({ target }) => {
-          const { value } = target;
+const UsersTableToolbar = (props) => {
+  const { enqueueSnackbar } = useSnackbar();
+  
+  const [ columnsForExport, setColumnsForExport ] = useState([]);
+  const [ open, setOpen ] = useState(false);
 
-          props.setSearchValue(value.trimStart());
-        }}
-        size="small"
-        value={props.searchValue}
-      />
-      <FormControlLabel
-        control={<Checkbox checked={props.paidInFullOnly} indeterminate={props.indeterminate} />}
-        label="Ticket Issued"
-        labelPlacement="start"
-        onChange={props.onPaidInFullClick}
-        sx={{ width: '175px', marginRight: '1rem' }}
-      />
-    </Stack>
-  </Toolbar>
-  ;
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  // Export Menu
+  const [ exportAnchorEl, setExportAnchorEl ] = useState(null);
+  const exportMenuOpen = Boolean(exportAnchorEl);
+
+  const handleExportMenuClick = (event) => {
+    setExportAnchorEl(event.currentTarget);
+  };
+
+  const handleExportMenuClose = () => {
+    setExportAnchorEl(null);
+  };
+   // Menu
+  const [ anchorEl, setAnchorEl ] = useState(null);
+  const menuOpen = Boolean(anchorEl);
+
+  const handleMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleExport = async (type) => {
+    const columnsToExport = props.columns.filter((column) => columnsForExport.includes(column.id));
+
+    const fileType = type === 'csv' ? 'CSV File' : 'Excel File';
+
+    enqueueSnackbar(`Generating ${fileType} for export`, { variant: 'info' });
+
+    handleClose();
+    setColumnsForExport([]);
+
+    const { error } = await makeAuthenticatedPostRequest('/api/admin/export/registrations', { columns: columnsToExport, event: props.eventUuid, type });
+    if (error) {
+      console.log(error)
+      enqueueSnackbar(error, { variant: 'error' });
+    } else {
+      enqueueSnackbar('Export file generated. Please check your email', { variant: 'success' });
+    }
+  };
+
+  return (
+    <Toolbar
+      sx={{
+        pl: { sm: 2 },
+        pr: { xs: 1, sm: 1 }
+      }}
+    >
+      <Typography
+        component="div"
+        id="users-table-title"
+        sx={{ flex: '1 1 100%', maxWidth: '200px' }}
+        variant="h6"
+      >
+          Registrations
+      </Typography>
+      <Stack
+        direction="row"
+        sx={{ width: '100%' }}
+      >
+        <TextField
+          fullWidth
+          id="outlined-search"
+          label="Search"
+          onChange={({ target }) => {
+            const { value } = target;
+
+            props.setSearchValue(value.trimStart());
+          }}
+          size="small"
+          value={props.searchValue}
+        />
+        <FormControlLabel
+          control={<Checkbox checked={props.paidInFullOnly} indeterminate={props.indeterminate} />}
+          label="Ticket Issued"
+          labelPlacement="start"
+          onChange={props.onPaidInFullClick}
+          sx={{ width: '175px' }}
+        />
+        <IconButton onClick={handleMenuClick}>
+          <MoreVertIcon />
+        </IconButton>
+        <Menu
+          anchorEl={anchorEl}
+          open={menuOpen}
+          onClose={handleMenuClose}
+          MenuListProps={{
+            'aria-labelledby': 'basic-button',
+          }}
+        >
+          <MenuItem key='export' onClick={() => { handleClickOpen(); handleMenuClose() }}>
+            <FormControlLabel
+              control={
+                <IconButton>
+                  <FileDownloadIcon />
+                </IconButton>
+              }
+              label="Export"
+              labelPlacement="end"
+            />
+          </MenuItem>
+        </Menu>
+        <Dialog open={open} onClose={handleClose}>
+          <DialogTitle>Export</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Select the columns to include in the export.
+              A file will be created and emailed to you.
+            </DialogContentText>
+            <Select
+              sx={{ width: '100%' }}
+              multiple
+              onChange={({ target: { value } }) => setColumnsForExport(value)}
+              value={columnsForExport}
+              renderValue={(selected) => selected.map((val) => find(props.columns, [ 'id', `${val}` ])?.label).join(', ')}
+            >
+              {map(props.columns, (column) => {
+                const columnLabel = column.label;
+                const columnValue = column.id;
+
+                return (
+                  <MenuItem key={columnValue} value={columnValue}>
+                    <Checkbox checked={columnsForExport.indexOf(columnValue) > -1} />
+                    <ListItemText primary={columnLabel} />
+                  </MenuItem>
+                );
+              })}
+            </Select>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose}>Cancel</Button>
+            <Button onClick={handleExportMenuClick}>Export</Button>
+            <Menu
+              anchorEl={exportAnchorEl}
+              open={exportMenuOpen}
+              onClose={handleExportMenuClose}
+              MenuListProps={{
+                'aria-labelledby': 'basic-button',
+              }}
+            >
+              <MenuItem key='export-csv' onClick={() => { handleExport('csv'); handleExportMenuClose() }}>
+                As CSV File
+              </MenuItem>
+              {/* <MenuItem key='export-xlsx' onClick={() => { handleExport('xlsx'); handleExportMenuClose() }}>
+                As Excel File
+              </MenuItem> */}
+            </Menu>
+          </DialogActions>
+        </Dialog>
+      </Stack>
+    </Toolbar>
+  );
+};
 
 UsersTableToolbar.propTypes = {
   indeterminate: PropTypes.bool,
@@ -252,6 +395,8 @@ function UsersTable({ loading, users, usersEvent, updatePayment, updateUser }) {
         data={rows}
         headerToolbar={
           <UsersTableToolbar
+            columns={columns}
+            eventUuid={usersEvent.uuid}
             indeterminate={indeterminate}
             onPaidInFullClick={handlePaidInFullClick}
             paidInFullOnly={paidInFullOnly}
@@ -261,6 +406,9 @@ function UsersTable({ loading, users, usersEvent, updatePayment, updateUser }) {
         }
         loading={isLoading}
         onRow={onRowClick}
+        style={{
+          position: 'relative'
+        }}
       />
       {
         selectedUserUuid &&

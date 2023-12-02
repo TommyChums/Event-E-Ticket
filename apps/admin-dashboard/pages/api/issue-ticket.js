@@ -1,11 +1,11 @@
 import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs'
-import nodemailer from 'nodemailer';
 import Handlebars from 'handlebars';
 import path from 'path';
 import isEmpty from 'lodash/isEmpty';
 import moment from 'moment';
 import fs from 'fs';
 import generateTicketImage from '../../lib/api/generateTicketImage';
+import sendEmail from '../../lib/api/sendEmail';
 
 export default async function handler(req, res) {
   const supabase = createServerSupabaseClient({ req, res });
@@ -98,41 +98,25 @@ export default async function handler(req, res) {
         facebookIcon,
         youtubeIcon
       });
-  
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: 'techteam@reformationlifecentre.org',
-          pass: process.env.EMAIL_PASS
-        }
+
+      const { error } = await sendEmail({
+        // list of receivers
+        to: registeredUser.email,
+        // Subject line
+        subject: `Ticket for: ${event.name}`,
+        // html body
+        html: ticketHtml,
+        attachments: [
+          {
+            filename: 'Ticket.png',
+            content: qrCodeImg,
+            encoding: 'base64'
+          }
+        ]
       });
-  
-      try {
-        await transporter.sendMail({
-          // sender address
-          from: '"Reformation Life Centre" <techteam@reformationlifecentre.org>',
-          // list of receivers
-          to: registeredUser.email,
-          // Subject line
-          subject: `Ticket for: ${event.name}`,
-          // html body
-          html: ticketHtml,
-          attachments: [
-            {
-              filename: 'Ticket.png',
-              content: qrCodeImg,
-              encoding: 'base64'
-            }
-          ]
-        }).then((info) => {
-          console.log(JSON.stringify({ info }));
-        }).catch((e) => {
-          throw e;
-        });
-      } catch (e) {
-        console.error(e);
-  
-        return res.status(500).json({ error: e.message });
+
+      if (error) {
+        return res.status(500).json({ error });
       }
     }
 
