@@ -32,12 +32,6 @@ function QrCodeScanner({ onError, onScan, style }) {
   
       qrScanner.current = scanner;
     }
-
-    return () => {
-      if (qrScanner.current) {
-        qrScanner.current.stop();
-      }
-    }
   }, [ videoRef, onError, onScan ]);
 
   useEffect(() => {
