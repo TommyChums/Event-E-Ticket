@@ -323,7 +323,6 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
             <Can I={ACTIONS.CREATE} A={SUBJECTS.PAYMENTS}>
               <Button
                 disabled={
-                  user.ticket_issued ||
                   updating ||
                   issuingTicket ||
                   currentPayment <= 0 &&

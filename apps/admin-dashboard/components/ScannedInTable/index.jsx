@@ -302,7 +302,7 @@ const PaymentsTableToolbar = (props) => {
           )
         }
       </Stack>
-      <Dialog onClose={handleClose} open={open}>
+      <Dialog onClose={handleClose} open={open} fullScreen>
         <DialogTitle>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             {shouldScan ? "Scan Ticket" : "Enter Person"}
@@ -317,16 +317,16 @@ const PaymentsTableToolbar = (props) => {
               onScan={handleRead}
             />
           ) : (
-            <Stack direction="column" justifyContent="space-between" sx={{ padding: '1rem', minHeight: '200px', ...!isSmallScreen ? { width: '500px' } : {} }}>
+            <Stack direction={isSmallScreen ? 'column' : 'row'} justifyContent="space-between" sx={{ padding: '1rem', minHeight: '200px', ...!isSmallScreen ? { width: '80%' } : {} }}>
               <Autocomplete
                 options={usersList}
-                sx={{ width: '100%' }}
+                sx={{ width: isSmallScreen ? '100%' : '60%' }}
                 disableCloseOnSelect
                 autoHighlight
                 getOptionDisabled={(option) =>
                   option.scanned_in
                 }
-                limitTags={2}
+                limitTags={isSmallScreen ? 2 : 10 }
                 multiple
                 inputValue={selectInputVal}
                 onInputChange={(_, newVal, reason) => {
@@ -344,7 +344,7 @@ const PaymentsTableToolbar = (props) => {
               <Button
                 disabled={!usersToEnter.length}
                 onClick={registerSelectedUsers}
-                sx={{ width: 280, marginTop: '50px', padding: 1, alignSelf: 'center' }}
+                sx={{ width: 280, marginTop: '50px', padding: 1, alignSelf: 'center', justifySelf: 'center' }}
                 variant="contained"
               >
                 Enter
