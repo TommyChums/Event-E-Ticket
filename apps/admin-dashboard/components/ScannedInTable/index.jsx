@@ -74,10 +74,13 @@ const columns = [
 const PaymentsTableToolbar = (props) => {
   const supabase = useSupabaseClient();
 
+  const isSmallScreen = useMediaQuery('(max-width:780px)');
+
   const { enqueueSnackbar } = useSnackbar();
 
   const [ canScan, setCanScan ] = useState();
 
+  const [ selectInputVal, setSelectInputVal ] = useState('');
   const [ usersToEnter, setUsersToEnter ] = useState([]);
   const [ shouldScan, setShouldScan ] = useState();
   const [ usersList, setUsersList ] = useState([]);
@@ -162,9 +165,8 @@ const PaymentsTableToolbar = (props) => {
               });
   
               props.updateUser(updatedTicketUser);
-              if (shouldScan)
-                setOpen(false);
-              dataRead.current = false;
+              if (!shouldScan)
+                dataRead.current = false;
             };
           };
         };
@@ -315,16 +317,22 @@ const PaymentsTableToolbar = (props) => {
               onScan={handleRead}
             />
           ) : (
-            <Stack direction="column" justifyContent="space-between" sx={{ padding: '1rem', minHeight: '200px' }}>
+            <Stack direction="column" justifyContent="space-between" sx={{ padding: '1rem', minHeight: '200px', ...!isSmallScreen ? { width: '500px' } : {} }}>
               <Autocomplete
                 options={usersList}
                 sx={{ width: '100%' }}
+                disableCloseOnSelect
                 autoHighlight
                 getOptionDisabled={(option) =>
                   option.scanned_in
                 }
                 limitTags={2}
                 multiple
+                inputValue={selectInputVal}
+                onInputChange={(_, newVal, reason) => {
+                  if (reason !== 'reset')
+                    setSelectInputVal(newVal)
+                }}
                 onChange={(_, newValue) => {
                   setUsersToEnter(newValue);
                 }}
