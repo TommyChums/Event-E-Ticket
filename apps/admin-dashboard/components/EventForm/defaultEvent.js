@@ -5,6 +5,12 @@ const defaultEvent = {
   uuid: v4(),
   name: 'My Event',
   is_online: false,
+  event_options: {
+    registrations_only: true,
+    multiple_registrations: false,
+    registration_email: true,
+    e_tickets: false,
+  },
   payment_config: {
     age_mapping: { general: { to: 999, from: 0 } },
     price_by_age: { general: 0 },
@@ -15,7 +21,7 @@ const defaultEvent = {
   start_date: moment().add(1, 'month').toISOString(),
   end_date: moment().add(1, 'month').add(1, 'hour').toISOString(),
   host: 'Reformation Life Centre',
-  ticket_template: '',
+  ticket_template: {},
   ticket_config: {
     colour: {
       dark: {
@@ -101,14 +107,16 @@ const defaultEvent = {
       field_label: 'Phone Number',
       field_type: 'phone_number',
       order: 4,
-      required: true
+      required: true,
+      can_delete: true
     },
     date_of_birth: {
       field_name: 'date_of_birth',
       field_label: 'Date of Birth',
       field_type: 'date',
       order: 5,
-      required: true
+      required: true,
+      can_delete: true
     },
   },
   banner: ''

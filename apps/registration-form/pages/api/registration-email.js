@@ -104,7 +104,7 @@ export default async function handler(req, res) {
     const eTickets = !isEmpty(ticketTemplate);
     
     const paymentConfig = event.payment_config || {};
-    const ticketRequired = !isEmpty(paymentConfig);
+    const ticketRequired = !event.event_options.registrations_only;
     const priceByAge = paymentConfig.price_by_age || {};
     const earlyBirdPriceByAge = paymentConfig.early_bird_price_by_age || {};
     const earlyBirdDate = paymentConfig.early_bird_date || null;

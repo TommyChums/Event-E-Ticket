@@ -239,6 +239,7 @@ export default function EventForm({ event, onSave, isNew }) {
   const isSmallScreen = useMediaQuery('(max-width:780px)');
   const confirm = useConfirm();
 
+  const [ eventOptions, setEventOptions ] = useState(event.event_options);
   const [ eTickets, setETickets ] = useState(!isEmpty(event.ticket_template));
   const [ bannerImageWidth, setBannerImageWidth ] = useState(0);
   const [ bannerImageHeight, setBannerImageHeight ] = useState(BANNER_IMAGE_HEIGHT);
@@ -271,6 +272,7 @@ export default function EventForm({ event, onSave, isNew }) {
 
     setEventPublished(event.is_published);
     setETickets(!isEmpty(event.ticket_template))
+    setEventOptions(event.event_options)
   }, [ event, getValues, reset, setEventPublished ]);
 
   useEffect(() => {
@@ -537,6 +539,8 @@ export default function EventForm({ event, onSave, isNew }) {
     delete data.original_ticket_template;
     delete data.ticket_config;
 
+    data.event_options = eventOptions
+
     enqueueSnackbar(`${isNew ? 'Creating' : 'Updating'} Event`, {
       variant: 'info'
     });
@@ -779,38 +783,91 @@ export default function EventForm({ event, onSave, isNew }) {
             rules={requiredRules}
           />
           <Typography variant="h6">
-            Ticket Information
+            Configuration
           </Typography>
+          <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
+            <FormControlLabel
+              control={<Switch />}
+              label="Multiple Registrations"
+              labelPlacement="start"
+              onChange={({ target }) => {
+                setEventOptions((prev) => ({
+                  ...prev,
+                  multiple_registrations: target.checked
+                }))
+              }}
+              sx={{ alignSelf: "center" }}
+              checked={eventOptions.multiple_registrations}
+            />
+            <FormControlLabel
+              control={<Switch />}
+              label="Registrations Only"
+              labelPlacement="start"
+              onChange={({ target }) => {
+                setETickets((prev) => {
+                  if (prev && target.checked) return false
+
+                  return prev
+                })
+                setEventOptions((prev) => ({
+                  ...prev,
+                  registrations_only: target.checked
+                }))
+              }}
+              sx={{ alignSelf: "center" }}
+              checked={eventOptions.registrations_only}
+            />
+            <FormControlLabel
+              control={<Switch />}
+              label="E-Tickets"
+              labelPlacement="start"
+              onChange={({ target }) => {
+                setETickets(target.checked)
+                setEventOptions((prev) => ({
+                  ...prev,
+                  e_tickets: target.checked,
+                  registrations_only: (prev.registrations_only && target.checked) ? false : prev.registrations_only
+                }))
+              }}
+              sx={{ alignSelf: "center" }}
+              checked={eTickets}
+            />
+          </Stack>
+          {
+            eventOptions.registrations_only ? null : (
+              <Typography variant="h6">
+                Ticket Information
+              </Typography>
+            ) 
+          }
           <Controller
             control={control}
             defaultValue={{}}
             name="payment_config"
             render={({ field }) =>
-              <PricingDialog
-                {...field}
-                disabled={eventPublished}
-                onClose={() => setPricingDialogOpen(false)}
-                open={pricingDialogOpen}
-                unregister={unregister}
-              />
+              eventOptions.registrations_only ? null : (
+                <PricingDialog
+                  {...field}
+                  disabled={eventPublished}
+                  onClose={() => setPricingDialogOpen(false)}
+                  open={pricingDialogOpen}
+                  unregister={unregister}
+                />
+              )
             }
           />
-          <Button
-            fullWidth
-            onClick={() => setPricingDialogOpen(true)}
-            type="button"
-            variant="contained"
-          >
-            Click to Configure Pricing
-          </Button>
-          <FormControlLabel
-            control={<Switch />}
-            label="E-Tickets"
-            labelPlacement="start"
-            onChange={({ target }) => setETickets(target.checked)}
-            sx={{ alignSelf: "center" }}
-            checked={eTickets}
-          />
+          {
+            eventOptions.registrations_only ? null : (
+              <Button
+                fullWidth
+                onClick={() => setPricingDialogOpen(true)}
+                type="button"
+                variant="contained"
+              >
+                Click to Configure Pricing
+              </Button>
+            ) 
+          }
           {
             eTickets ? (
               map(getValues('payment_config.age_mapping'), (_, ageLabel) =>
