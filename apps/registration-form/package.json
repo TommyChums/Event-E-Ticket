@@ -17,6 +17,7 @@
     "@mui/x-date-pickers": "^5.0.1",
     "@supabase/supabase-js": "^2.20.0",
     "base64-arraybuffer": "^1.0.2",
+    "fuse.js": "^7.0.0",
     "handlebars": "^4.7.7",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",

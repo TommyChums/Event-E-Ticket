@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Head from 'next/head'
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { v4, parse } from 'uuid';
@@ -8,6 +8,7 @@ import find from 'lodash/find';
 import isEmpty from 'lodash/isEmpty';
 import map from 'lodash/map';
 import reduce from 'lodash/reduce';
+import Fuse from 'fuse.js'
 import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
@@ -106,6 +107,61 @@ export default function RegistrationForm({ event }) {
 
   const { errors, isDirty, isSubmitting, isSubmitSuccessful, isValid } = formState;
 
+
+  const checkIsDuplicate = useCallback(async (userData) => {
+      const { data: eventUsers } = await supabase.from('registered-users')
+        .select('uuid, email, first_name, last_name')
+        .eq('registered_event', event.uuid)
+
+      if (isEmpty(eventUsers)) return [ false, null ]
+
+      const options = {
+        includeScore: true,
+        ignoreLocation: true,
+        threshold: 0.2,
+        distance: 10,
+        keys: [
+          {
+            name: 'email',
+            weight: 1
+          },
+          {
+            name: 'first_name',
+            weight: 2
+          },
+          {
+            name: 'last_name',
+            weight: 2
+          },
+        ],
+      }
+
+      const fuse = new Fuse(eventUsers, options)
+
+      const searchString = [
+        userData.email,
+        userData.first_name,
+        userData.last_name,
+      ].join(' | ')
+
+      const results = fuse.search({
+        $and: [
+          { email: userData.email },
+          { first_name: userData.first_name },
+          { last_name: userData.last_name },
+        ]
+      })
+      // const results = fuse.search(searchString)
+
+      if (!results.length) {
+        return [ false, null ]
+      }
+
+      console.debug('results:', results)
+
+      return [ true, results[0].item ]
+  }, [])
+
   useEffect(() => {
     append(defaultValues)
     return () => remove(0)
@@ -131,29 +187,58 @@ export default function RegistrationForm({ event }) {
     for (const registration of data.registrations) {
       const fullName = `${registration.first_name} ${registration.last_name}`
 
-      const age = moment().diff(registration.date_of_birth, 'years');
+      const age = registration.date_of_birth ? moment().diff(registration.date_of_birth, 'years') : 0
   
       const userUuid = v4();
   
-      const { data: newUser, error } = await supabase
-        .from('registered-users')
-        .insert([{
-          ...registration,
-          email: data.email,
-          uuid: userUuid,
-          age,
-          registered_event: event.uuid,
-          registration_number: registrationNumberFromUuid(userUuid),
-        }]).select().single();
-  
-      if (error) {
-        errs.push(error)
-        infoMsgs.push({ type: 'error', message: `Error while registering ${fullName}: ${error.message}` });
+      // registered-user-duplicates
+
+      const userData = {
+        ...registration,
+        email: data.email,
+        uuid: userUuid,
+        age,
+        registered_event: event.uuid,
+        registration_number: registrationNumberFromUuid(userUuid),
+      }
+
+      const [ isDuplicateUser, matchedUser ] = await checkIsDuplicate(userData)
+
+      if (isDuplicateUser) {
+        const duplicateUser = {
+          ...userData,
+          duplicate_uuid: matchedUser.uuid
+        }
+
+        console.debug('Found duplicate', duplicateUser)
+        const { data: newUser, error } = await supabase
+          .from('registered-user-duplicates')
+          .insert([
+            duplicateUser
+          ]).select().single();
+    
+        if (error) {
+          errs.push(error)
+          infoMsgs.push({ type: 'error', message: `Error while registering ${fullName}: ${error.message}` });
+        } else {
+          infoMsgs.push({ type: 'success', message: `Registration Successful for ${fullName}!` });
+        }
       } else {
-        infoMsgs.push({ type: 'success', message: `Registration Successful for ${fullName}!` });
-        // Don't await this, just let it be done in the background
-        fetch(`/api/registration-email?user_uuid=${newUser.uuid}`)
-          .catch((e) => `[NON-FATAL ERROR] - Sending registration email ${e.message}`);
+        const { data: newUser, error } = await supabase
+          .from('registered-users')
+          .insert([
+            userData
+          ]).select().single();
+    
+        if (error) {
+          errs.push(error)
+          infoMsgs.push({ type: 'error', message: `Error while registering ${fullName}: ${error.message}` });
+        } else {
+          infoMsgs.push({ type: 'success', message: `Registration Successful for ${fullName}!` });
+          // Don't await this, just let it be done in the background
+          fetch(`/api/registration-email?user_uuid=${newUser.uuid}`)
+            .catch((e) => `[NON-FATAL ERROR] - Sending registration email ${e.message}`);
+        }
       }
     }
 
@@ -689,7 +774,7 @@ export default function RegistrationForm({ event }) {
                   backgroundColor: event.branding?.primary_colour?.hex
                 }}
               >
-                {saving ? 'Registering' : 'Submit'}
+                {saving ? 'Registering' : fields.length > 1 ? 'Submit Registrations' : 'Submit'}
               </Button>
             </Stack>
           </form>
