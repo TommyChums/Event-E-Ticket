@@ -785,20 +785,22 @@ export default function EventForm({ event, onSave, isNew }) {
           <Typography variant="h6">
             Configuration
           </Typography>
-          <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
-            <FormControlLabel
-              control={<Switch />}
-              label="Multiple Registrations"
-              labelPlacement="start"
-              onChange={({ target }) => {
-                setEventOptions((prev) => ({
-                  ...prev,
-                  multiple_registrations: target.checked
-                }))
-              }}
-              sx={{ alignSelf: "center" }}
-              checked={eventOptions.multiple_registrations}
-            />
+          <Stack direction={isSmallScreen ? "column" : "row"} spacing={2} sx={{ justifyContent: isSmallScreen ? 'start' : 'space-between' }}>
+            <Stack direction="column" spacing={2}>
+              <FormControlLabel
+                control={<Switch />}
+                label="Multiple Registrations"
+                labelPlacement="start"
+                onChange={({ target }) => {
+                  setEventOptions((prev) => ({
+                    ...prev,
+                    multiple_registrations: target.checked
+                  }))
+                }}
+                sx={{ alignSelf: "center" }}
+                checked={eventOptions.multiple_registrations}
+              />
+            </Stack>
             <FormControlLabel
               control={<Switch />}
               label="Registrations Only"
@@ -833,6 +835,24 @@ export default function EventForm({ event, onSave, isNew }) {
               checked={eTickets}
             />
           </Stack>
+          {
+            eventOptions.multiple_registrations ? (
+              <Controller
+                control={control}
+                name="multiple_registrations_label"
+                render={({ field }) =>
+                  <TextField
+                    {...field}
+                    id="outlined-multiple_registrations_label"
+                    label="Registration Label"
+                    helperText={`Used on the add button. E.g. Add additional ${watch('multiple_registrations_label')}`}
+                    variant="outlined"
+                  />
+                }
+                rules={requiredRules}
+              />
+            ) : null
+          }
           {
             eventOptions.registrations_only ? null : (
               <Typography variant="h6">

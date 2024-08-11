@@ -746,7 +746,7 @@ export default function RegistrationForm({ event }) {
                         {
                           isFirst ? null : (
                             <Button type="button" variant="outlined" color="error" onClick={() => remove(index)}>
-                              Remove Registration
+                              Remove Additional {event.multiple_registrations_label}
                             </Button>
                           )
                         }
@@ -761,7 +761,7 @@ export default function RegistrationForm({ event }) {
               {
                 event.event_options.multiple_registrations ? (
                   <Button type="button" variant="contained" color="success" onClick={() => append(defaultValues)}>
-                    Add Registration
+                    Add Additional {event.multiple_registrations_label}
                   </Button>
                 ) : null
               }

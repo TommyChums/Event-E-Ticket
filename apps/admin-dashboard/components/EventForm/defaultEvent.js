@@ -21,6 +21,7 @@ const defaultEvent = {
   start_date: moment().add(1, 'month').toISOString(),
   end_date: moment().add(1, 'month').add(1, 'hour').toISOString(),
   host: 'Reformation Life Centre',
+  multiple_registrations_label: 'Registration',
   ticket_template: {},
   ticket_config: {
     colour: {
