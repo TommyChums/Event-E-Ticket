@@ -77,7 +77,14 @@ const eventUsersReducer = (state, action) => {
       ...state.users[payload.eventUuid]
     };
 
-    delete updatedEventUsers[payload.uuid];
+    if (payload.isDuplicate) {
+      const parentUser = { ...updatedEventUsers[payload.user?.duplicate_uuid] }
+      parentUser.collapseContent = parentUser.collapseContent?.filter((dup) => dup.uuid !== payload.uuid)
+
+      updatedEventUsers[parentUser.uuid] = parentUser
+    } else {
+      delete updatedEventUsers[payload.uuid];
+    }
 
     return {
       ...state,

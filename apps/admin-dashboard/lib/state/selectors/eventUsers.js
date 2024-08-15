@@ -59,7 +59,7 @@ export function useEventUsers(eventUuid) {
     async function getUsersWithPayments() {
       dispatch(eventUsersLoading({ eventUuid, loading: true }));
       const { data: users, error } = await supabase.from('registered-users')
-        .select('*, payments:registered-user-payments(*)')
+        .select('*, payments:registered-user-payments(*), collapseContent:registered-user-duplicates(*)')
         .eq('registered_event', eventUuid);
 
       if (error) {

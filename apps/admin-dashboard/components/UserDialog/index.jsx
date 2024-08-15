@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { useSnackbar } from 'notistack';
@@ -24,7 +24,7 @@ import Can from '../Can';
 import { makeAuthenticatedPostRequest } from '../../lib/api/makeAuthenticatedRequest';
 import getUserAmtPaidAndRequired from '../../lib/helpers/getUserAmtPaidAndRequired';
 import useDispatch from '../../lib/hooks/useDispatch';
-import { deleteEventUser } from '../../lib/state/actions/eventUsers';
+import { deleteEventUser, updateEventUser } from '../../lib/state/actions/eventUsers';
 import CONSTANTS from '../../lib/state/constants';
 import useCan from '../../lib/hooks/useCan';
 
@@ -35,7 +35,7 @@ const {
   },
 } = CONSTANTS;
 
-export default function UserDialog({ event, open, onClose, user, updatePayment, updateUser, ...props }) {
+export default function UserDialog({ event, open, onClose, user, updatePayment, updateUser, isDuplicate, ...props }) {
   const { can, cannot } = useCan();
   const supabase = useSupabaseClient();
 
@@ -50,12 +50,18 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
   const [ issuingTicket, setIssuingTicket ] = useState(false);
 
   const eTicketsEnabled = !isEmpty(event.ticket_template)
-  const canBeDeleted = can(ACTIONS.MANAGE, SUBJECTS.USERS) && isEmpty(user.payments) && !user.ticket_issued;
+  const canBeDeleted = can(ACTIONS.MANAGE, SUBJECTS.USERS) && ((isEmpty(user?.payments) && !user?.ticket_issued) || isDuplicate);
+
+  const registrationsOnly = useMemo(() => {
+    return event.event_options.registrations_only
+  }, [ event ])
 
   useEffect(() => {
     if (isEmpty(user) || isEmpty(event)) {
       onClose();
     }
+
+    console.log('user isDup', isDuplicate, user)
 
     const paymentConfig = event.payment_config;
 
@@ -91,21 +97,87 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
         variant: 'info'
       });
 
-      const { error } = await supabase.from('registered-users').delete().eq('uuid', user.uuid);
+      const { error } = await supabase.from(isDuplicate ? 'registered-user-duplicates' : 'registered-users').delete().eq('uuid', user.uuid);
 
       if (error) {
-        enqueueSnackbar(`Failed to delete ${user.first_name} ${user.last_name}: ${error.message}`, {
+        enqueueSnackbar(`Failed to delete${isDuplicate ? ' duplicate' : ''} ${user.first_name} ${user.last_name}: ${error.message}`, {
           variant: 'error'
         });
       } else {
-        enqueueSnackbar(`Deleted ${user.first_name} ${user.last_name}`, {
+        enqueueSnackbar(`Deleted${isDuplicate ? ' Duplicate' : ''} ${user.first_name} ${user.last_name}`, {
           variant: 'success'
         });
 
-        dispatch(deleteEventUser({ eventUuid: event.uuid, uuid: user.uuid }));
+        dispatch(deleteEventUser({ eventUuid: event.uuid, uuid: user.uuid, isDuplicate, user }));
       }
     } catch (e) {
       console.log('Delete cancelled');
+    }
+  };
+
+  const handleNotDuplicate = async () => {
+    try {
+      await confirm({
+        title: 'Are you sure this user is not duplicate?',
+        description: 'The user will be added as a unique registration',
+        confirmationText: 'Yes',
+        cancellationText: 'Cancel',
+        allowClose: false,
+        confirmationButtonProps: {
+          variant: 'contained',
+          color: 'success'
+        },
+        cancellationButtonProps: {
+          variant: 'outlined'
+        }
+      });
+
+      enqueueSnackbar(`Moving ${user.first_name} ${user.last_name}`, {
+        variant: 'info'
+      });
+
+      const insertee = { ...user }
+      delete insertee.duplicate_uuid
+      delete insertee.onClick
+      delete insertee.buttonText
+
+      const { error: insertError } = await supabase
+        .from('registered-users')
+        .insert([
+          insertee
+        ]).select().single();
+
+      if (insertError) {
+        enqueueSnackbar(`Failed to move ${user.first_name} ${user.last_name}: ${error.message}`, {
+          variant: 'error'
+        });
+      } else {
+        enqueueSnackbar(`Successfully added ${user.first_name} ${user.last_name} as a unique registration`, {
+          variant: 'success'
+        });
+
+        dispatch(updateEventUser({ eventUuid: event.uuid, user: insertee }));
+      }
+
+      enqueueSnackbar(`Deleting the duplicate record`, {
+        variant: 'info'
+      });
+
+      const { error } = await supabase.from('registered-user-duplicates').delete().eq('uuid', user.uuid);
+
+      if (error) {
+        enqueueSnackbar(`Failed to delete the duplicate record`, {
+          variant: 'error'
+        });
+      } else {
+        enqueueSnackbar(`Deleted the duplicate record`, {
+          variant: 'success'
+        });
+
+        dispatch(deleteEventUser({ eventUuid: event.uuid, uuid: user.uuid, isDuplicate, user }));
+      }
+    } catch (e) {
+      console.log('Move duplicate cancelled');
     }
   };
 
@@ -294,60 +366,84 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
         )
       }
       <DialogTitle style={{ padding: '16px 12px 0px' }}>{user.first_name} {user.last_name}</DialogTitle>
-      <DialogContent style={{ padding: '20px 12px' }}>
-        <Stack direction="column" spacing={2} width="100%">
-          <Typography>
-            Amount Required: ${amountRequriedToPay}
-          </Typography>
-          <Typography>
-            Amount Paid: ${amountPaid}
-          </Typography>
-          <Can I={ACTIONS.CREATE} A={SUBJECTS.PAYMENTS}>
-            <div style={{ width: '100%' }}>
-              <InputLabel htmlFor="outlined-adornment-amount">Current payment</InputLabel>
-              <OutlinedInput
-                fullWidth
-                id="outlined-adornment-amount"
-                label="Amount"
-                onChange={updateCurrentPayment}
-                startAdornment={<InputAdornment position="start">$</InputAdornment>}
-                value={currentPayment}
-              />
-            </div>
-          </Can>
-        </Stack>
-      </DialogContent>
+      {
+        registrationsOnly ? (
+          <div style={{ height: '100px' }}></div>
+        ) : (
+          <DialogContent style={{ padding: '20px 12px' }}>
+            <Stack direction="column" spacing={2} width="100%">
+              <Typography>
+                Amount Required: ${amountRequriedToPay}
+              </Typography>
+              <Typography>
+                Amount Paid: ${amountPaid}
+              </Typography>
+              <Can I={ACTIONS.CREATE} A={SUBJECTS.PAYMENTS}>
+                <div style={{ width: '100%' }}>
+                  <InputLabel htmlFor="outlined-adornment-amount">Current payment</InputLabel>
+                  <OutlinedInput
+                    fullWidth
+                    id="outlined-adornment-amount"
+                    label="Amount"
+                    onChange={updateCurrentPayment}
+                    startAdornment={<InputAdornment position="start">$</InputAdornment>}
+                    value={currentPayment}
+                  />
+                </div>
+              </Can>
+            </Stack>
+          </DialogContent>
+        )
+      }
       <DialogActions sx={{ px: '12px' }}>
         <Stack spacing={1} width="100%">
-          <Stack direction="row" justifyContent="space-between" spacing={1}>
-            <Can I={ACTIONS.CREATE} A={SUBJECTS.PAYMENTS}>
+          {
+            registrationsOnly || isDuplicate ? null : (
+              <>
+                <Stack direction="row" justifyContent="space-between" spacing={1}>
+                  <Can I={ACTIONS.CREATE} A={SUBJECTS.PAYMENTS}>
+                    <Button
+                      disabled={
+                        updating ||
+                        issuingTicket ||
+                        currentPayment <= 0 &&
+                        amountRequriedToPay > 0 ||
+                        amountRequriedToPay <= 0
+                      }
+                      onClick={handlePaymentUpdate}
+                      sx={{ width: '9rem' }}
+                      variant="contained"
+                    >
+                      {updating ? 'Adding ' : 'Add Payment'}
+                    </Button>
+                  </Can>
+                  <Button onClick={onClose} variant="outlined" fullWidth={cannot(ACTIONS.CREATE, SUBJECTS.PAYMENTS)}>Cancel</Button>
+                </Stack>
+                <Can I={ACTIONS.ISSUE} A={SUBJECTS.TICKETS}>
+                  <Button
+                    disabled={user.ticket_issued || updating || issuingTicket}
+                    onClick={handleIssueTicket}
+                    sx={{ width: '100%' }}
+                    variant="contained"
+                  >
+                    {issuingTicket ? (eTicketsEnabled ? 'Issuing Ticket' : 'Updating User') : (eTicketsEnabled ? 'Issue Ticket' : 'Ticket Issued')}
+                  </Button>
+                </Can>
+              </>
+            )
+          }
+          {
+            isDuplicate &&
               <Button
-                disabled={
-                  updating ||
-                  issuingTicket ||
-                  currentPayment <= 0 &&
-                  amountRequriedToPay > 0 ||
-                  amountRequriedToPay <= 0
-                }
-                onClick={handlePaymentUpdate}
-                sx={{ width: '9rem' }}
+                color="success"
+                disabled={issuingTicket}
+                onClick={handleNotDuplicate}
+                sx={{ width: '100%' }}
                 variant="contained"
               >
-                {updating ? 'Adding ' : 'Add Payment'}
+                Not Duplicate
               </Button>
-            </Can>
-            <Button onClick={onClose} variant="outlined" fullWidth={cannot(ACTIONS.CREATE, SUBJECTS.PAYMENTS)}>Cancel</Button>
-          </Stack>
-          <Can I={ACTIONS.ISSUE} A={SUBJECTS.TICKETS}>
-            <Button
-              disabled={user.ticket_issued || updating || issuingTicket}
-              onClick={handleIssueTicket}
-              sx={{ width: '100%' }}
-              variant="contained"
-            >
-              {issuingTicket ? (eTicketsEnabled ? 'Issuing Ticket' : 'Updating User') : (eTicketsEnabled ? 'Issue Ticket' : 'Ticket Issued')}
-            </Button>
-          </Can>
+          }
           {
             canBeDeleted &&
               <Button
@@ -357,7 +453,7 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
                 sx={{ width: '100%' }}
                 variant="contained"
               >
-                Delete
+                {isDuplicate ? 'Delete Duplicate' : 'Delete' }
               </Button>
 
           }
@@ -369,6 +465,7 @@ export default function UserDialog({ event, open, onClose, user, updatePayment, 
 
 UserDialog.propTypes = {
   event: PropTypes.object.isRequired,
+  isDuplicate: PropTypes.bool.isRequired,
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   user: PropTypes.object.isRequired,

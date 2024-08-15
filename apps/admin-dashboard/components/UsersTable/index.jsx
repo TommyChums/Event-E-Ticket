@@ -8,6 +8,7 @@ import find from 'lodash/find';
 import get from 'lodash/get';
 import isEqual from 'lodash/isEqual';
 import map from 'lodash/map';
+import reduce from 'lodash/reduce';
 import startCase from 'lodash/startCase';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
@@ -34,6 +35,9 @@ import Table from '../Table';
 import UserDialog from '../UserDialog';
 import getReadableTicketNumber from '../../lib/helpers/getReadableTicketNumber';
 import { makeAuthenticatedPostRequest } from '../../lib/api/makeAuthenticatedRequest';
+import useDispatch from '../../lib/hooks/useDispatch';
+import { deleteEventUser } from '../../lib/state/actions/eventUsers';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 
 function getValueRenderer(fieldType) {
   if (fieldType === 'text') {
@@ -216,13 +220,16 @@ const UsersTableToolbar = (props) => {
           size="small"
           value={props.searchValue}
         />
-        <FormControlLabel
-          control={<Checkbox checked={props.paidInFullOnly} indeterminate={props.indeterminate} />}
-          label="Ticket Issued"
-          labelPlacement="start"
-          onChange={props.onPaidInFullClick}
-          sx={{ width: '175px' }}
-        />
+        { props.registrationsOnly ? <div style={{ width: '75px' }}></div> : (
+            <FormControlLabel
+              control={<Checkbox checked={props.paidInFullOnly} indeterminate={props.indeterminate} />}
+              label="Ticket Issued"
+              labelPlacement="start"
+              onChange={props.onPaidInFullClick}
+              sx={{ width: '175px' }}
+            />
+          )
+        }
         <IconButton onClick={handleMenuClick}>
           <MoreVertIcon />
         </IconButton>
@@ -302,6 +309,7 @@ UsersTableToolbar.propTypes = {
   indeterminate: PropTypes.bool,
   onPaidInFullClick: PropTypes.func,
   paidInFullOnly: PropTypes.bool,
+  registrationsOnly: PropTypes.bool,
   searchValue: PropTypes.string,
   setSearchValue: PropTypes.func
 };
@@ -312,13 +320,23 @@ UsersTableToolbar.defaultProps = {
 };
 
 function UsersTable({ loading, users, usersEvent, updatePayment, updateUser }) {
+  const dispatch = useDispatch();
+  const supabase = useSupabaseClient();
+
   const [ rows, setRows ] = useState([]);
   const [ searchValue, setSearchValue ] = useState('');
   const [ selectedUserUuid, setSelectedUserUuid ] = useState('');
   const [ paidInFullOnly, setPaidInFullOnly ] = useState(false);
   const [ indeterminate, setIndeterminate ] = useState(false);
 
+  const [ duplicateUsers, setDuplicateUsers ] = useState([])
+
+  const [ isDuplicate, setIsDuplicate ] = useState(true);
   const [ isLoading, setIsLoading ] = useState(true);
+
+  const registrationsOnly = useMemo(() => {
+    return usersEvent.event_options.registrations_only
+  }, [ usersEvent ])
 
   useEffect(() => {
     setIsLoading(loading);
@@ -345,13 +363,17 @@ function UsersTable({ loading, users, usersEvent, updatePayment, updateUser }) {
     return [
       ...initialColumns,
       ...additionalColumns
-    ];
-  }, [ usersEvent ]);
+    ].filter((col) => !(registrationsOnly && [ 'ticket_issued', 'ticket_number' ].includes(col.id)) );
+  }, [ usersEvent, registrationsOnly ]);
 
   useEffect(() => {
-    const searchedUsers = filter(users, ({
-      first_name, last_name, ticket_issued, email, registration_number, date_of_birth
-    }) => {
+    const dupUsers = []
+
+    const searchedUsers = reduce(users, (next, user) => {
+      const {
+        first_name, last_name, ticket_issued, email, registration_number, date_of_birth
+      } = user
+
       const searchRegex = new RegExp(escapeRegExp(searchValue), 'i');
 
       const ticketIssuedCheck = paidInFullOnly ? ticket_issued : indeterminate ? !ticket_issued : true;
@@ -365,9 +387,21 @@ function UsersTable({ loading, users, usersEvent, updatePayment, updateUser }) {
         searchRegex.test(moment(date_of_birth, true).format('LL'))
       );
 
-      return searchCheck;
-    });
+      if (searchCheck) {
+        next.push({
+          ...user,
+          collapseContent: user.collapseContent?.map((dup) => {
+            dupUsers.push(dup)
 
+            return dup
+          })
+        })
+      }
+
+      return next
+    }, [])
+
+    setDuplicateUsers(dupUsers)
     setRows(searchedUsers);
   }, [ users, searchValue, paidInFullOnly, indeterminate, columns ]);
 
@@ -386,11 +420,19 @@ function UsersTable({ loading, users, usersEvent, updatePayment, updateUser }) {
 
   const onRowClick = ({ uuid }) => {
     setSelectedUserUuid(uuid);
+    setIsDuplicate(false)
   };
+
+  const onCollapsedRowClick = ({ uuid }) => {
+    setSelectedUserUuid(uuid);
+    setIsDuplicate(true)
+  }
 
   return (
     <>
       <Table
+        collapsable
+        collapseColumnHeader="Duplicates"
         columns={columns}
         data={rows}
         headerToolbar={
@@ -400,11 +442,13 @@ function UsersTable({ loading, users, usersEvent, updatePayment, updateUser }) {
             indeterminate={indeterminate}
             onPaidInFullClick={handlePaidInFullClick}
             paidInFullOnly={paidInFullOnly}
+            registrationsOnly={registrationsOnly}
             searchValue={searchValue}
             setSearchValue={setSearchValue}
           />
         }
         loading={isLoading}
+        onCollapsedRow={onCollapsedRowClick}
         onRow={onRowClick}
         style={{
           position: 'relative'
@@ -416,11 +460,13 @@ function UsersTable({ loading, users, usersEvent, updatePayment, updateUser }) {
             event={usersEvent}
             onClose={() => {
               setSelectedUserUuid('');
+              setIsDuplicate(false);
             }}
             open={!!selectedUserUuid}
             updatePayment={updatePayment}
             updateUser={updateUser}
-            user={find(rows, [ 'uuid', selectedUserUuid ]) || {}}
+            user={(isDuplicate ? find(duplicateUsers, [ 'uuid', selectedUserUuid ]) : find(rows, [ 'uuid', selectedUserUuid ])) || {}}
+            isDuplicate={isDuplicate}
           />
 
       }

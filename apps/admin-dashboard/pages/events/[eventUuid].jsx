@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import isEmpty from 'lodash/isEmpty';
 import Container from '@mui/material/Container';
 import CircularProgress from '@mui/material/CircularProgress';
 import Backdrop from '@mui/material/Backdrop';
@@ -77,6 +78,16 @@ export default function EventManagementPage() {
   const { scannedInUsers } = useScannedInUsers(eventUuid);
 
   const [ value, setValue ] = useState(event.is_published ? 'users' : 'config');
+  const [ registrationsOnly, setRegistrationsOnly ] = useState(event.event_options?.registrations_only);
+
+
+  console.debug(eventLoading, 'event:', event)
+
+  useEffect(() => {
+    setRegistrationsOnly(event.event_options?.registrations_only)
+  }, [ event ])
+
+  if (isEmpty(event)) return null
 
   const handleChange = (_, newValue) => {
     setValue(newValue);
@@ -85,6 +96,8 @@ export default function EventManagementPage() {
   const getTabs = () => {
     const tabsArr = [];
     TABS.forEach(({ action, subject, sx, ...tab}) => {
+      if (registrationsOnly && [ 'payments', 'at_event' ].includes(tab.value)) return
+
       if (can(action, subject)) {
         tabsArr.push(
           <Tab sx={{
@@ -144,26 +157,32 @@ export default function EventManagementPage() {
               />
             </TabPanel>
           </Can>
-          <Can I={ACTIONS.VIEW} A={SUBJECTS.PAYMENTS}>
-            <TabPanel index="payments" value={value}>
-              <PaymentsTable
-                loading={usersLoading}
-                payments={payments}
-                usersEvent={event}
-              />
-            </TabPanel>
-          </Can>
-          <Can I={ACTIONS.SCAN} A={SUBJECTS.TICKETS}>
-            <TabPanel index="at_event" value={value}>
-              <ScannedInTable
-                loading={usersLoading}
-                scannedInUsers={scannedInUsers}
-                updateUser={(data) => dispatch(updateEventUser({ user: data, eventUuid }))}
-                users={users}
-                usersEvent={event}
-              />
-            </TabPanel>
-          </Can>
+          {
+            registrationsOnly ? null : (
+              <>
+                <Can I={ACTIONS.VIEW} A={SUBJECTS.PAYMENTS}>
+                  <TabPanel index="payments" value={value}>
+                    <PaymentsTable
+                      loading={usersLoading}
+                      payments={payments}
+                      usersEvent={event}
+                    />
+                  </TabPanel>
+                </Can>
+                <Can I={ACTIONS.SCAN} A={SUBJECTS.TICKETS}>
+                  <TabPanel index="at_event" value={value}>
+                    <ScannedInTable
+                      loading={usersLoading}
+                      scannedInUsers={scannedInUsers}
+                      updateUser={(data) => dispatch(updateEventUser({ user: data, eventUuid }))}
+                      users={users}
+                      usersEvent={event}
+                    />
+                  </TabPanel>
+                </Can>
+              </>
+            )
+          }
         </Box>
         :
         <Backdrop open sx={{ color: '#fff' }}>

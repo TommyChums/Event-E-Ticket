@@ -1,10 +1,14 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import findIndex from 'lodash/findIndex';
 import get from 'lodash/get';
 import map from 'lodash/map';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Collapse from '@mui/material/Collapse';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -13,6 +17,7 @@ import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import TableSortLabel from '@mui/material/TableSortLabel';
+import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import Skeleton from '@mui/material/Skeleton';
 import visuallyHidden from '@mui/utils/visuallyHidden';
@@ -28,6 +33,10 @@ import MenuItem from '@mui/material/MenuItem';
 function descendingComparator(a, b, orderBy) {
   let aVal = get(a, orderBy);
   let bVal = get(b, orderBy);
+
+  if (Array.isArray(aVal) && Array.isArray(bVal)) {
+    return bVal.length - aVal.length
+  }
 
   const momAVal = moment(aVal, true);
   const momBVal = moment(bVal, true);
@@ -115,13 +124,14 @@ EnhancedTableHead.propTypes = {
   orderBy: PropTypes.string.isRequired
 };
 
-export default function EnhancedTable({ columns, onRow, loading, data, headerToolbar, style, children }) {
+export default function EnhancedTable({ columns, collapseColumnHeader, onRow, onCollapsedRow, loading, data, headerToolbar, style, collapsable, children }) {
   const [ tableColumns, setTableColumns ] = useState(columns);
   const [ rows, setRows ] = useState([]);
   const [ order, setOrder ] = useState('asc');
   const [ orderBy, setOrderBy ] = useState(columns[0]?.id);
   const [ page, setPage ] = useState(0);
   const [ rowsPerPage, setRowsPerPage ] = useState(10);
+  const [ collapsed, setCollapsed ] = useState({});
 
   const [ isLoading, setIsLoading ] = useState(true);
 
@@ -165,8 +175,21 @@ export default function EnhancedTable({ columns, onRow, loading, data, headerToo
   };
 
   useEffect(() => {
-    setTableColumns(columns);
-  }, [ columns ]);
+    const cols = [ ...columns ]
+
+    if (collapsable) {
+      cols.unshift(
+        {
+          id: 'collapseContent',
+          type: 'collapse',
+          disablePadding: false,
+          // disableSorting: true,
+          label: collapseColumnHeader || 'Show more'
+        }
+      )
+    }
+    setTableColumns(cols);
+  }, [ columns, collapsable, collapseColumnHeader ]);
 
   useEffect(() => {
     setRows(data);
@@ -208,24 +231,108 @@ export default function EnhancedTable({ columns, onRow, loading, data, headerToo
                     rows.slice().sort(getComparator(order, orderBy))
                       .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                       .map((row) =>
-                        <TableRow
-                          hover
-                          key={row.uuid}
-                          onClick={() => onRow(row)}
-                          role="checkbox"
-                          tabIndex={-1}
-                        >
-                          {
-                            map(tableColumns, ({ id, hidden, render = (val) => val }) => {
-                              if (hidden) {
-                                return null;
+                        <Fragment key={row.uuid}>
+                          <TableRow
+                            hover
+                            onClick={() => onRow(row)}
+                            role="checkbox"
+                            tabIndex={-1}
+                          >
+                            {
+                              collapsable ? (
+                                <TableCell>
+                                  {
+                                    row.collapseContent?.length ? (
+                                      <IconButton
+                                        aria-label="expand row"
+                                        size="small"
+                                        style={{ padding: 0 }}
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          setCollapsed((prev) => ({
+                                            ...prev,
+                                            [row.uuid]: !collapsed[row.uuid]
+                                          }))
+                                        }}
+                                      >
+                                        {collapsed[row.uuid] ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                                      </IconButton>
+                                    ) : "0"
+                                  }
+                                </TableCell>
+                              ) : null
+                            }
+                            {
+                              map(tableColumns, ({ id, hidden, render = (val) => val }) => {
+                                if (hidden || id === 'collapseContent') {
+                                  return null;
+                                }
+                                return (
+                                  <TableCell align="left" key={id}>{render(get(row, id, ''), row)}</TableCell>
+                                );
+                              })
+                            }
+                          </TableRow>
+                          <TableRow tabIndex={-1}>
+                            <TableCell style={{ padding: '0 0.5rem' }} colSpan={tableColumns.filter(({ hidden }) => !hidden).length}>
+                              {
+                                row.collapseContent?.length ? (
+                                  <Collapse in={collapsed[row.uuid]} timeout="auto" unmountOnExit>
+                                    <Box sx={{ margin: 1 }}>
+                                      <Typography variant="h6" gutterBottom component="div">
+                                        {collapseColumnHeader}
+                                      </Typography>
+                                      <Table
+                                        aria-labelledby="tableTitle"
+                                        size="large"
+                                        sx={{ minWidth: 'sm', border: '2px solid lightgrey', padding: '0.5rem', margin: '0' }}
+                                      >
+                                        <TableHead>
+                                          <TableRow sx={{ background: 'lightgrey' }}>
+                                            {
+                                              map(tableColumns, ({ id, hidden, label }) => {
+                                                if (hidden || id === 'collapseContent') {
+                                                  return null;
+                                                }
+                                                return (
+                                                  <TableCell align="left" key={id}>{label}</TableCell>
+                                                );
+                                              })
+                                            }
+                                          </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                          {
+                                            row.collapseContent.map(collapseRow => (
+                                              <TableRow
+                                                key={collapseRow.uuid}
+                                                onClick={() => onCollapsedRow(collapseRow)}
+                                                tabIndex={-1}
+                                                hover
+                                                role="checkbox"
+                                              >
+                                                {
+                                                  map(tableColumns, ({ id, hidden, render = (val) => val }) => {
+                                                    if (hidden || id === 'collapseContent') {
+                                                      return null;
+                                                    }
+                                                    return (
+                                                      <TableCell align="left" key={id}>{render(get(collapseRow, id, ''), collapseRow)}</TableCell>
+                                                    );
+                                                  })
+                                                }
+                                              </TableRow>
+                                            ))
+                                          }
+                                        </TableBody>
+                                      </Table>
+                                    </Box>
+                                  </Collapse>
+                                ) : null
                               }
-                              return (
-                                <TableCell align="left" key={id}>{render(get(row, id, ''), row)}</TableCell>
-                              );
-                            })
-                          }
-                        </TableRow>
+                            </TableCell>
+                          </TableRow>
+                        </Fragment>
                       )
 
                 }
@@ -309,8 +416,10 @@ export default function EnhancedTable({ columns, onRow, loading, data, headerToo
 };
 
 EnhancedTable.propTypes = {
+  collapsable: PropTypes.bool,
   columns: PropTypes.array.isRequired,
   children: PropTypes.node,
+  onCollapsedRow: PropTypes.func,
   onRow: PropTypes.func,
   loading: PropTypes.bool,
   data: PropTypes.array,
@@ -318,6 +427,8 @@ EnhancedTable.propTypes = {
 };
 
 EnhancedTable.defaultProps = {
+  collapsable: false,
+  onCollapsedRow: () => {},
   onRow: () => {},
   loading: false,
   data: [],
